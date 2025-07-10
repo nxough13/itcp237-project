@@ -3,17 +3,297 @@
 <head>
   <meta charset="UTF-8">
   <title>Home Haven Landing Page</title>
-  <link rel="stylesheet" href="css/style.css">
-  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-  <script src="js/main.js" defer></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Georgia', 'Times New Roman', serif;
+      background: #f7f4f0;
+      color: #444;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 40px 60px 0 60px;
+      background: #f7f4f0;
+    }
+    .logo {
+      font-size: 3rem;
+      font-weight: 500;
+      color: #444;
+      letter-spacing: 2px;
+    }
+    nav {
+      display: flex;
+      gap: 36px;
+    }
+    nav a {
+      text-decoration: none;
+      color: #7b8577;
+      font-size: 1.4rem;
+      font-family: 'Georgia', serif;
+      transition: color 0.2s;
+    }
+    nav a:hover {
+      color: #b89c7a;
+    }
+    .hero {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 40px 60px 0 60px;
+      background: #f7f4f0;
+      /* Add the background image here: */
+      background-image: url('img/homehavenbg.png');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      position: relative;
+      min-height: 420px;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(247,244,240,0.3); /* more transparent */
+      z-index: 0;
+    }
+    .hero > * {
+      position: relative;
+      z-index: 1;
+    }
+    .hero-art {
+      flex: 1;
+      display: flex;
+      align-items: flex-start;
+      justify-content: flex-start;
+    }
+    .hero-art img {
+      width: 420px;
+      border-radius: 18px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+      object-fit: cover;
+    }
+    .framed-art {
+      width: 340px;
+      height: 240px;
+      object-fit: cover;
+      border: 8px solid #b89c7a;
+      border-radius: 8px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+      background: #fff;
+    }
+    .hero-content {
+      flex: 2;
+      text-align: right;
+      padding-left: 60px;
+    }
+    .hero-title {
+      font-size: 4rem;
+      font-family: 'Georgia', serif;
+      color: #444;
+      margin: 0 0 10px 0;
+      line-height: 1.1;
+    }
+    .hero-desc {
+      font-size: 1.4rem;
+      color: #666;
+      margin-bottom: 32px;
+    }
+    .hero-btn {
+      font-size: 2rem;
+      padding: 16px 40px;
+      background: #d2bfa3;
+      color: #fff;
+      border: none;
+      border-radius: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      cursor: pointer;
+      font-family: 'Georgia', serif;
+      transition: background 0.2s;
+    }
+    .hero-btn:hover {
+      background: #b89c7a;
+    }
+    .products-section {
+      background: #f7f4f0;
+      padding: 40px 0 0 0;
+    }
+    .tabs {
+      display: flex;
+      gap: 36px;
+      font-size: 2.2rem;
+      margin-left: 80px;
+      margin-bottom: 16px;
+    }
+    .tab {
+      cursor: pointer;
+      color: #444;
+      border: none;
+      background: none;
+      font-family: 'Georgia', serif;
+      padding-bottom: 4px;
+      border-bottom: 3px solid transparent;
+      transition: border 0.2s;
+    }
+    .tab.active {
+      border-bottom: 3px solid #444;
+      font-weight: 500;
+    }
+    .product-list {
+      display: flex;
+      justify-content: center;
+      gap: 60px;
+      margin-top: 10px;
+      margin-bottom: 60px;
+    }
+    .product-card {
+      background: #fff;
+      border-radius: 32px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+      width: 270px;
+      padding: 32px 24px 24px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: box-shadow 0.2s;
+    }
+    .product-card:hover {
+      box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+    }
+    .product-img {
+      width: 180px;
+      height: 180px;
+      background: #7b4a24;
+      border-radius: 28px;
+      margin-bottom: 18px;
+    }
+    .product-title {
+      font-size: 1.5rem;
+      font-family: 'Georgia', serif;
+      color: #444;
+      margin-bottom: 6px;
+    }
+    .product-desc {
+      font-size: 1.1rem;
+      color: #666;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+    .product-price {
+      font-size: 1.3rem;
+      color: #222;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+    .product-rating {
+      margin-bottom: 12px;
+    }
+    .star {
+      color: #ffe066;
+      font-size: 1.3rem;
+    }
+    .product-actions {
+      display: flex;
+      gap: 12px;
+    }
+    .product-btn {
+      background: #d2bfa3;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 18px;
+      font-size: 1.1rem;
+      font-family: 'Georgia', serif;
+      cursor: pointer;
+      transition: background 0.2s;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    }
+    .product-btn:hover {
+      background: #b89c7a;
+    }
+    @media (max-width: 900px) {
+      .hero, header {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 24px;
+      }
+      .hero-content {
+        text-align: left;
+        padding-left: 0;
+        margin-top: 24px;
+      }
+      .product-list {
+        flex-direction: column;
+        align-items: center;
+        gap: 32px;
+      }
+      .tabs {
+        margin-left: 24px;
+      }
+    }
+  </style>
 </head>
 <body>
   <header>
-    <h1>Welcome to Home Haven!</h1>
+    <div class="logo">Home Haven</div>
+    <nav>
+      <a href="#">About</a>
+      <a href="#">Products</a>
+      <a href="#">Services</a>
+      <a href="#">Contacts</a>
+    </nav>
   </header>
-  <main>
-    <button id="fetchBtn">Fetch API Data</button>
-    <p id="result"></p>
-  </main>
+  <section class="hero">
+    <div class="hero-art">
+      <img src="img/homehavenbg.png" alt="Framed Art" class="framed-art"/>
+    </div>
+    <div class="hero-content">
+      <div class="hero-title">Elevate Your<br>Space</div>
+      <div class="hero-desc">Discover timeless pieces that bring comfort, style, and harmony into your home</div>
+      <button class="hero-btn">Shop Now</button>
+    </div>
+  </section>
+  <section class="products-section">
+    <div class="tabs">
+      <button class="tab active">Featured</button>
+      <button class="tab">Best Sellers</button>
+    </div>
+    <div class="product-list" id="product-list">
+      <!-- Products will be loaded here by JS -->
+    </div>
+  </section>
+  <script>
+fetch('http://localhost:4000/api/v1/products/featured')
+  .then(res => res.json())
+  .then(data => {
+    if (!data.success) throw new Error('Failed to load products');
+    const list = document.getElementById('product-list');
+    if (!data.products.length) {
+      list.innerHTML = '<p>No featured products found.</p>';
+      return;
+    }
+    list.innerHTML = data.products.map(product => `
+      <div class="product-card">
+        <div class="product-img" style="background-image:url('img/products/${product.image ? product.image : 'default.jpg'}'); background-size:cover; background-position:center;"></div>
+        <div class="product-title">${product.name}</div>
+        <div class="product-desc">${product.short_description || product.description}</div>
+        <div class="product-price">₱${parseFloat(product.sell_price).toFixed(2)}</div>
+        <div class="product-rating">
+          <span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span>
+        </div>
+        <div class="product-actions">
+          <button class="product-btn">Add to Cart</button>
+          <button class="product-btn">View Details</button>
+        </div>
+      </div>
+    `).join('');
+  })
+  .catch(err => {
+    document.getElementById('product-list').innerHTML = '<p>Error loading products.</p>';
+    console.error(err);
+  });
+</script>
 </body>
 </html>
