@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin - Product Management</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f7f4f0; margin: 0; padding: 0; }
+    h1 { text-align: center; margin-top: 24px; }
+    .container { max-width: 1100px; margin: 32px auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.07); padding: 32px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+    th, td { padding: 10px 8px; border-bottom: 1px solid #e0d8c3; text-align: left; }
+    th { background: #f3ede2; }
+    tr:last-child td { border-bottom: none; }
+    button { background: #b89c7a; color: #fff; border: none; border-radius: 6px; padding: 7px 16px; cursor: pointer; font-size: 1rem; margin-right: 4px; }
+    button:hover { background: #a07d54; }
+    .actions { white-space: nowrap; }
+    .add-btn { float: right; margin-bottom: 10px; }
+    /* Modal styles */
+    .modal { display: none; position: fixed; z-index: 10; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background: rgba(0,0,0,0.2); }
+    .modal-content { background: #fff; margin: 60px auto; padding: 24px 32px; border-radius: 10px; width: 400px; position: relative; }
+    .close { position: absolute; right: 18px; top: 10px; font-size: 1.5rem; cursor: pointer; color: #b89c7a; }
+    label { display: block; margin-top: 12px; }
+    input, select, textarea { width: 100%; padding: 7px; margin-top: 4px; border: 1px solid #ccc; border-radius: 5px; }
+    .modal-actions { text-align: right; margin-top: 18px; }
+  </style>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>Product Management</h1>
+    <button class="add-btn" id="addProductBtn">Add Product</button>
+    <table id="productsTable">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Price</th>
+          <th>Category</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <!-- Modal -->
+  <div id="productModal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2 id="modalTitle">Add Product</h2>
+      <form id="productForm">
+        <input type="hidden" id="product_id" name="product_id">
+        <label>Name <input type="text" id="name" name="name" required></label>
+        <label>Price <input type="number" id="sell_price" name="sell_price" step="0.01" required></label>
+        <label>Category ID <input type="number" id="category_id" name="category_id" required></label>
+        <label>Status
+          <select id="status" name="status">
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+            <option value="draft">Draft</option>
+          </select>
+        </label>
+        <label>SKU <input type="text" id="sku" name="sku"></label>
+        <label>Short Description <input type="text" id="short_description" name="short_description"></label>
+        <label>Description <textarea id="description" name="description"></textarea></label>
+        <label>Image Filename <input type="text" id="image" name="image"></label>
+        <div class="modal-actions">
+          <button type="submit" id="saveBtn">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = 'http://localhost:4000/api/v1/products';
+    function fetchProducts() {
+      $.get(API_URL, function(data) {
+        if (!data.success) return alert('Failed to load products');
+        const rows = data.products.map(p => `
+          <tr>
+            <td>${p.item_id}</td>
+            <td>${p.name}</td>
+            <td>₱${parseFloat(p.sell_price).toFixed(2)}</td>
+            <td>${p.category_id}</td>
+            <td>${p.status}</td>
+            <td class="actions">
+              <button class="edit-btn" data-id="${p.item_id}">Edit</button>
+              <button class="delete-btn" data-id="${p.item_id}">Delete</button>
+            </td>
+          </tr>
+        `).join('');
+        $('#productsTable tbody').html(rows);
+      });
+    }
+    $(document).ready(function() {
+      fetchProducts();
+      // Modal logic
+      const modal = $('#productModal');
+      const form = $('#productForm')[0];
+      $('#addProductBtn').click(function() {
+        form.reset();
+        $('#product_id').val('');
+        $('#modalTitle').text('Add Product');
+        modal.show();
+      });
+      $('.close').click(() => modal.hide());
+      $(window).click(e => { if (e.target === modal[0]) modal.hide(); });
+      // Edit
+      $('#productsTable').on('click', '.edit-btn', function() {
+        const id = $(this).data('id');
+        $.get(`${API_URL}/${id}`, function(data) {
+          if (!data.success) return alert('Failed to load product');
+          Object.entries(data.product).forEach(([k, v]) => $(`#${k}`).val(v));
+          $('#modalTitle').text('Edit Product');
+          modal.show();
+        });
+      });
+      // Delete
+      $('#productsTable').on('click', '.delete-btn', function() {
+        if (!confirm('Delete this product?')) return;
+        const id = $(this).data('id');
+        $.ajax({ url: `${API_URL}/${id}`, type: 'DELETE', success: fetchProducts });
+      });
+      // Save (Add/Edit)
+      $('#productForm').submit(function(e) {
+        e.preventDefault();
+        const id = $('#product_id').val();
+        const method = id ? 'PUT' : 'POST';
+        const url = id ? `${API_URL}/${id}` : API_URL;
+        const data = $(this).serializeArray().reduce((obj, item) => (obj[item.name]=item.value,obj), {});
+        $.ajax({
+          url, type: method, data: JSON.stringify(data), contentType: 'application/json',
+          success: () => { modal.hide(); fetchProducts(); },
+          error: (xhr) => alert(xhr.responseJSON?.error || 'Failed to save product')
+        });
+      });
+    });
+  </script>
+</body>
+</html> 

@@ -28,4 +28,70 @@ router.get('/products/featured', async (req, res) => {
   }
 });
 
+// GET /products - list all products
+router.get('/products', async (req, res) => {
+  try {
+    const [rows] = await db.query('SELECT * FROM item');
+    res.json({ success: true, products: rows });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, error: 'Failed to fetch products' });
+  }
+});
+
+// GET /products/:id - get one product
+router.get('/products/:id', async (req, res) => {
+  try {
+    const [rows] = await db.query('SELECT * FROM item WHERE item_id = ?', [req.params.id]);
+    if (rows.length === 0) return res.status(404).json({ success: false, error: 'Product not found' });
+    res.json({ success: true, product: rows[0] });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, error: 'Failed to fetch product' });
+  }
+});
+
+// POST /products - create product
+router.post('/products', async (req, res) => {
+  try {
+    const { category_id, name, description, short_description, sku, cost_price, sell_price, image, weight, dimensions, material, color, style, room_type, status, is_featured, meta_title, meta_description } = req.body;
+    const [result] = await db.query(
+      'INSERT INTO item (category_id, name, description, short_description, sku, cost_price, sell_price, image, weight, dimensions, material, color, style, room_type, status, is_featured, meta_title, meta_description, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())',
+      [category_id, name, description, short_description, sku, cost_price, sell_price, image, weight, dimensions, material, color, style, room_type, status, is_featured, meta_title, meta_description]
+    );
+    res.status(201).json({ success: true, product_id: result.insertId });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, error: 'Failed to create product' });
+  }
+});
+
+// PUT /products/:id - update product
+router.put('/products/:id', async (req, res) => {
+  try {
+    const { category_id, name, description, short_description, sku, cost_price, sell_price, image, weight, dimensions, material, color, style, room_type, status, is_featured, meta_title, meta_description } = req.body;
+    const [result] = await db.query(
+      'UPDATE item SET category_id=?, name=?, description=?, short_description=?, sku=?, cost_price=?, sell_price=?, image=?, weight=?, dimensions=?, material=?, color=?, style=?, room_type=?, status=?, is_featured=?, meta_title=?, meta_description=?, updated_at=NOW() WHERE item_id=?',
+      [category_id, name, description, short_description, sku, cost_price, sell_price, image, weight, dimensions, material, color, style, room_type, status, is_featured, meta_title, meta_description, req.params.id]
+    );
+    if (result.affectedRows === 0) return res.status(404).json({ success: false, error: 'Product not found' });
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, error: 'Failed to update product' });
+  }
+});
+
+// DELETE /products/:id - delete product
+router.delete('/products/:id', async (req, res) => {
+  try {
+    const [result] = await db.query('DELETE FROM item WHERE item_id = ?', [req.params.id]);
+    if (result.affectedRows === 0) return res.status(404).json({ success: false, error: 'Product not found' });
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, error: 'Failed to delete product' });
+  }
+});
+
 module.exports = router;
