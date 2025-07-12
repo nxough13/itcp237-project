@@ -58,7 +58,8 @@ router.post('/login', async (req, res) => {
       return res.json({ success: false, message: 'You are not a registered user, Please Register' });
     }
     const user = results[0];
-    if (user.status !== 'active' || !user.email_verified_at) {
+    // Allow admin users to login without email verification
+    if (user.role !== 'admin' && (user.status !== 'active' || !user.email_verified_at)) {
       return res.json({ success: false, message: 'Please verify your email before logging in.' });
     }
     // Plain text password check (for demo; use hashing in production)
@@ -316,6 +317,56 @@ router.post('/upgrade-to-customer', authenticateJWT, async (req, res) => {
     return res.json({ success: true, message: 'Upgraded to customer.', role: 'customer' });
   } catch (err) {
     return res.status(500).json({ success: false, message: 'Failed to upgrade role.' });
+  }
+});
+
+// GET /api/v1/admin/stats (protected, admin only)
+router.get('/admin/stats', authenticateJWT, async (req, res) => {
+  // Check if user is admin
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ success: false, message: 'Access denied. Admin only.' });
+  }
+  
+  try {
+    // Get user statistics
+    const [userStats] = await db.query('SELECT COUNT(*) as total FROM users WHERE role = "user"');
+    const [customerStats] = await db.query('SELECT COUNT(*) as total FROM customer');
+    const [sellerStats] = await db.query('SELECT COUNT(*) as total FROM users WHERE role = "seller"');
+    const [orderStats] = await db.query('SELECT COUNT(*) as total FROM orderinfo');
+    
+    // Get recent activity (last 10 orders)
+    const [recentOrders] = await db.query(`
+      SELECT o.order_number, o.date_placed, o.status, c.fname, c.lname
+      FROM orderinfo o
+      JOIN customer c ON o.customer_id = c.customer_id
+      ORDER BY o.date_placed DESC
+      LIMIT 10
+    `);
+    
+    // Get recent user registrations
+    const [recentUsers] = await db.query(`
+      SELECT name, email, role, created_at
+      FROM users
+      ORDER BY created_at DESC
+      LIMIT 5
+    `);
+    
+    return res.json({
+      success: true,
+      stats: {
+        totalUsers: userStats[0].total,
+        totalCustomers: customerStats[0].total,
+        totalSellers: sellerStats[0].total,
+        totalOrders: orderStats[0].total
+      },
+      recentActivity: {
+        orders: recentOrders,
+        users: recentUsers
+      }
+    });
+  } catch (err) {
+    console.error('Admin stats error:', err);
+    return res.status(500).json({ success: false, message: 'Failed to fetch admin statistics.' });
   }
 });
 
