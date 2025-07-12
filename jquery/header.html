@@ -1,0 +1,27 @@
+<header id="mainHeader" style="background:#f3ede5; padding:0.7rem 2rem; display:flex; align-items:center; justify-content:space-between; border-bottom:2px solid #e0d6c6; position:fixed; top:0; left:0; width:100%; box-sizing:border-box; z-index:1001; box-shadow:0 2px 8px rgba(0,0,0,0.07);">
+  <div style="display:flex; align-items:center; gap:1.2rem;">
+    <a href="index.html" style="display:flex; align-items:center; gap:1.2rem; text-decoration:none;">
+      <img src="img/logo.png" alt="Home Haven Logo" style="height:48px; width:48px;">
+      <span style="font-size:2.2rem; font-family:Georgia,serif; color:#444; font-weight:600; letter-spacing:1px;">Home Haven</span>
+    </a>
+    <span id="jwtStatus" style="margin-left:1.5rem; font-size:1rem; font-weight:600;"></span>
+  </div>
+  <nav style="display:flex; align-items:center; gap:1.2rem; position:relative;">
+    <span id="profileSection" style="display:inline-flex; align-items:center; gap:0.5rem;">
+      <a href="profile.html" id="profileIcon" style="color:#8B5C2A; font-size:2rem; border:2px solid #8B5C2A; border-radius:50%; padding:0.2rem; background:#f3ede5; display:inline-flex; align-items:center; justify-content:center; text-decoration:none;">
+        <span style="font-size:1.7rem;">&#128100;</span>
+      </a>
+      <button id="logoutBtn" style="display:none; background:#8B5C2A; color:#fff; border:none; border-radius:8px; padding:0.5rem 1.3rem; font-size:1.1rem; font-weight:700; cursor:pointer; margin-left:0.5rem; box-shadow:0 2px 6px rgba(0,0,0,0.08);">Logout</button>
+    </span>
+    <button id="dropdownBtn" style="display:none; background:none; border:none; font-size:2rem; cursor:pointer; margin-left:0.7rem; color:#8B5C2A; padding:0 0.5rem; border-radius:6px;">&#9776;</button>
+    <div id="dropdownMenu" style="display:none; position:absolute; top:60px; right:0; background:#fff; border-radius:12px; box-shadow:0 8px 32px rgba(0,0,0,0.12); min-width:200px; z-index:2000; padding:1rem 0;">
+      <a href="wishlist.html" style="display:flex; align-items:center; gap:0.7rem; color:#6d7a6d; font-size:1.1rem; text-decoration:none; padding:0.7rem 1.5rem;">&#10084; My Wishlist</a>
+      <a href="products.html" style="display:flex; align-items:center; gap:0.7rem; color:#6d7a6d; font-size:1.1rem; text-decoration:none; padding:0.7rem 1.5rem;">&#128722; Products</a>
+      <a href="#" style="display:flex; align-items:center; gap:0.7rem; color:#6d7a6d; font-size:1.1rem; text-decoration:none; padding:0.7rem 1.5rem;">&#128172; FAQ</a>
+      <a href="cart.html" style="display:flex; align-items:center; gap:0.7rem; color:#6d7a6d; font-size:1.1rem; text-decoration:none; padding:0.7rem 1.5rem;">&#128722; Cart</a>
+    </div>
+    <button id="loginBtn" style="display:none; background:#8B5C2A; color:#fff; border:none; border-radius:8px; padding:0.5rem 1.3rem; font-size:1.1rem; font-weight:700; cursor:pointer; margin-left:1rem;">Login</button>
+    <button id="signupBtn" style="display:none; background:#bfa77a; color:#fff; border:none; border-radius:8px; padding:0.5rem 1.3rem; font-size:1.1rem; font-weight:700; cursor:pointer; margin-left:0.5rem;">Sign Up</button>
+  </nav>
+</header>
+<div style="height:84px;"></div> 

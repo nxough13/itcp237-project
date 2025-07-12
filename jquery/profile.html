@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Home Haven - Profile</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary-color: #8B5C2A;
+      --primary-light: #bfa77a;
+      --primary-dark: #6d4c1c;
+      --secondary-color: #b85c2a;
+      --background-light: #f6f3ef;
+      --background-dark: #e5d6c3;
+      --text-dark: #3d2c1c;
+      --text-medium: #7a5420;
+      --text-light: #fffdfa;
+      --shadow-light: 0 4px 20px rgba(139, 92, 42, 0.08);
+      --shadow-medium: 0 8px 32px rgba(139, 92, 42, 0.15);
+      --shadow-dark: 0 12px 40px rgba(139, 92, 42, 0.2);
+      --transition-fast: all 0.15s ease-out;
+      --transition-medium: all 0.3s ease-out;
+      --transition-slow: all 0.5s ease-out;
+    }
+    
+    body { 
+      background: var(--background-light); 
+      font-family: 'Montserrat', sans-serif;
+      color: var(--text-dark);
+      line-height: 1.6;
+    }
+    
+    .profile-container { 
+      max-width: 1100px; 
+      margin: 2rem auto; 
+      background: #fff; 
+      border-radius: 24px; 
+      box-shadow: var(--shadow-medium); 
+      padding: 2.5rem 3rem;
+      transform: translateY(20px);
+      opacity: 0;
+      animation: fadeInUp 0.6s ease-out forwards;
+      overflow: hidden;
+      position: relative;
+    }
+    
+    @keyframes fadeInUp {
+      from {
+        transform: translateY(20px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+    
+    .profile-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 8px;
+      background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    }
+    
+    .profile-header { 
+      display: flex; 
+      align-items: flex-start; 
+      gap: 2rem; 
+      margin-bottom: 2rem; 
+      position: relative;
+    }
+    
+    .profile-actions {
+      display: flex;
+      gap: 1rem;
+      margin-left: auto;
+    }
+    
+    .profile-avatar { 
+      width: 160px; 
+      height: 160px; 
+      border-radius: 50%; 
+      background: var(--background-dark); 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      font-size: 6rem; 
+      color: var(--primary-color); 
+      border: 4px solid var(--primary-light); 
+      position: relative;
+      transition: var(--transition-medium);
+      box-shadow: var(--shadow-light);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    
+    .profile-avatar:hover {
+      transform: scale(1.03);
+      box-shadow: var(--shadow-medium);
+    }
+    
+    .profile-avatar:active {
+      transform: scale(0.98);
+    }
+    
+    .profile-avatar-edit { 
+      position: absolute; 
+      bottom: 8px;
+      right: 8px; 
+      background: #fff; 
+      border-radius: 50%; 
+      padding: 6px;
+      border: 1px solid var(--primary-light); 
+      cursor: pointer;
+      transition: var(--transition-fast);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .profile-avatar-edit:hover {
+      background: var(--primary-light);
+      color: white;
+      transform: scale(1.1);
+    }
+    
+    .profile-avatar-edit svg {
+      width: 16px;
+      height: 16px;
+      transition: var(--transition-fast);
+    }
+    
+    .profile-avatar-edit:hover svg {
+      stroke: white;
+    }
+    
+    .profile-title { 
+      font-size: 2.5rem; 
+      font-weight: 700; 
+      color: var(--text-dark); 
+      font-family: 'Playfair Display', serif;
+      letter-spacing: 0.5px;
+      margin-bottom: 0.5rem;
+      position: relative;
+      display: inline-block;
+    }
+    
+    .profile-title::after {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      left: 0;
+      width: 60px;
+      height: 3px;
+      background: var(--primary-light);
+      transition: var(--transition-medium);
+    }
+    
+    .profile-title:hover::after {
+      width: 100%;
+      background: var(--primary-color);
+    }
+    
+    .profile-form { 
+      display: flex; 
+      flex-wrap: wrap; 
+      gap: 2rem; 
+    }
+    
+    .profile-col { 
+      flex: 1 1 350px; 
+      min-width: 320px; 
+      padding: 0 1rem;
+    }
+    
+    .profile-form input[type="text"],
+    .profile-form input[type="email"],
+    .profile-form input[type="password"],
+    .profile-form input[type="date"] {
+      width: 100%;
+      padding: 0.6rem 0.8rem;
+      border: 1.5px solid #d1bfa3;
+      border-radius: 6px;
+      font-size: 1rem;
+      background: #fff;
+      color: var(--text-medium);
+      outline: none;
+      margin-bottom: 1rem;
+      transition: var(--transition-fast);
+      font-family: 'Montserrat', sans-serif;
+      height: 40px;
+    }
+
+    .profile-form label {
+      font-size: 1rem;
+      color: var(--primary-color);
+      font-weight: 600;
+      margin-bottom: 0.3rem;
+      display: block;
+      text-align: left;
+      font-family: 'Montserrat', sans-serif;
+    }
+
+    .input-group {
+      position: relative;
+      margin-bottom: 1rem;
+    }
+
+    .toggle-password {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+      color: var(--primary-light);
+      transition: var(--transition-fast);
+      height: 30px;
+      width: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .toggle-password svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .customer-fields-col {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .customer-fields-col input[type="text"] {
+      width: 100%;
+      padding: 0.6rem 0.8rem;
+      font-size: 1rem;
+      border: 1.5px solid #d1bfa3;
+      border-radius: 6px;
+      background: #fff;
+      color: var(--text-medium);
+      outline: none;
+      box-shadow: 0 1px 4px 0 rgba(139,92,42,0.04);
+      transition: var(--transition-fast);
+      height: 40px;
+      margin-bottom: 0.8rem;
+    }
+
+    .customer-fields-row {
+      gap: 1rem 2rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .customer-details-label {
+      margin: 1.5rem 0 1rem 1rem;
+    }
+
+    .action-btn {
+      height: 40px;
+    }
+
+    /* Loading animation for buttons */
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+    
+    .loading {
+      animation: pulse 1.5s infinite ease-in-out;
+      position: relative;
+      opacity: 0.9;
+    }
+    
+    .loading::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255,255,255,0.3);
+      z-index: 1;
+    }
+    
+    @media (max-width: 900px) {
+      .profile-container { 
+        padding: 1.5rem; 
+        margin: 1rem;
+        border-radius: 16px;
+      }
+      
+      .profile-header {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+      
+      .profile-actions {
+        margin-left: 0;
+        margin-top: 1.5rem;
+        width: 100%;
+        justify-content: center;
+      }
+      
+      .profile-title::after {
+        left: 50%;
+        transform: translateX(-50%);
+      }
+      
+      .action-btn {
+        padding: 0.6rem 1rem;
+        font-size: 0.9rem;
+      }
+    }
+    
+    @media (max-width: 600px) {
+      .profile-form {
+        gap: 1rem;
+      }
+      
+      .profile-col {
+        min-width: 100%;
+      }
+      
+      .action-btn {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+    .customer-details-section {
+      margin-top: 2.5rem;
+      padding: 2rem 1.5rem;
+      background: #f8f5f0;
+      border-radius: 14px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+      max-width: 700px;
+      margin-left: auto;
+      margin-right: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .customer-details-label {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #8B5C2A;
+      margin-bottom: 1.2rem;
+      letter-spacing: 1px;
+      text-align: left;
+      width: 100%;
+    }
+    .customer-fields-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.2rem 2.2rem;
+      width: 100%;
+      justify-content: center;
+      margin-bottom: 1.2rem;
+    }
+    .customer-fields-col {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .customer-fields-col label {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--primary-color);
+      letter-spacing: 0.5px;
+      margin-bottom: 0.5rem;
+      font-family: 'Montserrat', sans-serif;
+    }
+    .customer-fields-col input[type="text"] {
+      width: 100%;
+      padding: 0.6rem 0.8rem;
+      font-size: 1rem;
+      border: 1.5px solid #d1bfa3;
+      border-radius: 6px;
+      background: #fff;
+      color: var(--text-medium);
+      outline: none;
+      box-shadow: 0 1px 4px 0 rgba(139,92,42,0.04);
+      transition: var(--transition-fast);
+      height: 40px;
+      margin-bottom: 0.8rem;
+    }
+
+    .action-btn {
+      background: #a67c52;
+      color: #fff;
+      border: none;
+      border-radius: 32px;
+      padding: 0.7rem 2rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.18s, box-shadow 0.18s, color 0.18s;
+      box-shadow: 0 2px 8px 0 rgba(139,92,42,0.13);
+      margin-bottom: 0.2rem;
+      letter-spacing: 0.5px;
+      outline: none;
+      display: inline-block;
+      height: 48px;
+      padding: 0 1.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+    .action-btn:hover, .action-btn:focus {
+      background: #8B5C2A;
+      color: #fffbe6;
+      box-shadow: 0 4px 16px 0 rgba(139,92,42,0.18);
+    }
+    .pill-logout {
+      background: #b85c2a;
+    }
+    .pill-logout:hover, .pill-logout:focus {
+      background: #a04a1a;
+    }
+  </style>
+</head>
+<body>
+<script src="js/main.js"></script>
+<!-- Login Redirect Modal -->
+<div id="loginModal" style="display:none; position:fixed; z-index:1000; left:0; top:0; width:100vw; height:100vh; background:rgba(0,0,0,0.4); align-items:center; justify-content:center; backdrop-filter: blur(4px);">
+  <div style="background:#fff; color:#2d2233; border-radius:16px; padding:2rem 2.5rem; min-width:320px; max-width:90vw; box-shadow:0 8px 32px rgba(0,0,0,0.18); position:relative; text-align:center; animation: modalFadeIn 0.4s ease-out;">
+    <div id="loginModalMsg" style="font-size:1.2rem; margin-bottom:1.5rem;">Redirecting to Login page... (<span id="loginModalTimer">5</span>s)</div>
+    <div style="width:100%; height:6px; background:#f0f0f0; border-radius:3px; overflow:hidden; margin-top:1.5rem;">
+      <div id="loginModalProgress" style="height:100%; background:var(--primary-color); width:0%; transition:width 1s linear;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Custom Success/Error Modal -->
+<div id="customModal" style="display:none; position:fixed; z-index:1001; left:0; top:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); align-items:center; justify-content:center; backdrop-filter: blur(4px);">
+  <div style="background:#fff; color:#2d2233; border-radius:20px; padding:2.5rem 3rem; min-width:350px; max-width:90vw; box-shadow:0 12px 40px rgba(0,0,0,0.25); position:relative; text-align:center; animation: modalSlideIn 0.3s ease-out;">
+    <div id="customModalIcon" style="font-size:4rem; margin-bottom:1.5rem;">✅</div>
+    <div id="customModalTitle" style="font-size:1.5rem; font-weight:700; margin-bottom:1rem; color:var(--primary-color);">Success!</div>
+    <div id="customModalMessage" style="font-size:1.1rem; margin-bottom:2rem; line-height:1.5; color:#555;">Your changes have been saved successfully.</div>
+    <div style="width:100%; height:4px; background:#f0f0f0; border-radius:2px; overflow:hidden; margin-top:1rem;">
+      <div id="customModalProgress" style="height:100%; background:var(--primary-color); width:100%; transition:width 3s linear;"></div>
+    </div>
+  </div>
+</div>
+
+<style>
+@keyframes modalSlideIn {
+  from {
+    transform: translateY(-20px) scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+</style>
+<script>
+  const token = localStorage.getItem('jwt_token');
+  if (!token) {
+    document.getElementById('loginModal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    let seconds = 5;
+    const timerSpan = document.getElementById('loginModalTimer');
+    const progressBar = document.getElementById('loginModalProgress');
+    timerSpan.textContent = seconds;
+    progressBar.style.width = '0%';
+    
+    // Start progress bar animation
+    setTimeout(() => {
+      progressBar.style.width = '100%';
+    }, 10);
+    
+    const interval = setInterval(() => {
+      seconds--;
+      if (seconds > 0) {
+        timerSpan.textContent = seconds;
+      } else {
+        clearInterval(interval);
+        window.location.href = 'login.html?reason=notloggedin';
+      }
+    }, 1000);
+  }
+</script>
+  <div class="profile-container">
+    <div class="profile-header" style="display:flex; align-items:flex-start; gap:1.5rem; margin-bottom:2rem;">
+      <div class="profile-avatar" id="profileAvatar" tabindex="0" style="cursor:pointer;">
+        <span id="profileAvatarImg">👤</span>
+        <input type="file" id="avatarFileInput" accept="image/*" style="display:none;" />
+        <span class="profile-avatar-edit" title="Edit avatar"><svg viewBox="0 0 24 24" fill="none" stroke="#8B5C2A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19.5 3 21l1.5-4L16.5 3.5z"/></svg></span>
+      </div>
+      <div style="display:flex; flex-direction:column; justify-content:center; align-items:flex-start;">
+        <div style="font-size:1.2rem; color:#8B5C2A; text-align:left;" id="profileRoleLabel">User</div>
+        <div class="profile-title" id="profileName" style="font-size:2.1rem; font-weight:700; color:#3d2c1c; text-align:left;"></div>
+      </div>
+      <div class="profile-actions">
+        <button type="button" class="action-btn">
+          <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <path d="M16 10a4 4 0 0 1-8 0"></path>
+          </svg>
+          Orders
+        </button>
+        <button type="button" class="action-btn">
+          <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+          </svg>
+          Wishlist
+        </button>
+        <button type="button" class="action-btn">
+          <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          Track
+        </button>
+      </div>
+    </div>
+    <form class="profile-form" id="profileForm" autocomplete="off">
+      <div class="profile-col">
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" required>
+        <label for="password">Change Password:</label>
+        <div class="input-group">
+          <input type="password" id="password" name="password" placeholder="New password">
+          <button type="button" class="toggle-password" tabindex="-1" onclick="togglePassword('password', this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <label for="confirm-password">Confirm Password:</label>
+        <div class="input-group">
+          <input type="password" id="confirm-password" name="confirm-password" placeholder="Confirm new password">
+          <button type="button" class="toggle-password" tabindex="-1" onclick="togglePassword('confirm-password', this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" readonly>
+      </div>
+      <div class="profile-col">
+        <label for="address">Address:</label>
+        <input type="text" id="address" name="address">
+        <label for="phone">Phone Number:</label>
+        <input type="text" id="phone" name="phone">
+        <label for="birthdate">Birth Date:</label>
+        <input type="date" id="birthdate" name="birthdate">
+      </div>
+      <div style="flex-basis:100%;"></div>
+      <!-- Save User Details Button -->
+      <div style="display:flex; justify-content:flex-end; margin-bottom:2.2rem;">
+        <button type="button" class="action-btn" id="saveUserBtn">Save User Details</button>
+      </div>
+      <!-- Customer Details Section (merged, no box) -->
+      <div class="customer-details-label" style="margin-top:0.7rem; margin-bottom:0.7rem;">Customer Details</div>
+      <div class="customer-fields-row" style="margin-bottom:2rem;">
+        <div class="customer-fields-col">
+          <label for="title">Title:</label>
+          <input type="text" id="title" name="title">
+          <label for="fname">First Name:</label>
+          <input type="text" id="fname" name="fname">
+          <label for="lname">Last Name:</label>
+          <input type="text" id="lname" name="lname">
+        </div>
+        <div class="customer-fields-col">
+          <label for="town">Town:</label>
+          <input type="text" id="town" name="town">
+          <label for="zipcode">Zipcode:</label>
+          <input type="text" id="zipcode" name="zipcode">
+        </div>
+      </div>
+      <!-- Save Customer Details Button -->
+      <div style="display:flex; justify-content:center; margin-bottom:2.2rem;">
+        <button type="button" class="action-btn" id="saveCustomerBtn">Save Customer Details</button>
+      </div>
+      <div class="profile-message" id="profileMessage"></div>
+      <button type="button" class="action-btn pill-logout" id="logoutBtnProfile" style="width:100%; margin-top:2rem;">Logout</button>
+    </form>
+  </div>
+  <script>
+    // Custom Modal Functions
+    function showCustomModal(isSuccess, message) {
+      const modal = document.getElementById('customModal');
+      const icon = document.getElementById('customModalIcon');
+      const title = document.getElementById('customModalTitle');
+      const messageEl = document.getElementById('customModalMessage');
+      const progress = document.getElementById('customModalProgress');
+      
+      // Set modal content based on success/error
+      if (isSuccess) {
+        icon.textContent = '✅';
+        icon.style.color = '#28a745';
+        title.textContent = 'Success!';
+        title.style.color = '#28a745';
+      } else {
+        icon.textContent = '❌';
+        icon.style.color = '#dc3545';
+        title.textContent = 'Error!';
+        title.style.color = '#dc3545';
+      }
+      
+      messageEl.textContent = message;
+      
+      // Show modal
+      modal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+      
+      // Reset progress bar
+      progress.style.width = '0%';
+      
+      // Start progress bar animation
+      setTimeout(() => {
+        progress.style.width = '100%';
+      }, 10);
+      
+      // Auto-close after 3 seconds
+      setTimeout(() => {
+        hideCustomModal();
+      }, 3000);
+    }
+    
+    function hideCustomModal() {
+      const modal = document.getElementById('customModal');
+      modal.style.display = 'none';
+      document.body.style.overflow = 'auto';
+    }
+    
+    function togglePassword(fieldId, btn) {
+      const input = document.getElementById(fieldId);
+      if (input.type === 'password') {
+        input.type = 'text';
+        btn.querySelector('svg').style.opacity = 0.5;
+      } else {
+        input.type = 'password';
+        btn.querySelector('svg').style.opacity = 1;
+      }
+    }
+
+    // Fetch profile data
+    let userRole = 'user'; // default
+    if (token) {
+      fetch('http://localhost:4000/api/v1/profile', {
+        method: 'GET',
+        headers: { 'Authorization': 'Bearer ' + token }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          if (document.getElementById('name')) document.getElementById('name').value = data.profile.name || '';
+          if (document.getElementById('email')) document.getElementById('email').value = data.profile.email || '';
+          if (document.getElementById('address')) document.getElementById('address').value = data.profile.address || '';
+          if (document.getElementById('phone')) document.getElementById('phone').value = data.profile.phone || '';
+          if (document.getElementById('birthdate')) document.getElementById('birthdate').value = data.profile.date_of_birth && data.profile.date_of_birth !== '0000-00-00' ? data.profile.date_of_birth.split('T')[0] : '';
+          if (document.getElementById('profileName')) document.getElementById('profileName').textContent = (data.profile.name || '').toUpperCase();
+          
+          // Set User/Customer label
+          const roleLabel = document.getElementById('profileRoleLabel');
+          if (roleLabel) {
+            if (userRole === 'customer') {
+              roleLabel.textContent = 'User / Customer';
+            } else {
+              roleLabel.textContent = 'User';
+            }
+          }
+          
+          if (typeof setUserName === 'function') setUserName(data.profile.name || '');
+          
+          // Get role from localStorage or default to 'user'
+          userRole = localStorage.getItem('user_role') || 'user';
+          if (data.profile.role) userRole = data.profile.role;
+          localStorage.setItem('user_role', userRole);
+          
+          // Customer fields are always visible now, just populate if data exists
+          if (userRole === 'customer') {
+            if (data.profile.title) document.getElementById('title').value = data.profile.title;
+            if (data.profile.fname) document.getElementById('fname').value = data.profile.fname;
+            if (data.profile.lname) document.getElementById('lname').value = data.profile.lname;
+            if (data.profile.town) document.getElementById('town').value = data.profile.town;
+            if (data.profile.zipcode) document.getElementById('zipcode').value = data.profile.zipcode;
+          }
+          
+          if (data.profile.profile_image) {
+            setProfileAvatarImg(data.profile.profile_image);
+          } else if (data.profile.image_path) {
+            setProfileAvatarImg(data.profile.image_path);
+          } else {
+            setProfileAvatarImg(null);
+          }
+        } else {
+          document.getElementById('profileMessage').textContent = data.message || 'Failed to load profile.';
+        }
+      })
+      .catch((err) => {
+        console.error('Profile load error:', err);
+        document.getElementById('profileMessage').textContent = 'Failed to load profile.';
+      });
+    }
+    
+    // Profile image logic
+    const avatarDiv = document.getElementById('profileAvatar');
+    const avatarImgSpan = document.getElementById('profileAvatarImg');
+    const avatarFileInput = document.getElementById('avatarFileInput');
+    let selectedAvatarFile = null;
+    
+    // On click, open file picker
+    avatarDiv.addEventListener('click', function() {
+      avatarFileInput.click();
+    });
+    
+    avatarFileInput.addEventListener('change', function(e) {
+      if (e.target.files && e.target.files[0]) {
+        selectedAvatarFile = e.target.files[0];
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+          avatarImgSpan.innerHTML = `<img src="${ev.target.result}" alt="Profile" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`;
+        };
+        reader.readAsDataURL(selectedAvatarFile);
+      }
+    });
+    
+    // On profile load, show image if available
+    function setProfileAvatarImg(url) {
+      if (url) {
+        avatarImgSpan.innerHTML = `<img src="${url}" alt="Profile" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`;
+      } else {
+        avatarImgSpan.textContent = '👤';
+      }
+    }
+    
+    // Save User Changes
+    document.getElementById('saveUserBtn').addEventListener('click', function(e) {
+      e.preventDefault();
+      const btn = this;
+      btn.classList.add('loading');
+      
+      const name = document.getElementById('name').value.trim();
+      const address = document.getElementById('address').value.trim();
+      const phone = document.getElementById('phone').value.trim();
+      const birthdate = document.getElementById('birthdate').value;
+      const password = document.getElementById('password').value;
+      const confirmPassword = document.getElementById('confirm-password').value;
+      
+      // Customer fields
+      const title = document.getElementById('title') ? document.getElementById('title').value.trim() : '';
+      const fname = document.getElementById('fname') ? document.getElementById('fname').value.trim() : '';
+      const lname = document.getElementById('lname') ? document.getElementById('lname').value.trim() : '';
+      const town = document.getElementById('town') ? document.getElementById('town').value.trim() : '';
+      const zipcode = document.getElementById('zipcode') ? document.getElementById('zipcode').value.trim() : '';
+      
+      if (password && password !== confirmPassword) {
+        document.getElementById('profileMessage').textContent = 'Passwords do not match.';
+        btn.classList.remove('loading');
+        return;
+      }
+      
+      if (!token) {
+        document.getElementById('profileMessage').textContent = 'User not logged in. Please log in.';
+        btn.classList.remove('loading');
+        return;
+      }
+      
+      const formData = new FormData();
+      formData.append('name', name);
+      formData.append('address', address);
+      formData.append('phone', phone);
+      formData.append('date_of_birth', birthdate);
+      formData.append('password', password);
+      
+      // Add customer fields if they exist
+      if (userRole === 'customer') {
+        formData.append('title', title);
+        formData.append('fname', fname);
+        formData.append('lname', lname);
+        formData.append('town', town);
+        formData.append('zipcode', zipcode);
+      }
+      
+      if (selectedAvatarFile) {
+        formData.append('profile_image', selectedAvatarFile);
+      }
+      
+      fetch('http://localhost:4000/api/v1/profile', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + token
+        },
+        body: formData
+      })
+      .then(res => res.json())
+      .then(data => {
+        btn.classList.remove('loading');
+        
+        if (data.success) {
+          showCustomModal(true, 'User details updated successfully!');
+          document.getElementById('profileName').textContent = name.toUpperCase();
+          document.getElementById('password').value = '';
+          document.getElementById('confirm-password').value = '';
+          
+          if (typeof setUserName === 'function') setUserName(name);
+          if (data.profile && (data.profile.profile_image || data.profile.image_path)) {
+            setProfileAvatarImg(data.profile.profile_image || data.profile.image_path);
+          }
+          selectedAvatarFile = null;
+        } else {
+          showCustomModal(false, data.message || 'Failed to update user details.');
+        }
+      })
+      .catch((error) => {
+        btn.classList.remove('loading');
+        console.error('Update error:', error);
+        showCustomModal(false, 'Failed to update user details. Please try again.');
+      });
+    });
+    
+    // Save Customer Details Button
+    document.getElementById('saveCustomerBtn').addEventListener('click', function(e) {
+      e.preventDefault();
+      const btn = this;
+      btn.classList.add('loading');
+      
+      // Collect customer fields
+      const title = document.getElementById('title') ? document.getElementById('title').value.trim() : '';
+      const fname = document.getElementById('fname') ? document.getElementById('fname').value.trim() : '';
+      const lname = document.getElementById('lname') ? document.getElementById('lname').value.trim() : '';
+      const town = document.getElementById('town') ? document.getElementById('town').value.trim() : '';
+      const zipcode = document.getElementById('zipcode') ? document.getElementById('zipcode').value.trim() : '';
+      
+      if (!token) {
+        showCustomModal(false, 'User not logged in. Please log in.');
+        btn.classList.remove('loading');
+        return;
+      }
+      
+      // Create form data with only customer fields
+      const formData = new FormData();
+      formData.append('title', title);
+      formData.append('fname', fname);
+      formData.append('lname', lname);
+      formData.append('town', town);
+      formData.append('zipcode', zipcode);
+      
+      fetch('http://localhost:4000/api/v1/profile', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + token
+        },
+        body: formData
+      })
+      .then(res => res.json())
+      .then(data => {
+        btn.classList.remove('loading');
+        
+        if (data.success) {
+          showCustomModal(true, 'Customer details updated successfully!');
+          // Update user role if this is the first time setting customer details
+          if (userRole === 'user') {
+            userRole = 'customer';
+            localStorage.setItem('user_role', 'customer');
+            const roleLabel = document.getElementById('profileRoleLabel');
+            if (roleLabel) {
+              roleLabel.textContent = 'User / Customer';
+            }
+          }
+        } else {
+          showCustomModal(false, data.message || 'Failed to update customer details.');
+        }
+      })
+      .catch((error) => {
+        btn.classList.remove('loading');
+        console.error('Customer update error:', error);
+        showCustomModal(false, 'Failed to update customer details. Please try again.');
+      });
+    });
+    
+    document.getElementById('logoutBtnProfile').onclick = function() {
+      localStorage.removeItem('jwt_token');
+      window.location.href = 'index.html';
+    };
+  </script>
+</body>
+</html>

@@ -217,7 +217,8 @@ CREATE TABLE `item` (
   `meta_description` text DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `deleted_at` timestamp NULL DEFAULT NULL
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  `seller_id` bigint(20) UNSIGNED DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -475,11 +476,12 @@ CREATE TABLE `users` (
   `email_verified_at` timestamp NULL DEFAULT NULL,
   `password` varchar(255) NOT NULL,
   `remember_token` varchar(100) DEFAULT NULL,
-  `role` enum('user','admin') NOT NULL DEFAULT 'user',
+  `role` enum('user','admin','seller') NOT NULL DEFAULT 'user',
   `status` enum('active','inactive','suspended') NOT NULL DEFAULT 'active',
   `google_id` varchar(255) DEFAULT NULL,
   `auth_token` varchar(255) DEFAULT NULL,
   `token_expires_at` timestamp NULL DEFAULT NULL,
+  `profile_image` varchar(255) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -580,7 +582,8 @@ ALTER TABLE `item`
   ADD UNIQUE KEY `sku` (`sku`),
   ADD KEY `category_id` (`category_id`),
   ADD KEY `idx_item_status` (`status`),
-  ADD KEY `idx_item_featured` (`is_featured`);
+  ADD KEY `idx_item_featured` (`is_featured`),
+  ADD KEY `seller_id` (`seller_id`);
 
 --
 -- Indexes for table `item_images`
@@ -848,7 +851,8 @@ ALTER TABLE `email_notifications`
 -- Constraints for table `item`
 --
 ALTER TABLE `item`
-  ADD CONSTRAINT `item_category_fk` FOREIGN KEY (`category_id`) REFERENCES `categories` (`category_id`) ON DELETE SET NULL;
+  ADD CONSTRAINT `item_category_fk` FOREIGN KEY (`category_id`) REFERENCES `categories` (`category_id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `item_seller_fk` FOREIGN KEY (`seller_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `item_images`

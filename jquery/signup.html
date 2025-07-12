@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Home Haven Sign Up</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Georgia', serif;
+      background: url('img/homehavenbg.png') no-repeat center center fixed;
+      background-size: cover;
+      min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+    .bg-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0,0,0,0.2);
+      z-index: 0;
+      pointer-events: none;
+    }
+    .container {
+      position: relative;
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      align-items: center;
+      width: 100vw;
+      max-width: 1400px;
+      min-height: 100vh;
+      padding-top: 0;
+      padding-bottom: 0;
+      padding-right: 0;
+      padding-bottom: 5vh;
+      z-index: 1;
+    }
+    .left {
+      flex: 1;
+      color: #fff;
+      padding-left: 5vw;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-start;
+      z-index: 2;
+    }
+    .left h1 {
+      font-size: 6vw;
+      font-weight: 700;
+      margin: 0 0 1vw 0;
+      line-height: 1.05;
+      text-shadow: 0 2px 16px rgba(0,0,0,0.25);
+      letter-spacing: 1px;
+    }
+    .left p {
+      font-size: 2vw;
+      margin: 0;
+      font-weight: 400;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.18);
+    }
+    .login-card {
+      background: #FFE5D1;
+      border-radius: 32px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 1.5px 8px rgba(0,0,0,0.10);
+      padding: 2vw 1.5vw 2vw 1.5vw;
+      width: 340px;
+      min-width: 260px;
+      max-width: 360px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 3vh 3vw 2vh auto;
+      z-index: 2;
+      max-height: none;
+      overflow-y: visible;
+    }
+    .logo {
+      width: 100px;
+      height: 100px;
+      margin-bottom: 0.5vw;
+      object-fit: contain;
+    }
+    .login-title {
+      font-size: 1.7rem;
+      font-weight: 500;
+      color: #8B5C2A;
+      margin: 0.5vw 0 0.2vw 0;
+      text-align: center;
+    }
+    .login-subtitle {
+      font-size: 0.95rem;
+      color: #6d4c1c;
+      margin-bottom: 1.5vw;
+      text-align: center;
+    }
+    .login-form {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6vw;
+      margin-top: 0.3vw;
+      margin-bottom: 0.3vw;
+    }
+    .login-form label {
+      font-size: 1rem;
+      color: #8B5C2A;
+      margin-bottom: 0.15vw;
+      font-weight: 500;
+      margin-left: 0.2vw;
+    }
+    .login-form input[type="text"],
+    .login-form input[type="email"],
+    .login-form input[type="password"] {
+      width: 100%;
+      padding: 0.5vw 0.7vw;
+      border: 1px solid #d1bfa3;
+      border-radius: 10px;
+      font-size: 1rem;
+      background: #fff;
+      color: #6d4c1c;
+      outline: none;
+      box-sizing: border-box;
+      margin-bottom: 0.15vw;
+    }
+    .input-group {
+      position: relative;
+      width: 100%;
+    }
+    .input-group input[type="password"],
+    .input-group input[type="text"] {
+      width: 100%;
+      box-sizing: border-box;
+      border: 1px solid #d1bfa3;
+      border-radius: 8px;
+      background: #fff;
+      outline: none;
+      transition: none;
+      margin-right: 0;
+    }
+    .toggle-password {
+      position: absolute;
+      right: 0.5rem;
+      top: 50%;
+      transform: translateY(-50%);
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      cursor: pointer;
+      padding: 0;
+      margin: 0;
+      height: 2rem;
+      width: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+      outline: none;
+      overflow: hidden;
+    }
+    .toggle-password svg {
+      width: 2rem;
+      height: 2rem;
+      display: block;
+      overflow: hidden;
+    }
+    .toggle-password:focus {
+      outline: none;
+      box-shadow: none;
+    }
+    .login-btn {
+      width: 100%;
+      background: #8B5C2A;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 0.5vw 0;
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-top: 0.2vw;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .login-btn:hover {
+      background: #6d4c1c;
+    }
+    .signup-link {
+      margin-top: 1vw;
+      font-size: 1rem;
+      color: #6d4c1c;
+      text-align: center;
+    }
+    .signup-link a {
+      color: #8B5C2A;
+      text-decoration: underline;
+      font-weight: 500;
+      margin-left: 0.2vw;
+    }
+    .footer {
+      width: 100vw;
+      text-align: center;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      background: rgba(255,255,255,0.7);
+      font-size: 1rem;
+      color: #333;
+      padding: 0.3vw 0;
+      letter-spacing: 0.5px;
+      z-index: 3;
+    }
+    @media (max-width: 900px) {
+      .container {
+        flex-direction: column;
+        height: auto;
+      }
+      .left {
+        align-items: center;
+        padding: 2vw 0 0 0;
+      }
+      .left h1 {
+        font-size: 2.5rem;
+      }
+      .left p {
+        font-size: 1.1rem;
+      }
+      .login-card {
+        margin-top: 2vw;
+        padding: 6vw 4vw 4vw 4vw;
+        margin-right: 0;
+        margin-left: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+<script>
+  if (localStorage.getItem('jwt_token')) {
+    window.location.href = 'index.html';
+  }
+</script>
+  <div class="bg-overlay"></div>
+  <div class="container">
+    <div class="left">
+      <h1>Elevate Your<br>Space</h1>
+      <p>"Where Comfort Meets Style"</p>
+    </div>
+    <div class="login-card">
+      <img src="img/TextLogo.png" alt="Home Haven Logo" class="logo">
+      <div class="login-title">Sign Up</div>
+      <div class="login-subtitle">Welcome! Please enter your details.</div>
+      <form class="login-form" id="signupForm" autocomplete="off">
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" required placeholder="Enter your name">
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required placeholder="Enter your email" autocomplete="off">
+        <label for="password">Password:</label>
+        <div class="input-group">
+          <input type="password" id="password" name="password" required placeholder="Enter your password">
+          <button type="button" class="toggle-password" tabindex="-1" onclick="togglePassword('password', this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <label for="confirm-password">Confirm Password:</label>
+        <div class="input-group">
+          <input type="password" id="confirm-password" name="confirm-password" required placeholder="Confirm your password">
+          <button type="button" class="toggle-password" tabindex="-1" onclick="togglePassword('confirm-password', this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <button type="submit" class="login-btn">Sign Up</button>
+      </form>
+      <div class="signup-link">Already have an account? <a href="login.html">Log In</a></div>
+    </div>
+  </div>
+  <div class="footer">@Kung ano mang pwedeng ilagay here</div>
+  <script>
+    // Still force lowercase for pasted or autofilled text
+    document.getElementById('email').addEventListener('input', function(e) {
+      const start = this.selectionStart;
+      const end = this.selectionEnd;
+      this.value = this.value.toLowerCase();
+      this.setSelectionRange(start, end);
+    });
+    // Toggle password visibility
+    function togglePassword(fieldId, btn) {
+      const input = document.getElementById(fieldId);
+      if (input.type === 'password') {
+        input.type = 'text';
+        btn.querySelector('svg').style.opacity = 0.5;
+      } else {
+        input.type = 'password';
+        btn.querySelector('svg').style.opacity = 1;
+      }
+    }
+    document.getElementById('signupForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const confirmPassword = document.getElementById('confirm-password').value;
+      if (password !== confirmPassword) {
+        alert('Passwords do not match.');
+        return;
+      }
+      fetch('http://localhost:4000/api/v1/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          alert('You are now registered! You may now log in.');
+          window.location.href = 'login.html';
+        } else {
+          alert('Registration failed: ' + (data.message || 'Please try again.'));
+        }
+      })
+      .catch(() => alert('Registration failed. Please try again.'));
+    });
+  </script>
+</body>
+</html>

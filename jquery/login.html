@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Home Haven Login</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Georgia', serif;
+      background: url('img/homehavenbg.png') no-repeat center center fixed;
+      background-size: cover;
+      min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+    }
+    .bg-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0,0,0,0.2);
+      z-index: 0;
+      pointer-events: none;
+    }
+    .container {
+      position: relative;
+      display: flex;
+      flex-direction: row;
+      justify-content: flex-start;
+      align-items: center;
+      width: 100vw;
+      height: 100vh;
+      z-index: 1;
+    }
+    .left {
+      flex: 1;
+      color: #fff;
+      padding-left: 5vw;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-start;
+      z-index: 2;
+    }
+    .left h1 {
+      font-size: 6vw;
+      font-weight: 700;
+      margin: 0 0 1vw 0;
+      line-height: 1.05;
+      text-shadow: 0 2px 16px rgba(0,0,0,0.25);
+      letter-spacing: 1px;
+    }
+    .left p {
+      font-size: 2vw;
+      margin: 0;
+      font-weight: 400;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.18);
+    }
+    .login-card {
+      background: #FFE5D1;
+      border-radius: 32px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.10);
+      padding: 2.5vw 2vw 2vw 2vw;
+      width: 370px;
+      max-width: 90vw;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-right: 5vw;
+      margin-left: 2vw;
+      z-index: 2;
+    }
+    .logo {
+      width: 150px;
+      height: 150px;
+      margin-bottom: 0.5vw;
+      object-fit: contain;
+    }
+    .login-title {
+      font-size: 2.2rem;
+      font-weight: 500;
+      color: #8B5C2A;
+      margin: 0.5vw 0 0.2vw 0;
+      text-align: center;
+    }
+    .login-subtitle {
+      font-size: 1rem;
+      color: #6d4c1c;
+      margin-bottom: 1.5vw;
+      text-align: center;
+    }
+    .login-form {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 1vw;
+    }
+    .login-form label {
+      font-size: 1rem;
+      color: #8B5C2A;
+      margin-bottom: 0.2vw;
+      font-weight: 500;
+    }
+    .login-form input[type="email"],
+    .login-form input[type="password"] {
+      width: 100%;
+      padding: 0.7vw 1vw;
+      border: 1px solid #d1bfa3;
+      border-radius: 8px;
+      font-size: 1rem;
+      background: #fff;
+      color: #6d4c1c;
+      outline: none;
+      box-sizing: border-box;
+    }
+    .input-group {
+      position: relative;
+      width: 100%;
+    }
+    .input-group input[type="password"],
+    .input-group input[type="text"] {
+      width: 100%;
+      box-sizing: border-box;
+      border: 1px solid #d1bfa3;
+      border-radius: 8px;
+      background: #fff;
+      outline: none;
+      transition: none;
+      margin-right: 0;
+    }
+    .toggle-password {
+      position: absolute;
+      right: 0.5rem;
+      top: 50%;
+      transform: translateY(-50%);
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      cursor: pointer;
+      padding: 0;
+      margin: 0;
+      height: 2rem;
+      width: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+      outline: none;
+      overflow: hidden;
+    }
+    .toggle-password svg {
+      width: 2rem;
+      height: 2rem;
+      display: block;
+      overflow: hidden;
+    }
+    .toggle-password:focus {
+      outline: none;
+      box-shadow: none;
+    }
+    .login-btn {
+      width: 100%;
+      background: #8B5C2A;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 0.8vw 0;
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-top: 0.5vw;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .login-btn:hover {
+      background: #6d4c1c;
+    }
+    .forgot-password {
+      font-size: 0.95rem;
+      color: #8B5C2A;
+      text-align: left;
+      margin-top: 0.5vw;
+      text-decoration: none;
+      display: block;
+    }
+    .signup-link {
+      margin-top: 1vw;
+      font-size: 1rem;
+      color: #6d4c1c;
+      text-align: center;
+    }
+    .signup-link a {
+      color: #8B5C2A;
+      text-decoration: underline;
+      font-weight: 500;
+      margin-left: 0.2vw;
+    }
+    .footer {
+      width: 100vw;
+      text-align: center;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      background: rgba(255,255,255,0.7);
+      font-size: 1rem;
+      color: #333;
+      padding: 0.3vw 0;
+      letter-spacing: 0.5px;
+      z-index: 3;
+    }
+    @media (max-width: 900px) {
+      .container {
+        flex-direction: column;
+        height: auto;
+      }
+      .left {
+        align-items: center;
+        padding: 2vw 0 0 0;
+      }
+      .left h1 {
+        font-size: 2.5rem;
+      }
+      .left p {
+        font-size: 1.1rem;
+      }
+      .login-card {
+        margin-top: 2vw;
+        padding: 6vw 4vw 4vw 4vw;
+        margin-right: 0;
+        margin-left: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+<script>
+  if (localStorage.getItem('jwt_token')) {
+    window.location.href = 'index.html';
+  }
+</script>
+  <div class="bg-overlay"></div>
+  <div class="container">
+    <div class="left">
+      <h1>Elevate Your<br>Space</h1>
+      <p>"Where Comfort Meets Style"</p>
+    </div>
+    <div class="login-card">
+      <img src="img/TextLogo.png" alt="Home Haven Logo" class="logo">
+      <div class="login-title">Login</div>
+      <div class="login-subtitle">Welcome back! Please enter your details.</div>
+      <form class="login-form" id="loginForm" autocomplete="off">
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required placeholder="Enter your email">
+        <label for="password">Password:</label>
+        <div class="input-group">
+          <input type="password" id="password" name="password" required placeholder="Enter your password">
+          <button type="button" class="toggle-password" tabindex="-1" onclick="togglePassword('password', this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <button type="submit" class="login-btn">Log In</button>
+      </form>
+      <a href="#" class="forgot-password">Forgot Password?</a>
+      <div class="signup-link">Don't have an account? <a href="signup.html">Sign Up</a></div>
+    </div>
+  </div>
+  <div id="errorModal" style="display:none; position:fixed; z-index:1000; left:0; top:0; width:100vw; height:100vh; background:rgba(0,0,0,0.4); align-items:center; justify-content:center;">
+    <div style="background:#fff; color:#2d2233; border-radius:16px; padding:2rem 2.5rem; min-width:320px; max-width:90vw; box-shadow:0 8px 32px rgba(0,0,0,0.18); position:relative; text-align:center;">
+      <div id="modalMessage" style="font-size:1.1rem; margin-bottom:1.5rem;"></div>
+      <button onclick="closeModal()" style="background:#8B5C2A; color:#fff; border:none; border-radius:8px; padding:0.7rem 2rem; font-size:1.1rem; font-weight:600; cursor:pointer;">OK</button>
+    </div>
+  </div>
+  <div class="footer">@Kung ano mang pwedeng ilagay here</div>
+  <script>
+    // Toggle password visibility
+    function togglePassword(fieldId, btn) {
+      const input = document.getElementById(fieldId);
+      if (input.type === 'password') {
+        input.type = 'text';
+        btn.querySelector('svg').style.opacity = 0.5;
+      } else {
+        input.type = 'password';
+        btn.querySelector('svg').style.opacity = 1;
+      }
+    }
+    function showModal(message, showVerify, email, onSuccess) {
+      document.getElementById('modalMessage').textContent = message;
+      const verifyBtn = document.getElementById('modalVerifyBtn');
+      if (showVerify) {
+        verifyBtn.style.display = '';
+        verifyBtn.disabled = false;
+        verifyBtn.textContent = 'Verify email now';
+        verifyBtn.onclick = function() {
+          verifyBtn.disabled = true;
+          verifyBtn.textContent = 'Sending...';
+          fetch('http://localhost:4000/api/v1/resend-verification', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email })
+          })
+          .then(res => res.json())
+          .then(data => {
+            verifyBtn.style.display = 'none';
+            document.getElementById('modalMessage').textContent = data.message || 'Verification email sent!';
+            setTimeout(closeModal, 3000);
+          })
+          .catch(() => {
+            verifyBtn.style.display = 'none';
+            document.getElementById('modalMessage').textContent = 'Failed to send verification email.';
+            setTimeout(closeModal, 3000);
+          });
+        };
+      } else {
+        verifyBtn.style.display = 'none';
+      }
+      document.getElementById('errorModal').style.display = 'flex';
+      if (onSuccess) {
+        setTimeout(() => {
+          closeModal();
+          onSuccess();
+        }, 1500);
+      }
+    }
+    function closeModal() {
+      document.getElementById('errorModal').style.display = 'none';
+    }
+    function showErrorModal(message) {
+      document.getElementById('modalMessage').textContent = message;
+      document.getElementById('errorModal').style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      fetch('http://localhost:4000/api/v1/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          if (data.token) {
+            localStorage.setItem('jwt_token', data.token);
+          }
+          // Store user name for header greeting if available
+          if (typeof setUserName === 'function' && data.user && data.user.name) setUserName(data.user.name);
+          showModal('Login successful!', false, null, function() {
+            window.location.href = 'index.html';
+          });
+        } else {
+          if (data.message && data.message.toLowerCase().includes('verify your email')) {
+            showModal(data.message, true, email);
+          } else {
+            showErrorModal(data.message || 'Login failed.');
+          }
+        }
+      })
+      .catch(() => showErrorModal('Login failed.'));
+    });
+  </script>
+</body>
+</html>
