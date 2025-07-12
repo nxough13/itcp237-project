@@ -1,5 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
+<script>
+  // Check if user is admin and redirect to admin dashboard
+  const token = localStorage.getItem('jwt_token');
+  const userRole = localStorage.getItem('user_role');
+  
+  if (token && userRole === 'admin') {
+    window.location.href = 'admin.html';
+  }
+</script>
 <head>
   <meta charset="UTF-8">
   <title>Home Haven Landing Page</title>

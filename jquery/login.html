@@ -348,8 +348,21 @@
           }
           // Store user name for header greeting if available
           if (typeof setUserName === 'function' && data.user && data.user.name) setUserName(data.user.name);
+          // Store user role and name
+          if (data.user && data.user.role) {
+            localStorage.setItem('user_role', data.user.role);
+          }
+          if (data.user && data.user.name) {
+            localStorage.setItem('user_name', data.user.name);
+          }
+          
           showModal('Login successful!', false, null, function() {
-            window.location.href = 'index.html';
+            // Redirect based on user role
+            if (data.user && data.user.role === 'admin') {
+              window.location.href = 'admin.html';
+            } else {
+              window.location.href = 'index.html';
+            }
           });
         } else {
           if (data.message && data.message.toLowerCase().includes('verify your email')) {
