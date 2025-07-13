@@ -15,11 +15,11 @@ router.get('/test-db', async (req, res) => {
   }
 });
 
-// GET /products/featured - fetch up to 3 featured, active products
+// GET /products/featured - fetch up to 3 active products
 router.get('/products/featured', async (req, res) => {
   try {
     const [rows] = await db.query(
-      'SELECT item_id, name, short_description, description, sell_price, image FROM item WHERE is_featured = 1 AND status = "active" LIMIT 3'
+      'SELECT item_id, name, description, sell_price, image FROM item WHERE status = "active" LIMIT 3'
     );
     res.json({ success: true, products: rows });
   } catch (err) {

@@ -269,6 +269,7 @@
   <div id="errorModal" style="display:none; position:fixed; z-index:1000; left:0; top:0; width:100vw; height:100vh; background:rgba(0,0,0,0.4); align-items:center; justify-content:center;">
     <div style="background:#fff; color:#2d2233; border-radius:16px; padding:2rem 2.5rem; min-width:320px; max-width:90vw; box-shadow:0 8px 32px rgba(0,0,0,0.18); position:relative; text-align:center;">
       <div id="modalMessage" style="font-size:1.1rem; margin-bottom:1.5rem;"></div>
+      <button id="modalVerifyBtn" onclick="closeModal()" style="background:#8B5C2A; color:#fff; border:none; border-radius:8px; padding:0.7rem 2rem; font-size:1.1rem; font-weight:600; cursor:pointer; display:none;">Verify Email</button>
       <button onclick="closeModal()" style="background:#8B5C2A; color:#fff; border:none; border-radius:8px; padding:0.7rem 2rem; font-size:1.1rem; font-weight:600; cursor:pointer;">OK</button>
     </div>
   </div>
@@ -285,6 +286,7 @@
         btn.querySelector('svg').style.opacity = 1;
       }
     }
+
     function showModal(message, showVerify, email, onSuccess) {
       document.getElementById('modalMessage').textContent = message;
       const verifyBtn = document.getElementById('modalVerifyBtn');
@@ -323,18 +325,22 @@
         }, 1500);
       }
     }
+
     function closeModal() {
       document.getElementById('errorModal').style.display = 'none';
     }
+
     function showErrorModal(message) {
       document.getElementById('modalMessage').textContent = message;
       document.getElementById('errorModal').style.display = 'flex';
       document.body.style.overflow = 'hidden';
     }
+
     document.getElementById('loginForm').addEventListener('submit', function(e) {
       e.preventDefault();
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
+      
       fetch('http://localhost:4000/api/v1/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

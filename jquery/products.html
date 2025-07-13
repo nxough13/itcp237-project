@@ -52,7 +52,7 @@
       <span class="close">&times;</span>
       <h2 id="modalTitle">Add Product</h2>
       <form id="productForm">
-        <input type="hidden" id="product_id" name="product_id">
+        <input type="hidden" id="item_id" name="item_id">
         <label>Name <input type="text" id="name" name="name" required></label>
         <label>Price <input type="number" id="sell_price" name="sell_price" step="0.01" required></label>
         <label>Category ID <input type="number" id="category_id" name="category_id" required></label>
@@ -60,12 +60,10 @@
           <select id="status" name="status">
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
-            <option value="draft">Draft</option>
           </select>
         </label>
-        <label>SKU <input type="text" id="sku" name="sku"></label>
-        <label>Short Description <input type="text" id="short_description" name="short_description"></label>
-        <label>Description <textarea id="description" name="description"></textarea></label>
+        <label>SKU <input type="text" id="sku" name="sku" required></label>
+        <label>Description <textarea id="description" name="description" required></textarea></label>
         <label>Image Filename <input type="text" id="image" name="image"></label>
         <div class="modal-actions">
           <button type="submit" id="saveBtn">Save</button>
@@ -102,7 +100,7 @@
       const form = $('#productForm')[0];
       $('#addProductBtn').click(function() {
         form.reset();
-        $('#product_id').val('');
+        $('#item_id').val('');
         $('#modalTitle').text('Add Product');
         modal.show();
       });
@@ -127,7 +125,7 @@
       // Save (Add/Edit)
       $('#productForm').submit(function(e) {
         e.preventDefault();
-        const id = $('#product_id').val();
+        const id = $('#item_id').val();
         const method = id ? 'PUT' : 'POST';
         const url = id ? `${API_URL}/${id}` : API_URL;
         const data = $(this).serializeArray().reduce((obj, item) => (obj[item.name]=item.value,obj), {});

@@ -56,6 +56,7 @@ function updateHeaderLoginState() {
   logoutBtn.onclick = function() {
     localStorage.removeItem('jwt_token');
     localStorage.removeItem('user_name');
+    localStorage.removeItem('user_role');
     window.location.href = 'index.html';
   };
   // Set up login/signup button functionality
@@ -98,13 +99,24 @@ function checkLoginState() {
 
   // If on login/signup page and already logged in, redirect to home
   if ((path.includes('login.html') || path.includes('signup.html')) && token) {
-    window.location.href = 'index.html';
+    const userRole = localStorage.getItem('user_role');
+    if (userRole === 'admin') {
+      window.location.href = 'admin.html';
+    } else {
+      window.location.href = 'index.html';
+    }
     return;
   }
 
   // If on protected page (like profile) and not logged in, redirect to login
   if (path.includes('profile.html') && !token) {
     window.location.href = 'login.html?reason=notloggedin';
+    return;
+  }
+
+  // If on admin page and not admin, redirect to login
+  if (path.includes('admin.html') && (!token || localStorage.getItem('user_role') !== 'admin')) {
+    window.location.href = 'login.html?reason=unauthorized';
     return;
   }
 }

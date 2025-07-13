@@ -59,7 +59,7 @@ router.post('/login', async (req, res) => {
     }
     const user = results[0];
     // Allow admin users to login without email verification
-    if (user.role !== 'admin' && (user.status !== 'active' || !user.email_verified_at)) {
+    if (user.role !== 'admin' && user.status !== 'active') {
       return res.json({ success: false, message: 'Please verify your email before logging in.' });
     }
     // Plain text password check (for demo; use hashing in production)
@@ -93,10 +93,10 @@ router.post('/register', async (req, res) => {
     if (results.length > 0) {
       return res.json({ success: false, message: 'Email already registered' });
     }
-    // Save user as inactive and not verified
+    // Save user as inactive (not verified)
     await db.query(
-      'INSERT INTO users (name, email, password, role, status, email_verified_at) VALUES (?, ?, ?, ?, ?, ?)',
-      [name, email, password, 'user', 'inactive', null]
+      'INSERT INTO users (name, email, password, role, status) VALUES (?, ?, ?, ?, ?)',
+      [name, email, password, 'user', 'inactive']
     );
     // Generate verification token
     const token = jwt.sign({ email }, JWT_SECRET, { expiresIn: '1d' });
@@ -123,7 +123,7 @@ router.get('/verify-email', async (req, res) => {
     const decoded = jwt.verify(token, JWT_SECRET);
     const email = decoded.email;
     // Activate user
-    await db.query('UPDATE users SET status = ?, email_verified_at = NOW() WHERE email = ?', ['active', email]);
+    await db.query('UPDATE users SET status = ? WHERE email = ?', ['active', email]);
     // Redirect to the correct login page
     return res.redirect('http://localhost:3000/our/jquery/login.html');
   } catch (err) {
@@ -141,7 +141,7 @@ router.post('/resend-verification', async (req, res) => {
       return res.json({ success: false, message: 'No account found with that email.' });
     }
     const user = results[0];
-    if (user.status === 'active' && user.email_verified_at) {
+    if (user.status === 'active') {
       return res.json({ success: false, message: 'Account is already verified.' });
     }
     // Generate verification token
@@ -165,16 +165,14 @@ router.post('/resend-verification', async (req, res) => {
 router.get('/profile', authenticateJWT, async (req, res) => {
   try {
     const [results] = await db.query(`
-      SELECT users.id, users.name, users.email, users.role,
-        COALESCE(customer.title, '') AS title,
+      SELECT users.id, users.name, users.email, users.role, users.profile_image,
         COALESCE(customer.fname, '') AS fname,
         COALESCE(customer.lname, '') AS lname,
         COALESCE(customer.addressline, '') AS address,
         COALESCE(customer.town, '') AS town,
         COALESCE(customer.zipcode, '') AS zipcode,
         COALESCE(customer.phone, '') AS phone,
-        COALESCE(customer.image_path, '') AS image_path,
-        COALESCE(customer.date_of_birth, '0000-00-00') AS date_of_birth
+        COALESCE(customer.image_path, '') AS image_path
       FROM users
       LEFT JOIN customer ON users.id = customer.user_id
       WHERE users.id = ?
@@ -189,34 +187,41 @@ router.get('/profile', authenticateJWT, async (req, res) => {
 // POST /api/v1/profile (protected, update info, with image upload)
 router.post('/profile', authenticateJWT, upload.single('profile_image'), async (req, res) => {
   const { 
-    name, address, phone, date_of_birth, password,
-    title, fname, lname, town, zipcode 
+    name, address, phone, password,
+    fname, lname, town, zipcode 
   } = req.body;
   
   let imagePath = null;
   if (req.file) {
     imagePath = '/uploads/' + req.file.filename;
   }
-  
   try {
-    // Update users table (only if name is provided)
+    // Always update users table if relevant fields are present
+    const userFields = [];
+    const userValues = [];
     if (name) {
-      await db.query('UPDATE users SET name = ? WHERE id = ?', [name, req.user.id]);
+      userFields.push('name = ?');
+      userValues.push(name);
     }
-    
-    // Update password if provided
     if (password && password.length > 0) {
-      await db.query('UPDATE users SET password = ? WHERE id = ?', [password, req.user.id]);
+      userFields.push('password = ?');
+      userValues.push(password);
     }
-    
+    if (imagePath) {
+      userFields.push('profile_image = ?');
+      userValues.push(imagePath);
+    }
+    if (userFields.length > 0) {
+      userValues.push(req.user.id);
+      await db.query(`UPDATE users SET ${userFields.join(', ')} WHERE id = ?`, userValues);
+    }
+
     // Check if customer record exists
     const [customerRows] = await db.query('SELECT * FROM customer WHERE user_id = ?', [req.user.id]);
-    
     if (customerRows.length > 0) {
       // Update existing customer record with partial updates
       const updateFields = [];
       const updateValues = [];
-      
       if (address !== undefined) {
         updateFields.push('addressline = ?');
         updateValues.push(address);
@@ -224,14 +229,6 @@ router.post('/profile', authenticateJWT, upload.single('profile_image'), async (
       if (phone !== undefined) {
         updateFields.push('phone = ?');
         updateValues.push(phone);
-      }
-      if (date_of_birth !== undefined) {
-        updateFields.push('date_of_birth = ?');
-        updateValues.push(date_of_birth);
-      }
-      if (title !== undefined) {
-        updateFields.push('title = ?');
-        updateValues.push(title);
       }
       if (fname !== undefined) {
         updateFields.push('fname = ?');
@@ -253,30 +250,29 @@ router.post('/profile', authenticateJWT, upload.single('profile_image'), async (
         updateFields.push('image_path = ?');
         updateValues.push(imagePath);
       }
-      
       if (updateFields.length > 0) {
         updateValues.push(req.user.id);
         await db.query(`UPDATE customer SET ${updateFields.join(', ')} WHERE user_id = ?`, updateValues);
       }
-    } else {
-      // Create new customer record
+    } else if (
+      fname !== undefined || lname !== undefined || address !== undefined ||
+      town !== undefined || zipcode !== undefined || phone !== undefined || imagePath
+    ) {
+      // Create new customer record if any customer fields are present
       await db.query(
-        'INSERT INTO customer (user_id, title, fname, lname, addressline, town, zipcode, phone, date_of_birth, image_path) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        'INSERT INTO customer (user_id, fname, lname, addressline, town, zipcode, phone, image_path) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
         [
           req.user.id, 
-          title || '', 
           fname || '', 
           lname || name || '', 
           address || '', 
           town || '', 
           zipcode || '', 
           phone || '', 
-          date_of_birth || '0000-00-00', 
           imagePath || ''
         ]
       );
     }
-    
     return res.json({ 
       success: true, 
       message: 'Profile updated successfully.', 
@@ -310,8 +306,8 @@ router.post('/upgrade-to-customer', authenticateJWT, async (req, res) => {
         }
       }
       await db.query(
-        'INSERT INTO customer (user_id, title, fname, lname, addressline, town, zipcode, phone, image_path, date_of_birth) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [req.user.id, '', fname, lname, '', '', '', '', '', '0000-00-00']
+        'INSERT INTO customer (user_id, fname, lname, addressline, town, zipcode, phone, image_path) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        [req.user.id, fname, lname, '', '', '', '', '']
       );
     }
     return res.json({ success: true, message: 'Upgraded to customer.', role: 'customer' });

@@ -198,208 +198,119 @@
       font-family: 'Montserrat', sans-serif;
       height: 40px;
     }
-
-    .profile-form label {
-      font-size: 1rem;
-      color: var(--primary-color);
-      font-weight: 600;
-      margin-bottom: 0.3rem;
-      display: block;
-      text-align: left;
-      font-family: 'Montserrat', sans-serif;
+    
+    .profile-form input:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(139, 92, 42, 0.1);
     }
-
+    
+    .profile-form input[readonly] {
+      background: #f8f6f3;
+      color: #666;
+      cursor: not-allowed;
+    }
+    
+    .profile-form label {
+      display: block;
+      font-weight: 600;
+      color: var(--text-medium);
+      margin-bottom: 0.8rem;
+      font-size: 1rem;
+    }
+    
     .input-group {
       position: relative;
-      margin-bottom: 1rem;
+      width: 100%;
     }
-
+    
+    .input-group input[type="password"],
+    .input-group input[type="text"] {
+      width: 100%;
+      box-sizing: border-box;
+      border: 1.5px solid #d1bfa3;
+      border-radius: 6px;
+      background: #fff;
+      outline: none;
+      transition: var(--transition-fast);
+      margin-right: 0;
+      padding-right: 3rem;
+    }
+    
     .toggle-password {
       position: absolute;
-      right: 8px;
+      right: 0.5rem;
       top: 50%;
       transform: translateY(-50%);
-      background: transparent;
-      border: none;
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
       cursor: pointer;
-      padding: 4px;
-      color: var(--primary-light);
-      transition: var(--transition-fast);
-      height: 30px;
-      width: 30px;
+      padding: 0;
+      margin: 0;
+      height: 2rem;
+      width: 2rem;
       display: flex;
       align-items: center;
       justify-content: center;
+      z-index: 2;
+      outline: none;
+      overflow: hidden;
     }
-
+    
     .toggle-password svg {
-      width: 18px;
-      height: 18px;
+      width: 2rem;
+      height: 2rem;
+      display: block;
+      overflow: hidden;
     }
-
-    .customer-fields-col {
-      display: flex;
-      flex-direction: column;
-      gap: 0.3rem;
-      margin-bottom: 0.5rem;
-    }
-
-    .customer-fields-col input[type="text"] {
-      width: 100%;
-      padding: 0.6rem 0.8rem;
-      font-size: 1rem;
-      border: 1.5px solid #d1bfa3;
-      border-radius: 6px;
-      background: #fff;
-      color: var(--text-medium);
+    
+    .toggle-password:focus {
       outline: none;
-      box-shadow: 0 1px 4px 0 rgba(139,92,42,0.04);
-      transition: var(--transition-fast);
-      height: 40px;
-      margin-bottom: 0.8rem;
+      box-shadow: none;
     }
-
-    .customer-fields-row {
-      gap: 1rem 2rem;
-      margin-bottom: 1.5rem;
-    }
-
+    
     .customer-details-label {
-      margin: 1.5rem 0 1rem 1rem;
-    }
-
-    .action-btn {
-      height: 40px;
-    }
-
-    /* Loading animation for buttons */
-    @keyframes pulse {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-      100% { transform: scale(1); }
-    }
-    
-    .loading {
-      animation: pulse 1.5s infinite ease-in-out;
-      position: relative;
-      opacity: 0.9;
-    }
-    
-    .loading::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(255,255,255,0.3);
-      z-index: 1;
-    }
-    
-    @media (max-width: 900px) {
-      .profile-container { 
-        padding: 1.5rem; 
-        margin: 1rem;
-        border-radius: 16px;
-      }
-      
-      .profile-header {
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-      }
-      
-      .profile-actions {
-        margin-left: 0;
-        margin-top: 1.5rem;
-        width: 100%;
-        justify-content: center;
-      }
-      
-      .profile-title::after {
-        left: 50%;
-        transform: translateX(-50%);
-      }
-      
-      .action-btn {
-        padding: 0.6rem 1rem;
-        font-size: 0.9rem;
-      }
-    }
-    
-    @media (max-width: 600px) {
-      .profile-form {
-        gap: 1rem;
-      }
-      
-      .profile-col {
-        min-width: 100%;
-      }
-      
-      .action-btn {
-        width: 100%;
-        justify-content: center;
-      }
-    }
-    .customer-details-section {
-      margin-top: 2.5rem;
-      padding: 2rem 1.5rem;
-      background: #f8f5f0;
-      border-radius: 14px;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
-      max-width: 700px;
-      margin-left: auto;
-      margin-right: auto;
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-    }
-    .customer-details-label {
-      font-size: 1.3rem;
+      font-size: 1.5rem;
       font-weight: 700;
-      color: #8B5C2A;
-      margin-bottom: 1.2rem;
-      letter-spacing: 1px;
-      text-align: left;
-      width: 100%;
-    }
-    .customer-fields-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1.2rem 2.2rem;
-      width: 100%;
-      justify-content: center;
-      margin-bottom: 1.2rem;
-    }
-    .customer-fields-col {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
+      color: var(--text-dark);
+      font-family: 'Playfair Display', serif;
       margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--primary-light);
     }
-    .customer-fields-col label {
-      font-size: 1.1rem;
-      font-weight: 600;
-      color: var(--primary-color);
-      letter-spacing: 0.5px;
-      margin-bottom: 0.5rem;
-      font-family: 'Montserrat', sans-serif;
+    
+    .customer-fields-row {
+      display: flex;
+      gap: 2rem;
+      flex-wrap: wrap;
     }
-    .customer-fields-col input[type="text"] {
-      width: 100%;
-      padding: 0.6rem 0.8rem;
-      font-size: 1rem;
-      border: 1.5px solid #d1bfa3;
-      border-radius: 6px;
-      background: #fff;
-      color: var(--text-medium);
-      outline: none;
-      box-shadow: 0 1px 4px 0 rgba(139,92,42,0.04);
-      transition: var(--transition-fast);
-      height: 40px;
-      margin-bottom: 0.8rem;
+    
+    .customer-fields-col {
+      flex: 1 1 300px;
+      min-width: 280px;
     }
-
+    
+    .profile-message {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-radius: 8px;
+      font-weight: 500;
+      text-align: center;
+      display: none;
+    }
+    
+    .profile-message.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    
+    .profile-message.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    
     .action-btn {
       background: #a67c52;
       color: #fff;
@@ -507,7 +418,7 @@
       <div class="profile-avatar" id="profileAvatar" tabindex="0" style="cursor:pointer;">
         <span id="profileAvatarImg">👤</span>
         <input type="file" id="avatarFileInput" accept="image/*" style="display:none;" />
-        <span class="profile-avatar-edit" title="Edit avatar"><svg viewBox="0 0 24 24" fill="none" stroke="#8B5C2A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19.5 3 21l1.5-4L16.5 3.5z"/></svg></span>
+        <span class="profile-avatar-edit" id="profileAvatarEdit" title="Edit avatar"><svg viewBox="0 0 24 24" fill="none" stroke="#8B5C2A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19.5 3 21l1.5-4L16.5 3.5z"/></svg></span>
       </div>
       <div style="display:flex; flex-direction:column; justify-content:center; align-items:flex-start;">
         <div style="font-size:1.2rem; color:#8B5C2A; text-align:left;" id="profileRoleLabel">User</div>
@@ -563,88 +474,20 @@
         <input type="text" id="address" name="address">
         <label for="phone">Phone Number:</label>
         <input type="text" id="phone" name="phone">
-        <label for="birthdate">Birth Date:</label>
-        <input type="date" id="birthdate" name="birthdate">
       </div>
       <div style="flex-basis:100%;"></div>
       <!-- Save User Details Button -->
       <div style="display:flex; justify-content:flex-end; margin-bottom:2.2rem;">
         <button type="button" class="action-btn" id="saveUserBtn">Save User Details</button>
       </div>
-      <!-- Customer Details Section (merged, no box) -->
-      <div class="customer-details-label" style="margin-top:0.7rem; margin-bottom:0.7rem;">Customer Details</div>
-      <div class="customer-fields-row" style="margin-bottom:2rem;">
-        <div class="customer-fields-col">
-          <label for="title">Title:</label>
-          <input type="text" id="title" name="title">
-          <label for="fname">First Name:</label>
-          <input type="text" id="fname" name="fname">
-          <label for="lname">Last Name:</label>
-          <input type="text" id="lname" name="lname">
-        </div>
-        <div class="customer-fields-col">
-          <label for="town">Town:</label>
-          <input type="text" id="town" name="town">
-          <label for="zipcode">Zipcode:</label>
-          <input type="text" id="zipcode" name="zipcode">
-        </div>
-      </div>
-      <!-- Save Customer Details Button -->
-      <div style="display:flex; justify-content:center; margin-bottom:2.2rem;">
-        <button type="button" class="action-btn" id="saveCustomerBtn">Save Customer Details</button>
-      </div>
+      <!-- Customer Details Section (conditionally rendered) -->
+      <div id="customerSectionWrapper"></div>
       <div class="profile-message" id="profileMessage"></div>
       <button type="button" class="action-btn pill-logout" id="logoutBtnProfile" style="width:100%; margin-top:2rem;">Logout</button>
     </form>
   </div>
   <script>
-    // Custom Modal Functions
-    function showCustomModal(isSuccess, message) {
-      const modal = document.getElementById('customModal');
-      const icon = document.getElementById('customModalIcon');
-      const title = document.getElementById('customModalTitle');
-      const messageEl = document.getElementById('customModalMessage');
-      const progress = document.getElementById('customModalProgress');
-      
-      // Set modal content based on success/error
-      if (isSuccess) {
-        icon.textContent = '✅';
-        icon.style.color = '#28a745';
-        title.textContent = 'Success!';
-        title.style.color = '#28a745';
-      } else {
-        icon.textContent = '❌';
-        icon.style.color = '#dc3545';
-        title.textContent = 'Error!';
-        title.style.color = '#dc3545';
-      }
-      
-      messageEl.textContent = message;
-      
-      // Show modal
-      modal.style.display = 'flex';
-      document.body.style.overflow = 'hidden';
-      
-      // Reset progress bar
-      progress.style.width = '0%';
-      
-      // Start progress bar animation
-      setTimeout(() => {
-        progress.style.width = '100%';
-      }, 10);
-      
-      // Auto-close after 3 seconds
-      setTimeout(() => {
-        hideCustomModal();
-      }, 3000);
-    }
-    
-    function hideCustomModal() {
-      const modal = document.getElementById('customModal');
-      modal.style.display = 'none';
-      document.body.style.overflow = 'auto';
-    }
-    
+    // Toggle password visibility
     function togglePassword(fieldId, btn) {
       const input = document.getElementById(fieldId);
       if (input.type === 'password') {
@@ -656,246 +499,229 @@
       }
     }
 
-    // Fetch profile data
-    let userRole = 'user'; // default
-    if (token) {
+    // Show custom modal
+    function showCustomModal(title, message, icon = '✅') {
+      document.getElementById('customModalIcon').textContent = icon;
+      document.getElementById('customModalTitle').textContent = title;
+      document.getElementById('customModalMessage').textContent = message;
+      document.getElementById('customModal').style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+      
+      // Auto-close after 3 seconds
+      setTimeout(() => {
+        document.getElementById('customModal').style.display = 'none';
+        document.body.style.overflow = 'auto';
+      }, 3000);
+    }
+
+    // Avatar click logic
+    document.getElementById('profileAvatar').addEventListener('click', function() {
+      document.getElementById('avatarFileInput').click();
+    });
+    document.getElementById('profileAvatarEdit').addEventListener('click', function(e) {
+      e.stopPropagation();
+      document.getElementById('avatarFileInput').click();
+    });
+    document.getElementById('avatarFileInput').addEventListener('change', function() {
+      const file = this.files[0];
+      if (!file) return;
+      const token = localStorage.getItem('jwt_token');
+      const formData = new FormData();
+      formData.append('profile_image', file);
       fetch('http://localhost:4000/api/v1/profile', {
-        method: 'GET',
-        headers: { 'Authorization': 'Bearer ' + token }
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData
       })
       .then(res => res.json())
       .then(data => {
-        if (data.success) {
-          if (document.getElementById('name')) document.getElementById('name').value = data.profile.name || '';
-          if (document.getElementById('email')) document.getElementById('email').value = data.profile.email || '';
-          if (document.getElementById('address')) document.getElementById('address').value = data.profile.address || '';
-          if (document.getElementById('phone')) document.getElementById('phone').value = data.profile.phone || '';
-          if (document.getElementById('birthdate')) document.getElementById('birthdate').value = data.profile.date_of_birth && data.profile.date_of_birth !== '0000-00-00' ? data.profile.date_of_birth.split('T')[0] : '';
-          if (document.getElementById('profileName')) document.getElementById('profileName').textContent = (data.profile.name || '').toUpperCase();
-          
-          // Set User/Customer label
-          const roleLabel = document.getElementById('profileRoleLabel');
-          if (roleLabel) {
-            if (userRole === 'customer') {
-              roleLabel.textContent = 'User / Customer';
-            } else {
-              roleLabel.textContent = 'User';
-            }
-          }
-          
-          if (typeof setUserName === 'function') setUserName(data.profile.name || '');
-          
-          // Get role from localStorage or default to 'user'
-          userRole = localStorage.getItem('user_role') || 'user';
-          if (data.profile.role) userRole = data.profile.role;
-          localStorage.setItem('user_role', userRole);
-          
-          // Customer fields are always visible now, just populate if data exists
-          if (userRole === 'customer') {
-            if (data.profile.title) document.getElementById('title').value = data.profile.title;
-            if (data.profile.fname) document.getElementById('fname').value = data.profile.fname;
-            if (data.profile.lname) document.getElementById('lname').value = data.profile.lname;
-            if (data.profile.town) document.getElementById('town').value = data.profile.town;
-            if (data.profile.zipcode) document.getElementById('zipcode').value = data.profile.zipcode;
-          }
-          
-          if (data.profile.profile_image) {
-            setProfileAvatarImg(data.profile.profile_image);
-          } else if (data.profile.image_path) {
-            setProfileAvatarImg(data.profile.image_path);
-          } else {
-            setProfileAvatarImg(null);
-          }
+        if (data.success && data.image_path) {
+          document.getElementById('profileAvatarImg').innerHTML = `<img src="${data.image_path}" alt="Profile" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
+          showCustomModal('Success', 'Profile image updated!', '✅');
         } else {
-          document.getElementById('profileMessage').textContent = data.message || 'Failed to load profile.';
+          showCustomModal('Error', data.message || 'Failed to update image', '❌');
         }
       })
-      .catch((err) => {
-        console.error('Profile load error:', err);
-        document.getElementById('profileMessage').textContent = 'Failed to load profile.';
-      });
-    }
-    
-    // Profile image logic
-    const avatarDiv = document.getElementById('profileAvatar');
-    const avatarImgSpan = document.getElementById('profileAvatarImg');
-    const avatarFileInput = document.getElementById('avatarFileInput');
-    let selectedAvatarFile = null;
-    
-    // On click, open file picker
-    avatarDiv.addEventListener('click', function() {
-      avatarFileInput.click();
+      .catch(() => showCustomModal('Error', 'Failed to update image', '❌'));
     });
-    
-    avatarFileInput.addEventListener('change', function(e) {
-      if (e.target.files && e.target.files[0]) {
-        selectedAvatarFile = e.target.files[0];
-        const reader = new FileReader();
-        reader.onload = function(ev) {
-          avatarImgSpan.innerHTML = `<img src="${ev.target.result}" alt="Profile" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`;
-        };
-        reader.readAsDataURL(selectedAvatarFile);
-      }
-    });
-    
-    // On profile load, show image if available
-    function setProfileAvatarImg(url) {
-      if (url) {
-        avatarImgSpan.innerHTML = `<img src="${url}" alt="Profile" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`;
+
+    // Render customer section based on role
+    function renderCustomerSection(role, profile) {
+      const wrapper = document.getElementById('customerSectionWrapper');
+      wrapper.innerHTML = '';
+      if (role === 'customer' || role === 'seller' || role === 'admin') {
+        wrapper.innerHTML = `
+          <div class="customer-details-label" style="margin-top:0.7rem; margin-bottom:0.7rem;">Customer Details</div>
+          <div class="customer-fields-row" style="margin-bottom:2rem;">
+            <div class="customer-fields-col">
+              <label for="fname">First Name:</label>
+              <input type="text" id="fname" name="fname" value="${profile.fname || ''}">
+              <label for="lname">Last Name:</label>
+              <input type="text" id="lname" name="lname" value="${profile.lname || ''}">
+            </div>
+            <div class="customer-fields-col">
+              <label for="town">Town:</label>
+              <input type="text" id="town" name="town" value="${profile.town || ''}">
+              <label for="zipcode">Zipcode:</label>
+              <input type="text" id="zipcode" name="zipcode" value="${profile.zipcode || ''}">
+            </div>
+          </div>
+          <div style="display:flex; justify-content:center; margin-bottom:2.2rem;">
+            <button type="button" class="action-btn" id="saveCustomerBtn">Save Customer Details</button>
+          </div>
+        `;
+        // Re-attach save handler
+        document.getElementById('saveCustomerBtn').addEventListener('click', saveCustomerDetails);
       } else {
-        avatarImgSpan.textContent = '👤';
+        wrapper.innerHTML = `<div style="display:flex; justify-content:center; margin:2rem 0;"><button type="button" class="action-btn" id="upgradeBtn">Upgrade to Customer</button></div>`;
+        document.getElementById('upgradeBtn').addEventListener('click', function() {
+          const token = localStorage.getItem('jwt_token');
+          fetch('http://localhost:4000/api/v1/upgrade-to-customer', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              showCustomModal('Success', 'You are now a customer!', '✅');
+              setTimeout(() => window.location.reload(), 1200);
+            } else {
+              showCustomModal('Error', data.message || 'Failed to upgrade', '❌');
+            }
+          })
+          .catch(() => showCustomModal('Error', 'Failed to upgrade', '❌'));
+        });
       }
     }
-    
-    // Save User Changes
-    document.getElementById('saveUserBtn').addEventListener('click', function(e) {
-      e.preventDefault();
-      const btn = this;
-      btn.classList.add('loading');
-      
-      const name = document.getElementById('name').value.trim();
+
+    // Save customer details handler
+    function saveCustomerDetails() {
+      const token = localStorage.getItem('jwt_token');
+      if (!token) return;
+      const fname = document.getElementById('fname').value.trim();
+      const lname = document.getElementById('lname').value.trim();
       const address = document.getElementById('address').value.trim();
       const phone = document.getElementById('phone').value.trim();
-      const birthdate = document.getElementById('birthdate').value;
-      const password = document.getElementById('password').value;
-      const confirmPassword = document.getElementById('confirm-password').value;
-      
-      // Customer fields
-      const title = document.getElementById('title') ? document.getElementById('title').value.trim() : '';
-      const fname = document.getElementById('fname') ? document.getElementById('fname').value.trim() : '';
-      const lname = document.getElementById('lname') ? document.getElementById('lname').value.trim() : '';
-      const town = document.getElementById('town') ? document.getElementById('town').value.trim() : '';
-      const zipcode = document.getElementById('zipcode') ? document.getElementById('zipcode').value.trim() : '';
-      
-      if (password && password !== confirmPassword) {
-        document.getElementById('profileMessage').textContent = 'Passwords do not match.';
-        btn.classList.remove('loading');
-        return;
-      }
-      
-      if (!token) {
-        document.getElementById('profileMessage').textContent = 'User not logged in. Please log in.';
-        btn.classList.remove('loading');
-        return;
-      }
-      
+      const town = document.getElementById('town').value.trim();
+      const zipcode = document.getElementById('zipcode').value.trim();
       const formData = new FormData();
-      formData.append('name', name);
-      formData.append('address', address);
-      formData.append('phone', phone);
-      formData.append('date_of_birth', birthdate);
-      formData.append('password', password);
-      
-      // Add customer fields if they exist
-      if (userRole === 'customer') {
-        formData.append('title', title);
-        formData.append('fname', fname);
-        formData.append('lname', lname);
-        formData.append('town', town);
-        formData.append('zipcode', zipcode);
-      }
-      
-      if (selectedAvatarFile) {
-        formData.append('profile_image', selectedAvatarFile);
-      }
-      
-      fetch('http://localhost:4000/api/v1/profile', {
-        method: 'POST',
-        headers: {
-          'Authorization': 'Bearer ' + token
-        },
-        body: formData
-      })
-      .then(res => res.json())
-      .then(data => {
-        btn.classList.remove('loading');
-        
-        if (data.success) {
-          showCustomModal(true, 'User details updated successfully!');
-          document.getElementById('profileName').textContent = name.toUpperCase();
-          document.getElementById('password').value = '';
-          document.getElementById('confirm-password').value = '';
-          
-          if (typeof setUserName === 'function') setUserName(name);
-          if (data.profile && (data.profile.profile_image || data.profile.image_path)) {
-            setProfileAvatarImg(data.profile.profile_image || data.profile.image_path);
-          }
-          selectedAvatarFile = null;
-        } else {
-          showCustomModal(false, data.message || 'Failed to update user details.');
-        }
-      })
-      .catch((error) => {
-        btn.classList.remove('loading');
-        console.error('Update error:', error);
-        showCustomModal(false, 'Failed to update user details. Please try again.');
-      });
-    });
-    
-    // Save Customer Details Button
-    document.getElementById('saveCustomerBtn').addEventListener('click', function(e) {
-      e.preventDefault();
-      const btn = this;
-      btn.classList.add('loading');
-      
-      // Collect customer fields
-      const title = document.getElementById('title') ? document.getElementById('title').value.trim() : '';
-      const fname = document.getElementById('fname') ? document.getElementById('fname').value.trim() : '';
-      const lname = document.getElementById('lname') ? document.getElementById('lname').value.trim() : '';
-      const town = document.getElementById('town') ? document.getElementById('town').value.trim() : '';
-      const zipcode = document.getElementById('zipcode') ? document.getElementById('zipcode').value.trim() : '';
-      
-      if (!token) {
-        showCustomModal(false, 'User not logged in. Please log in.');
-        btn.classList.remove('loading');
-        return;
-      }
-      
-      // Create form data with only customer fields
-      const formData = new FormData();
-      formData.append('title', title);
       formData.append('fname', fname);
       formData.append('lname', lname);
+      formData.append('address', address);
+      formData.append('phone', phone);
       formData.append('town', town);
       formData.append('zipcode', zipcode);
-      
+      fetch('http://localhost:4000/api/v1/profile', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          showCustomModal('Success', 'Customer details updated successfully!', '✅');
+        } else {
+          showCustomModal('Error', data.message || 'Failed to update customer details', '❌');
+        }
+      })
+      .catch(() => showCustomModal('Error', 'Failed to update customer details', '❌'));
+    }
+
+    // Load profile data (updated)
+    function loadProfile() {
+      const token = localStorage.getItem('jwt_token');
+      if (!token) return;
+      fetch('http://localhost:4000/api/v1/profile', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          const profile = data.profile;
+          // Set user details
+          if (document.getElementById('name')) document.getElementById('name').value = profile.name || '';
+          if (document.getElementById('email')) document.getElementById('email').value = profile.email || '';
+          if (document.getElementById('profileName')) document.getElementById('profileName').textContent = profile.name || '';
+          if (document.getElementById('profileRoleLabel')) document.getElementById('profileRoleLabel').textContent = profile.role || 'User';
+          if (document.getElementById('address')) document.getElementById('address').value = profile.address || '';
+          if (document.getElementById('phone')) document.getElementById('phone').value = profile.phone || '';
+          // Set profile image if available
+          const imgSrc = profile.profile_image || profile.image_path;
+          if (imgSrc) {
+            const fullImgSrc = imgSrc.startsWith('http') ? imgSrc : `http://localhost:4000${imgSrc}`;
+            document.getElementById('profileAvatarImg').innerHTML = `<img src="${fullImgSrc}" alt="Profile" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
+          }
+          // Render customer section based on role
+          renderCustomerSection(profile.role, profile);
+        }
+      })
+      .catch(err => {
+        console.error('Failed to load profile:', err);
+      });
+    }
+
+    // Save user details
+    document.getElementById('saveUserBtn').addEventListener('click', function() {
+      const token = localStorage.getItem('jwt_token');
+      if (!token) return;
+
+      const name = document.getElementById('name').value.trim();
+      const password = document.getElementById('password').value;
+      const confirmPassword = document.getElementById('confirm-password').value;
+
+      if (password && password !== confirmPassword) {
+        showCustomModal('Error', 'Passwords do not match!', '❌');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('name', name);
+      if (password) {
+        formData.append('password', password);
+      }
+
       fetch('http://localhost:4000/api/v1/profile', {
         method: 'POST',
         headers: {
-          'Authorization': 'Bearer ' + token
+          'Authorization': `Bearer ${token}`
         },
         body: formData
       })
       .then(res => res.json())
       .then(data => {
-        btn.classList.remove('loading');
-        
         if (data.success) {
-          showCustomModal(true, 'Customer details updated successfully!');
-          // Update user role if this is the first time setting customer details
-          if (userRole === 'user') {
-            userRole = 'customer';
-            localStorage.setItem('user_role', 'customer');
-            const roleLabel = document.getElementById('profileRoleLabel');
-            if (roleLabel) {
-              roleLabel.textContent = 'User / Customer';
+          showCustomModal('Success', 'User details updated successfully!', '✅');
+          // Update localStorage
+          if (name) {
+            localStorage.setItem('user_name', name);
+            if (typeof updateHeaderLoginState === 'function') {
+              updateHeaderLoginState();
             }
           }
+          // Clear password fields
+          document.getElementById('password').value = '';
+          document.getElementById('confirm-password').value = '';
         } else {
-          showCustomModal(false, data.message || 'Failed to update customer details.');
+          showCustomModal('Error', data.message || 'Failed to update user details', '❌');
         }
       })
-      .catch((error) => {
-        btn.classList.remove('loading');
-        console.error('Customer update error:', error);
-        showCustomModal(false, 'Failed to update customer details. Please try again.');
+      .catch(err => {
+        showCustomModal('Error', 'Failed to update user details', '❌');
       });
     });
-    
-    document.getElementById('logoutBtnProfile').onclick = function() {
+
+    // Logout functionality
+    document.getElementById('logoutBtnProfile').addEventListener('click', function() {
       localStorage.removeItem('jwt_token');
+      localStorage.removeItem('user_name');
+      localStorage.removeItem('user_role');
       window.location.href = 'index.html';
-    };
+    });
+
+    // Load profile on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      loadProfile();
+    });
   </script>
 </body>
 </html>

@@ -282,6 +282,12 @@
       <div class="signup-link">Already have an account? <a href="login.html">Log In</a></div>
     </div>
   </div>
+  <div id="successModal" style="display:none; position:fixed; z-index:1000; left:0; top:0; width:100vw; height:100vh; background:rgba(0,0,0,0.4); align-items:center; justify-content:center;">
+    <div style="background:#fff; color:#2d2233; border-radius:16px; padding:2rem 2.5rem; min-width:320px; max-width:90vw; box-shadow:0 8px 32px rgba(0,0,0,0.18); position:relative; text-align:center;">
+      <div id="successMessage" style="font-size:1.1rem; margin-bottom:1.5rem;"></div>
+      <button onclick="closeSuccessModal()" style="background:#8B5C2A; color:#fff; border:none; border-radius:8px; padding:0.7rem 2rem; font-size:1.1rem; font-weight:600; cursor:pointer;">OK</button>
+    </div>
+  </div>
   <div class="footer">@Kung ano mang pwedeng ilagay here</div>
   <script>
     // Still force lowercase for pasted or autofilled text
@@ -291,6 +297,7 @@
       this.value = this.value.toLowerCase();
       this.setSelectionRange(start, end);
     });
+
     // Toggle password visibility
     function togglePassword(fieldId, btn) {
       const input = document.getElementById(fieldId);
@@ -302,16 +309,29 @@
         btn.querySelector('svg').style.opacity = 1;
       }
     }
+
+    function showSuccessModal(message) {
+      document.getElementById('successMessage').textContent = message;
+      document.getElementById('successModal').style.display = 'flex';
+    }
+
+    function closeSuccessModal() {
+      document.getElementById('successModal').style.display = 'none';
+      window.location.href = 'login.html';
+    }
+
     document.getElementById('signupForm').addEventListener('submit', function(e) {
       e.preventDefault();
       const name = document.getElementById('name').value.trim();
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
       const confirmPassword = document.getElementById('confirm-password').value;
+      
       if (password !== confirmPassword) {
         alert('Passwords do not match.');
         return;
       }
+      
       fetch('http://localhost:4000/api/v1/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -320,8 +340,7 @@
       .then(res => res.json())
       .then(data => {
         if (data.success) {
-          alert('You are now registered! You may now log in.');
-          window.location.href = 'login.html';
+          showSuccessModal('Registration successful! Please check your email to verify your account.');
         } else {
           alert('Registration failed: ' + (data.message || 'Please try again.'));
         }

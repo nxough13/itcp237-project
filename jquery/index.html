@@ -222,6 +222,18 @@
     .product-btn:hover {
       background: #b89c7a;
     }
+    .loading-message {
+      text-align: center;
+      font-size: 1.2rem;
+      color: #666;
+      padding: 2rem;
+    }
+    .error-message {
+      text-align: center;
+      font-size: 1.2rem;
+      color: #dc3545;
+      padding: 2rem;
+    }
     @media (max-width: 900px) {
       .hero, header {
         flex-direction: column;
@@ -262,39 +274,92 @@
       <button class="tab">Best Sellers</button>
     </div>
     <div class="product-list" id="product-list">
-      <!-- Products will be loaded here by JS -->
+      <div class="loading-message">Loading products...</div>
     </div>
   </section>
   <script>
-fetch('http://localhost:4000/api/v1/products/featured')
-  .then(res => res.json())
-  .then(data => {
-    if (!data.success) throw new Error('Failed to load products');
-    const list = document.getElementById('product-list');
-    if (!data.products.length) {
-      list.innerHTML = '<p>No featured products found.</p>';
-      return;
+    // Load featured products
+    function loadFeaturedProducts() {
+      const productList = document.getElementById('product-list');
+      
+      fetch('http://localhost:4000/api/v1/products/featured')
+        .then(res => res.json())
+        .then(data => {
+          if (!data.success) {
+            throw new Error(data.message || 'Failed to load products');
+          }
+          
+          if (!data.products || data.products.length === 0) {
+            productList.innerHTML = '<div class="loading-message">No featured products found.</div>';
+            return;
+          }
+          
+          productList.innerHTML = data.products.map(product => `
+            <div class="product-card">
+              <div class="product-img" style="background-image:url('img/products/${product.image || 'default.jpg'}'); background-size:cover; background-position:center;"></div>
+              <div class="product-title">${product.name || 'Product Name'}</div>
+              <div class="product-desc">${product.description ? (product.description.length > 100 ? product.description.substring(0, 100) + '...' : product.description) : 'No description available'}</div>
+              <div class="product-price">₱${parseFloat(product.sell_price || 0).toFixed(2)}</div>
+              <div class="product-rating">
+                <span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span>
+              </div>
+              <div class="product-actions">
+                <button class="product-btn" onclick="addToCart(${product.item_id})">Add to Cart</button>
+                <button class="product-btn" onclick="viewProduct(${product.item_id})">View Details</button>
+              </div>
+            </div>
+          `).join('');
+        })
+        .catch(err => {
+          console.error('Error loading products:', err);
+          productList.innerHTML = '<div class="error-message">Error loading products. Please try again later.</div>';
+        });
     }
-    list.innerHTML = data.products.map(product => `
-      <div class="product-card">
-        <div class="product-img" style="background-image:url('img/products/${product.image ? product.image : 'default.jpg'}'); background-size:cover; background-position:center;"></div>
-        <div class="product-title">${product.name}</div>
-        <div class="product-desc">${product.short_description || product.description}</div>
-        <div class="product-price">₱${parseFloat(product.sell_price).toFixed(2)}</div>
-        <div class="product-rating">
-          <span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span>
-        </div>
-        <div class="product-actions">
-          <button class="product-btn">Add to Cart</button>
-          <button class="product-btn">View Details</button>
-        </div>
-      </div>
-    `).join('');
-  })
-  .catch(err => {
-    document.getElementById('product-list').innerHTML = '<p>Error loading products.</p>';
-    console.error(err);
-  });
-</script>
+
+    // Add to cart function
+    function addToCart(itemId) {
+      const token = localStorage.getItem('jwt_token');
+      if (!token) {
+        alert('Please login to add items to cart');
+        window.location.href = 'login.html';
+        return;
+      }
+      
+      fetch('http://localhost:4000/api/v1/cart/add', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          item_id: itemId,
+          quantity: 1
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          alert('Item added to cart successfully!');
+        } else {
+          alert(data.message || 'Failed to add item to cart');
+        }
+      })
+      .catch(err => {
+        console.error('Error adding to cart:', err);
+        alert('Failed to add item to cart');
+      });
+    }
+
+    // View product function
+    function viewProduct(itemId) {
+      // For now, just show an alert. This could be expanded to show a modal or redirect to a product page
+      alert(`Viewing product ${itemId}. Product detail page will be implemented next!`);
+    }
+
+    // Load products when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+      loadFeaturedProducts();
+    });
+  </script>
 </body>
 </html>
