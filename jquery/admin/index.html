@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Home Haven - Admin Dashboard</title>
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="../css/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -368,15 +368,9 @@
         <div class="admin-section">
           <h2 class="section-title">Quick Actions</h2>
           <div class="quick-actions">
-            <button class="action-btn" onclick="viewUsers()">
-              👥 View Users
-            </button>
-            <button class="action-btn" onclick="viewCustomers()">
-              🛒 View Customers
-            </button>
-            <button class="action-btn" onclick="viewSellers()">
-              🏪 View Sellers
-            </button>
+            <a href="users.html" class="action-btn">👥 View Users</a>
+            <a href="customers.html" class="action-btn">🛒 View Customers</a>
+            <a href="sellers.html" class="action-btn">🏪 View Sellers</a>
             <button class="action-btn" onclick="viewOrders()">
               📦 View Orders
             </button>
@@ -421,6 +415,10 @@
               </div>
             </div>
           </div>
+        </div>
+        <div class="admin-section">
+          <h2 class="section-title">Pending Seller Verifications</h2>
+          <div id="pendingSellers"></div>
         </div>
       </div>
     </main>
@@ -530,7 +528,7 @@
       localStorage.removeItem('jwt_token');
       localStorage.removeItem('user_role');
       localStorage.removeItem('user_name');
-      window.location.href = 'login.html';
+      window.location.href = '../login.html';
     }
     
     // Placeholder functions for admin actions
@@ -557,6 +555,49 @@
     function systemSettings() {
       alert('System Settings functionality will be implemented next!');
     }
+
+    function loadPendingSellers() {
+      $.ajax({
+        url: 'http://localhost:4000/api/v1/admin/sellers/unverified',
+        method: 'GET',
+        headers: { 'Authorization': 'Bearer ' + token },
+        success: function(res) {
+          if (res.success && res.sellers.length > 0) {
+            let html = '<ul style="list-style:none;padding:0;">';
+            res.sellers.forEach(seller => {
+              html += `<li style='margin-bottom:1rem;'>
+                <b>${seller.name}</b> (${seller.business_name})
+                <button class='action-btn' style='margin-left:1rem;' onclick='verifySeller(${seller.seller_id})'>Verify</button>
+              </li>`;
+            });
+            html += '</ul>';
+            $('#pendingSellers').html(html);
+          } else {
+            $('#pendingSellers').html('<span>No pending seller verifications.</span>');
+          }
+        },
+        error: function() {
+          $('#pendingSellers').html('<span>Error loading pending sellers.</span>');
+        }
+      });
+    }
+    function verifySeller(sellerId) {
+      $.ajax({
+        url: `http://localhost:4000/api/v1/admin/sellers/${sellerId}/verify`,
+        method: 'PATCH',
+        headers: { 'Authorization': 'Bearer ' + token },
+        success: function(res) {
+          loadPendingSellers();
+          loadAdminData && loadAdminData(); // refresh stats if available
+        },
+        error: function() {
+          alert('Failed to verify seller.');
+        }
+      });
+    }
+    $(document).ready(function() {
+      loadPendingSellers();
+    });
   </script>
 </body>
 </html> 

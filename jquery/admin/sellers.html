@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Home Haven - Sellers</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    body { background: var(--background-light, #f6f3ef); font-family: 'Montserrat', sans-serif; color: var(--text-dark, #3d2c1c); margin: 0; padding: 0; }
+    .container { max-width: 1200px; margin: 2rem auto; background: white; border-radius: 16px; box-shadow: 0 4px 20px rgba(139, 92, 42, 0.08); padding: 2rem; }
+    h1 { font-family: 'Playfair Display', serif; font-size: 2.2rem; margin-bottom: 1.5rem; }
+    .profile-img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 1px solid #ccc; }
+    @media (max-width: 700px) { .container { padding: 0.5rem; } h1 { font-size: 1.3rem; } table { font-size: 0.9rem; } }
+  </style>
+</head>
+<body>
+  <div id="header"></div>
+  <div class="container">
+    <h1>Sellers</h1>
+    <table id="sellersTable" class="display" style="width:100%">
+      <thead>
+        <tr>
+          <th>User ID</th>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Seller ID</th>
+          <th>Business Name</th>
+          <th>Business Description</th>
+          <th>Business Address</th>
+          <th>Business Phone</th>
+          <th>Business Email</th>
+          <th>Is Verified</th>
+          <th>Created At</th>
+          <th>Profile Image</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  <script>
+    $('#header').load('../header.html');
+    const token = localStorage.getItem('jwt_token');
+    const userRole = localStorage.getItem('user_role');
+    if (!token || userRole !== 'admin') {
+      window.location.href = '../login.html?reason=unauthorized';
+    }
+    $(document).ready(function() {
+      const table = $('#sellersTable').DataTable({
+        columns: [
+          { data: 'id' },
+          { data: 'name' },
+          { data: 'email' },
+          { data: 'seller_id' },
+          { data: 'business_name' },
+          { data: 'business_description' },
+          { data: 'business_address' },
+          { data: 'business_phone' },
+          { data: 'business_email' },
+          { data: 'is_verified', render: renderVerified },
+          { data: 'created_at', render: renderDate },
+          { data: 'profile_image', render: renderImage },
+          { data: null, render: renderActions, orderable: false, searchable: false }
+        ]
+      });
+      loadSellers();
+      function loadSellers() {
+        $.ajax({
+          url: 'http://localhost:4000/api/v1/admin/sellers',
+          method: 'GET',
+          headers: { 'Authorization': 'Bearer ' + token },
+          success: function(res) {
+            if (res.success) {
+              table.clear().rows.add(res.sellers).draw();
+            } else {
+              alert('Failed to load sellers: ' + res.message);
+            }
+          },
+          error: function(xhr) {
+            alert('Error loading sellers: ' + (xhr.responseJSON?.message || xhr.statusText));
+          }
+        });
+      }
+      function renderImage(data) {
+        if (!data) return '';
+        return `<img src="http://localhost:4000${data}" class="profile-img" alt="Profile">`;
+      }
+      function renderDate(data) {
+        if (!data) return '';
+        return new Date(data).toLocaleString();
+      }
+      function renderVerified(data) {
+        return data ? 'Yes' : 'No';
+      }
+      function renderActions(data, type, row) {
+        if (type === 'display') {
+          return `<a href="seller-details.html?sellerId=${row.id}" class="action-btn" style="padding:0.3rem 0.8rem;">View Details</a>`;
+        }
+        return '';
+      }
+      function logout() {
+        localStorage.removeItem('jwt_token');
+        localStorage.removeItem('user_role');
+        localStorage.removeItem('user_name');
+        window.location.href = '../login.html';
+      }
+    });
+  </script>
+</body>
+</html> 

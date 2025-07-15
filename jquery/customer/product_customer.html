@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Products - Home Haven</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <style>
+    .product-page-container {
+      max-width: 1200px;
+      margin: 40px auto;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+      padding: 32px 32px 24px 32px;
+    }
+    .product-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+    .product-header h2 {
+      font-family: Georgia, serif;
+      font-size: 2.1rem;
+      color: #8B5C2A;
+      margin: 0;
+    }
+    .product-filters {
+      display: flex;
+      align-items: center;
+      gap: 1.2rem;
+      flex-wrap: wrap;
+    }
+    .product-filters input, .product-filters select {
+      padding: 7px 12px;
+      border-radius: 6px;
+      border: 1px solid #bfa77a;
+      font-size: 1rem;
+      background: #f7f4f0;
+    }
+    .category-list {
+      display: flex;
+      gap: 1.1rem;
+      flex-wrap: wrap;
+      margin: 18px 0 28px 0;
+      justify-content: center;
+    }
+    .category-btn {
+      background: #f3ede5;
+      color: #8B5C2A;
+      border: 1px solid #bfa77a;
+      border-radius: 8px;
+      padding: 7px 18px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+    .category-btn.active, .category-btn:hover {
+      background: #8B5C2A;
+      color: #fff;
+    }
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 32px 24px;
+      margin-top: 10px;
+    }
+    .product-card {
+      background: #f3ede5;
+      border-radius: 14px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      padding: 18px 16px 16px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+    }
+    .product-img {
+      width: 160px;
+      height: 160px;
+      background: #8B5C2A;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 2.5rem;
+      overflow: hidden;
+    }
+    .product-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.3em;
+      margin-bottom: 4px;
+      width: 100%;
+      text-align: center;
+    }
+    .product-title {
+      font-size: 1.2rem;
+      font-family: Georgia, serif;
+      color: #8B5C2A;
+      font-weight: 600;
+      text-align: center;
+      flex: 0 1 auto;
+    }
+    .wishlist-btn {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      color: #8B5C2A;
+      cursor: pointer;
+      transition: color 0.2s;
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      z-index: 4;
+    }
+    .wishlist-btn.active {
+      color: #e67e22;
+    }
+    .featured-ribbon {
+      position: absolute;
+      top: 12px;
+      left: 0;
+      background: #b0b9d6;
+      color: #444;
+      font-size: 1rem;
+      font-weight: 600;
+      padding: 2px 18px 2px 8px;
+      border-radius: 0 10px 10px 0;
+      z-index: 3;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.07);
+    }
+    @media (max-width: 700px) {
+      .product-page-container { padding: 12px 2vw; }
+      .products-grid { gap: 18px 8px; }
+    }
+  </style>
+  <script>
+    // Override injectHeader to load header_customer.html
+    function injectHeader() {
+      const path = window.location.pathname;
+      if (path.includes('login.html') || path.includes('signup.html')) return;
+      fetch('header_customer.html')
+        .then(res => res.text())
+        .then(html => {
+          const headerDiv = document.createElement('div');
+          headerDiv.innerHTML = html;
+          document.body.insertBefore(headerDiv, document.body.firstChild);
+          if (typeof updateHeaderLoginState === 'function') updateHeaderLoginState();
+        })
+        .catch(error => {
+          console.error('Failed to load header:', error);
+        });
+    }
+    // Product data (2 per category, placeholder images)
+    const categories = [
+      "Living Room", "Bedroom", "Kitchen and Dining", "Bathroom", "Office", "Outdoor", "Lighting", "Storage", "Wall Art", "Seasonal"
+    ];
+    const products = [
+      { name: "Sofa Deluxe", price: 12000, date: "2024-06-01", category: "Living Room", desc: "Comfy 3-seater sofa.", img: "", id: 1 },
+      { name: "Coffee Table", price: 3500, date: "2024-05-20", category: "Living Room", desc: "Modern wooden coffee table.", img: "", id: 2 },
+      { name: "Queen Bed", price: 15000, date: "2024-05-15", category: "Bedroom", desc: "Spacious queen-size bed.", img: "", id: 3 },
+      { name: "Nightstand", price: 2200, date: "2024-05-18", category: "Bedroom", desc: "Minimalist nightstand.", img: "", id: 4 },
+      { name: "Dining Set", price: 18000, date: "2024-05-10", category: "Kitchen and Dining", desc: "6-seater dining set.", img: "", id: 5 },
+      { name: "Bar Stool", price: 1200, date: "2024-05-12", category: "Kitchen and Dining", desc: "Adjustable bar stool.", img: "", id: 6 },
+      { name: "Shower Curtain", price: 600, date: "2024-05-08", category: "Bathroom", desc: "Waterproof curtain.", img: "", id: 7 },
+      { name: "Bath Mat", price: 400, date: "2024-05-09", category: "Bathroom", desc: "Soft absorbent mat.", img: "", id: 8 },
+      { name: "Office Chair", price: 3500, date: "2024-05-05", category: "Office", desc: "Ergonomic chair.", img: "", id: 9 },
+      { name: "Desk Organizer", price: 800, date: "2024-05-06", category: "Office", desc: "Keep your desk tidy.", img: "", id: 10 },
+      { name: "Patio Set", price: 9000, date: "2024-05-01", category: "Outdoor", desc: "Outdoor table & chairs.", img: "", id: 11 },
+      { name: "Garden Lamp", price: 950, date: "2024-05-03", category: "Outdoor", desc: "Solar-powered lamp.", img: "", id: 12 },
+      { name: "Pendant Light", price: 2500, date: "2024-04-28", category: "Lighting", desc: "Elegant pendant light.", img: "", id: 13 },
+      { name: "Table Lamp", price: 1100, date: "2024-04-29", category: "Lighting", desc: "Classic table lamp.", img: "", id: 14 },
+      { name: "Storage Box", price: 400, date: "2024-04-25", category: "Storage", desc: "Foldable storage box.", img: "", id: 15 },
+      { name: "Bookshelf", price: 3200, date: "2024-04-26", category: "Storage", desc: "5-tier bookshelf.", img: "", id: 16 },
+      { name: "Canvas Art", price: 1800, date: "2024-04-22", category: "Wall Art", desc: "Abstract canvas art.", img: "", id: 17 },
+      { name: "Wall Clock", price: 950, date: "2024-04-23", category: "Wall Art", desc: "Modern wall clock.", img: "", id: 18 },
+      { name: "Christmas Tree", price: 2500, date: "2023-12-01", category: "Seasonal", desc: "6ft artificial tree.", img: "", id: 19 },
+      { name: "Pumpkin Decor", price: 700, date: "2023-10-10", category: "Seasonal", desc: "Festive pumpkin decor.", img: "", id: 20 }
+    ];
+    let wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
+    function isWishlisted(id) {
+      return wishlist.includes(id);
+    }
+    function toggleWishlist(id) {
+      if (isWishlisted(id)) {
+        wishlist = wishlist.filter(wid => wid !== id);
+      } else {
+        wishlist.push(id);
+      }
+      localStorage.setItem('wishlist', JSON.stringify(wishlist));
+    }
+    let selectedCategory = '';
+    function getFeaturedProducts() {
+      return products.slice().sort(()=>0.5-Math.random()).slice(0,3);
+    }
+    function renderCategories() {
+      const catList = $("#categoryList");
+      catList.empty();
+      catList.append(<button class="category-btn${selectedCategory===''?' active':''}" data-cat="">All</button>);
+      categories.forEach(cat => {
+        catList.append(<button class="category-btn${selectedCategory===cat?' active':''}" data-cat="${cat}">${cat}</button>);
+      });
+    }
+    function renderFeatured() {
+      const all = products.slice();
+      const shuffled = all.slice().sort(()=>0.5-Math.random());
+      const featured = shuffled.slice(0,3);
+      const grid = $("#featuredGrid");
+      grid.empty();
+      featured.forEach(prod => {
+        grid.append(`
+          <div class="product-card">
+            <button class="wishlist-btn${isWishlisted(prod.id)?' active':''}" data-id="${prod.id}" title="Add to Wishlist">${isWishlisted(prod.id)?'&#9733;':'&#9734;'}</button>
+            <div class="featured-ribbon">Featured</div>
+            <div class="product-img"><span>&#128717;</span></div>
+            <div class="product-title-row">
+              <div class="product-title">${prod.name}</div>
+            </div>
+            <div class="product-desc">${prod.desc}</div>
+            <div class="product-price">₱${prod.price.toLocaleString()}</div>
+            <div class="product-date">${prod.date}</div>
+            <div class="product-actions">
+              <button>Add to Cart</button>
+              <button>View Details</button>
+            </div>
+          </div>
+        `);
+      });
+    }
+    function renderProducts() {
+      let filtered = products.slice();
+      $('#productsHeading').text('Products');
+      const search = $("#searchInput").val().toLowerCase();
+      if (search) {
+        filtered = filtered.filter(p => p.name.toLowerCase().includes(search));
+      }
+      if (selectedCategory) {
+        filtered = filtered.filter(p => p.category === selectedCategory);
+      }
+      const sort = $("#sortSelect").val();
+      if (sort === "price") filtered.sort((a,b)=>a.price-b.price);
+      if (sort === "date") filtered.sort((a,b)=>new Date(b.date)-new Date(a.date));
+      const grid = $("#productsGrid");
+      grid.empty();
+      if (!filtered.length) {
+        grid.append('<div style="grid-column:1/-1;text-align:center;color:#888;font-size:1.2rem;">No products found.</div>');
+        return;
+      }
+      filtered.forEach(prod => {
+        grid.append(`
+          <div class="product-card">
+            <button class="wishlist-btn${isWishlisted(prod.id)?' active':''}" data-id="${prod.id}" title="Add to Wishlist">${isWishlisted(prod.id)?'&#9733;':'&#9734;'}</button>
+            <div class="product-img"><span>&#128717;</span></div>
+            <div class="product-title-row">
+              <div class="product-title">${prod.name}</div>
+            </div>
+            <div class="product-desc">${prod.desc}</div>
+            <div class="product-price">₱${prod.price.toLocaleString()}</div>
+            <div class="product-date">${prod.date}</div>
+            <div class="product-actions">
+              <button>Add to Cart</button>
+              <button>View Details</button>
+            </div>
+          </div>
+        `);
+      });
+    }
+    $(document).ready(function() {
+      injectHeader();
+      renderCategories();
+      renderFeatured();
+      renderProducts();
+      $("#categoryList").on("click", ".category-btn", function() {
+        selectedCategory = $(this).data("cat");
+        renderCategories();
+        renderFeatured();
+        renderProducts();
+      });
+      $("#searchInput").on("input", renderProducts);
+      $("#sortSelect").on("change", renderProducts);
+      $(document).on('click', '.wishlist-btn', function(e) {
+        const id = $(this).data('id');
+        toggleWishlist(id);
+        renderProducts();
+        renderFeatured();
+      });
+    });
+  </script>
+</head>
+<body>
+  <div style="height:84px;"></div>
+  <div id="featuredContainer" class="product-page-container">
+    <h2 style="font-family:Georgia,serif; color:#8B5C2A; font-size:2rem; margin-bottom:0.5em;">Featured</h2>
+    <div class="products-grid" id="featuredGrid"></div>
+  </div>
+  <div class="product-page-container">
+    <div class="product-header">
+      <h2 id="productsHeading">Products</h2>
+      <div class="product-filters">
+        <input type="text" id="searchInput" placeholder="Search products...">
+        <select id="sortSelect">
+          <option value="">Sort By</option>
+          <option value="price">Price</option>
+          <option value="date">Date</option>
+        </select>
+      </div>
+    </div>
+    <div class="category-list" id="categoryList">
+      <!-- Category buttons will be injected here -->
+    </div>
+    <div class="products-grid" id="productsGrid">
+      <!-- Product cards will be injected here -->
+    </div>
+  </div>
+</body>
+</html> 

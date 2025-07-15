@@ -8,17 +8,20 @@ const app = express();
 const testDB = require('./routes/test-db');
 const itemRoutes = require('./routes/item');
 const authRoutes = require('./routes/auth');
+const adminRoutes = require('./routes/admin');
 
 // ✅ Middleware
 app.use(cors({
-  origin: '*', // or specify your frontend origin
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  origin: 'http://localhost:3000',
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
 }));
 app.use(express.json());
 app.use('/api/v1', testDB); 
 app.use('/api/v1', itemRoutes);
 app.use('/api/v1', authRoutes);
+app.use('/api/v1/admin', adminRoutes);
 
 // Serve uploads folder for profile images and other uploads
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));

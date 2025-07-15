@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Your Order - Home Haven</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <style>
+    body { background: #f7f4f0; margin: 0; font-family: 'Segoe UI', Arial, sans-serif; }
+    .checkout-container { max-width: 1100px; margin: 8px auto 90px auto; padding: 0 8px; }
+    .checkout-title { font-size: 2.1rem; font-family: Georgia, serif; color: #444; margin: 28px 0 18px 0; font-weight: 600; text-align: left; }
+    .checkout-item { background: #f2e5d2; border-radius: 16px; display: flex; align-items: center; padding: 12px 16px; margin-bottom: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.03); position: relative; min-height: 70px; }
+    .checkout-item-img { width: 54px; height: 54px; border-radius: 50%; background: #d6eaff; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-right: 14px; }
+    .checkout-item-main { flex: 1; display: flex; align-items: center; gap: 0.7em; }
+    .checkout-item-details { display: flex; flex-direction: column; justify-content: center; min-width: 180px; }
+    .checkout-item-name { font-size: 1.1rem; font-family: Georgia, serif; font-weight: 600; color: #444; line-height: 1.1; }
+    .checkout-item-meta { color: #7a7a7a; font-size: 0.92rem; margin-bottom: 1px; }
+    .checkout-item-color { color: #7a8a7a; font-size: 0.98rem; margin-left: 18px; min-width: 80px; text-align: left; }
+    .checkout-item-qtybox { display: flex; align-items: center; background: #e7e0d2; border-radius: 6px; padding: 2px 6px; gap: 0.2em; margin: 0 12px; }
+    .checkout-item-qtybox input { width: 1.7em; text-align: center; font-size: 1rem; border: none; background: transparent; border-radius: 0; padding: 0; }
+    .checkout-item-price { font-size: 1.2rem; font-weight: 700; color: #444; margin-left: 10px; min-width: 70px; text-align: right; }
+    .checkout-summary { margin: 32px 0 0 0; font-size: 1.3rem; color: #444; }
+    .checkout-summary-row { display: flex; justify-content: flex-end; align-items: center; margin-bottom: 6px; }
+    .checkout-summary-label { min-width: 140px; text-align: right; margin-right: 18px; color: #444; font-size: 1.1rem; }
+    .checkout-summary-value { min-width: 90px; text-align: right; color: #444; font-size: 1.1rem; }
+    .checkout-summary-total { font-weight: 700; color: #5a6a5a; font-size: 1.25rem; }
+    .checkout-footer { position: fixed; left: 0; bottom: 0; width: 100vw; background: #f6e3e3; display: flex; align-items: center; justify-content: flex-end; padding: 0.7em 2.5em 0.7em 2.5em; z-index: 1002; box-shadow: 0 -2px 12px rgba(0,0,0,0.07); }
+    .checkout-order { background: #cfa7a7; color: #fff; font-size: 1.1rem; font-weight: 600; border: none; border-radius: 2em; padding: 0.5em 1.7em; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.07); transition: background 0.2s; margin-right: 6vw; }
+    .checkout-order:hover { background: #b97c7c; }
+    .checkout-back { position: absolute; right: 2.5em; top: 1.5em; color: #444; font-size: 1.1rem; text-decoration: none; }
+    @media (max-width: 700px) {
+      .checkout-title { font-size: 1.3rem; }
+      .checkout-container { margin: 12px auto 90px auto; padding: 0 1vw; }
+      .checkout-item { flex-direction: column; align-items: flex-start; padding: 10px 4px; }
+      .checkout-item-img { margin: 0 0 8px 0; }
+      .checkout-item-qtybox { margin: 6px 0; }
+      .checkout-item-price { margin: 6px 0 0 0; text-align: left; }
+      .checkout-summary-row { flex-direction: column; align-items: flex-end; gap: 2px; }
+      .checkout-footer { flex-direction: column; gap: 0.5em; padding: 0.7em 0.7em; }
+      .checkout-order { margin-right: 0; width: 100%; }
+      .checkout-back { position: static; margin-bottom: 1em; }
+    }
+  </style>
+  <script>
+    function injectHeader() {
+      fetch('header_customer.html')
+        .then(res => res.text())
+        .then(html => {
+          const headerDiv = document.createElement('div');
+          headerDiv.innerHTML = html;
+          document.body.insertBefore(headerDiv, document.body.firstChild);
+        });
+    }
+    document.addEventListener('DOMContentLoaded', injectHeader);
+  </script>
+</head>
+<body>
+  <div style="height:84px;"></div>
+  <a href="product_customer.html" class="checkout-back">&#8592; Back to Shop</a>
+  <div class="checkout-container">
+    <div class="checkout-title">Your Order</div>
+    <div class="checkout-item">
+      <div class="checkout-item-img"><span>🌄</span></div>
+      <div class="checkout-item-main">
+        <div class="checkout-item-details">
+          <div class="checkout-item-name">Item Name</div>
+          <div class="checkout-item-meta">Item ID? or Order ID?</div>
+        </div>
+        <span class="checkout-item-color">Color [if applicable]</span>
+      </div>
+      <div class="checkout-item-qtybox">
+        <input type="text" value="1" readonly>
+      </div>
+      <div class="checkout-item-price">₱0.00</div>
+    </div>
+    <div class="checkout-item">
+      <div class="checkout-item-img"><span>🌄</span></div>
+      <div class="checkout-item-main">
+        <div class="checkout-item-details">
+          <div class="checkout-item-name">Item Name</div>
+          <div class="checkout-item-meta">Item ID? or Order ID?</div>
+        </div>
+        <span class="checkout-item-color">Beige</span>
+      </div>
+      <div class="checkout-item-qtybox">
+        <input type="text" value="2" readonly>
+      </div>
+      <div class="checkout-item-price">₱0.00</div>
+    </div>
+    <div class="checkout-summary">
+      <div class="checkout-summary-row">
+        <span class="checkout-summary-label">Subtotal:</span>
+        <span class="checkout-summary-value">₱0.00</span>
+      </div>
+      <div class="checkout-summary-row">
+        <span class="checkout-summary-label">Shipping Fee:</span>
+        <span class="checkout-summary-value">₱0.00</span>
+      </div>
+      <div class="checkout-summary-row checkout-summary-total">
+        <span class="checkout-summary-label">Total:</span>
+        <span class="checkout-summary-value">₱0.00</span>
+      </div>
+    </div>
+  </div>
+  <div class="checkout-footer">
+    <button class="checkout-order">Order Now</button>
+  </div>
+</body>
+</html> 

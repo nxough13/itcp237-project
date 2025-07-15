@@ -17,11 +17,48 @@
     <div id="dropdownMenu" style="display:none; position:absolute; top:60px; right:0; background:#fff; border-radius:12px; box-shadow:0 8px 32px rgba(0,0,0,0.12); min-width:200px; z-index:2000; padding:1rem 0;">
       <a href="wishlist.html" style="display:flex; align-items:center; gap:0.7rem; color:#6d7a6d; font-size:1.1rem; text-decoration:none; padding:0.7rem 1.5rem;">&#10084; My Wishlist</a>
       <a href="products.html" style="display:flex; align-items:center; gap:0.7rem; color:#6d7a6d; font-size:1.1rem; text-decoration:none; padding:0.7rem 1.5rem;">&#128722; Products</a>
-      <a href="#" style="display:flex; align-items:center; gap:0.7rem; color:#6d7a6d; font-size:1.1rem; text-decoration:none; padding:0.7rem 1.5rem;">&#128172; FAQ</a>
+      <a href="admin/admin.html" style="display:flex; align-items:center; gap:0.7rem; color:#6d7a6d; font-size:1.1rem; text-decoration:none; padding:0.7rem 1.5rem;">Admin Dashboard</a>
       <a href="cart.html" style="display:flex; align-items:center; gap:0.7rem; color:#6d7a6d; font-size:1.1rem; text-decoration:none; padding:0.7rem 1.5rem;">&#128722; Cart</a>
     </div>
     <button id="loginBtn" style="display:none; background:#8B5C2A; color:#fff; border:none; border-radius:8px; padding:0.5rem 1.3rem; font-size:1.1rem; font-weight:700; cursor:pointer; margin-left:1rem;">Login</button>
     <button id="signupBtn" style="display:none; background:#bfa77a; color:#fff; border:none; border-radius:8px; padding:0.5rem 1.3rem; font-size:1.1rem; font-weight:700; cursor:pointer; margin-left:0.5rem;">Sign Up</button>
   </nav>
 </header>
-<div style="height:84px;"></div> 
+<div style="height:84px;"></div>
+<script>
+// Dynamic navigation based on user role
+$(function() {
+  const userRole = localStorage.getItem('user_role');
+  // Hide all role-specific links by default
+  $('#dropdownMenu a').hide();
+  // Show links based on role
+  if (userRole === 'admin') {
+    // Admin: show admin dashboard, products, wishlist, cart
+    $('#dropdownMenu a[href="admin/index.html"]').show();
+    $('#dropdownMenu a[href="products.html"]').show();
+    $('#dropdownMenu a[href="wishlist.html"]').show();
+    $('#dropdownMenu a[href="cart.html"]').show();
+  } else if (userRole === 'seller') {
+    // Seller: show seller dashboard (now seller/index.html), products
+    if (!$('#dropdownMenu a[href="seller/index.html"]').length) {
+      $('#dropdownMenu').prepend('<a href="seller/index.html" style="display:flex; align-items:center; gap:0.7rem; color:#6d7a6d; font-size:1.1rem; text-decoration:none; padding:0.7rem 1.5rem;">Seller Dashboard</a>');
+    }
+    $('#dropdownMenu a[href="seller/index.html"]').show();
+    $('#dropdownMenu a[href="products.html"]').show();
+    $('#dropdownMenu a[href="cart.html"]').show();
+  } else if (userRole === 'customer') {
+    // Customer: show customer dashboard (now customer/index.html), wishlist, cart
+    if (!$('#dropdownMenu a[href="customer/index.html"]').length) {
+      $('#dropdownMenu').prepend('<a href="customer/index.html" style="display:flex; align-items:center; gap:0.7rem; color:#6d7a6d; font-size:1.1rem; text-decoration:none; padding:0.7rem 1.5rem;">Customer Dashboard</a>');
+    }
+    $('#dropdownMenu a[href="customer/index.html"]').show();
+    $('#dropdownMenu a[href="wishlist.html"]').show();
+    $('#dropdownMenu a[href="cart.html"]').show();
+  } else {
+    // Plain user: only show products, wishlist, cart
+    $('#dropdownMenu a[href="products.html"]').show();
+    $('#dropdownMenu a[href="wishlist.html"]').show();
+    $('#dropdownMenu a[href="cart.html"]').show();
+  }
+});
+</script> 

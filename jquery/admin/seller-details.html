@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seller Details - Home Haven Admin</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    body { background: var(--background-light, #f6f3ef); font-family: 'Montserrat', sans-serif; color: var(--text-dark, #3d2c1c); margin: 0; padding: 0; }
+    .container { max-width: 1200px; margin: 2rem auto; background: white; border-radius: 16px; box-shadow: 0 4px 20px rgba(139, 92, 42, 0.08); padding: 2rem; }
+    h1 { font-family: 'Playfair Display', serif; font-size: 2.2rem; margin-bottom: 1.5rem; }
+    .profile-img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 1px solid #ccc; }
+    .back-btn { background: #bfa77a; color: #3d2c1c; border: none; border-radius: 6px; padding: 0.5rem 1.2rem; font-weight: 500; cursor: pointer; margin-bottom: 1.5rem; }
+    .status-btn { border: none; border-radius: 6px; padding: 0.3rem 0.8rem; font-weight: 500; cursor: pointer; color: white; background: #28a745; transition: background 0.2s; }
+    .status-btn.inactive { background: #dc3545; }
+    .action-success { color: #28a745; font-size: 0.95rem; margin-left: 0.5rem; }
+    .action-error { color: #dc3545; font-size: 0.95rem; margin-left: 0.5rem; }
+    @media (max-width: 700px) { .container { padding: 0.5rem; } h1 { font-size: 1.3rem; } table { font-size: 0.9rem; } }
+  </style>
+</head>
+<body>
+  <div id="header"></div>
+  <div class="container">
+    <button class="back-btn" onclick="window.location.href='sellers.html'">&larr; Back to Sellers</button>
+    <h1>Seller Details</h1>
+    <div id="sellerInfo" style="margin-bottom:2rem;"></div>
+    <h2>Products</h2>
+    <table id="itemsTable" class="display" style="width:100%">
+      <thead>
+        <tr>
+          <th>Item ID</th>
+          <th>Name</th>
+          <th>Description</th>
+          <th>SKU</th>
+          <th>Price</th>
+          <th>Image</th>
+          <th>Status</th>
+          <th>Created At</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  <script>
+    $('#header').load('../header.html');
+    // Auth check
+    const token = localStorage.getItem('jwt_token');
+    const userRole = localStorage.getItem('user_role');
+    if (!token || userRole !== 'admin') {
+      window.location.href = '../login.html?reason=unauthorized';
+    }
+    // Get sellerId from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const sellerId = urlParams.get('sellerId');
+    if (!sellerId) {
+      alert('No seller selected.');
+      window.location.href = 'sellers.html';
+    }
+    // Fetch and display seller info
+    function loadSellerInfo() {
+      $.ajax({
+        url: `http://localhost:4000/api/v1/admin/sellers`,
+        method: 'GET',
+        headers: { 'Authorization': 'Bearer ' + token },
+        success: function(res) {
+          if (res.success) {
+            const seller = res.sellers.find(s => s.id == sellerId);
+            if (!seller) {
+              $('#sellerInfo').html('<b>Seller not found.</b>');
+              return;
+            }
+            $('#sellerInfo').html(`
+              <b>Name:</b> ${seller.name} <br>
+              <b>Business:</b> ${seller.business_name} <br>
+              <b>Email:</b> ${seller.email} <br>
+              <b>Phone:</b> ${seller.business_phone || ''} <br>
+              <b>Verified:</b> ${seller.is_verified ? 'Yes' : 'No'}
+            `);
+          } else {
+            $('#sellerInfo').html('<b>Failed to load seller info.</b>');
+          }
+        },
+        error: function() {
+          $('#sellerInfo').html('<b>Error loading seller info.</b>');
+        }
+      });
+    }
+    // Fetch and display seller's items
+    function loadItems() {
+      $.ajax({
+        url: `http://localhost:4000/api/v1/admin/sellers/${sellerId}/items`,
+        method: 'GET',
+        headers: { 'Authorization': 'Bearer ' + token },
+        success: function(res) {
+          if (res.success) {
+            table.clear().rows.add(res.items).draw();
+          } else {
+            alert('Failed to load items: ' + res.message);
+          }
+        },
+        error: function(xhr) {
+          alert('Error loading items: ' + (xhr.responseJSON?.message || xhr.statusText));
+        }
+      });
+    }
+    // DataTable setup
+    const table = $('#itemsTable').DataTable({
+      columns: [
+        { data: 'item_id' },
+        { data: 'name' },
+        { data: 'description' },
+        { data: 'sku' },
+        { data: 'sell_price' },
+        { data: 'image', render: renderImage },
+        { data: 'status', render: renderStatus },
+        { data: 'created_at', render: renderDate }
+      ]
+    });
+    function renderImage(data) {
+      if (!data) return '';
+      return `<img src="http://localhost:4000${data}" class="profile-img" alt="Product">`;
+    }
+    function renderStatus(data, type, row) {
+      if (type === 'display') {
+        const btnClass = data === 'active' ? '' : 'inactive';
+        const btnText = data === 'active' ? 'Active' : 'Inactive';
+        const newStatus = data === 'active' ? 'inactive' : 'active';
+        return `<button class="status-btn ${btnClass}" data-id="${row.item_id}" data-status="${data}">${btnText}</button><span class="action-success" style="display:none;">✔</span><span class="action-error" style="display:none;"></span>`;
+      }
+      return data;
+    }
+    function renderDate(data) {
+      if (!data) return '';
+      return new Date(data).toLocaleString();
+    }
+    // Handle status toggle
+    $('#itemsTable tbody').on('click', '.status-btn', function() {
+      const itemId = $(this).data('id');
+      const currentStatus = $(this).data('status');
+      const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+      const $row = $(this).closest('td');
+      $.ajax({
+        url: `http://localhost:4000/api/v1/admin/items/${itemId}/status`,
+        method: 'PATCH',
+        headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+        data: JSON.stringify({ status: newStatus }),
+        success: function(res) {
+          if (res.success) {
+            loadItems();
+          } else {
+            $row.find('.action-error').text(res.message).show().delay(2000).fadeOut();
+          }
+        },
+        error: function(xhr) {
+          $row.find('.action-error').text(xhr.responseJSON?.message || xhr.statusText).show().delay(2000).fadeOut();
+        }
+      });
+    });
+    // Initial load
+    loadSellerInfo();
+    loadItems();
+  </script>
+</body>
+</html> 

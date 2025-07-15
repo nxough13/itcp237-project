@@ -480,8 +480,29 @@
       <div style="display:flex; justify-content:flex-end; margin-bottom:2.2rem;">
         <button type="button" class="action-btn" id="saveUserBtn">Save User Details</button>
       </div>
-      <!-- Customer Details Section (conditionally rendered) -->
-      <div id="customerSectionWrapper"></div>
+      <!-- Profile Section -->
+      <div class="profile-section">
+        <h2>Profile</h2>
+        <!-- Profile fields here -->
+        <!-- ... -->
+        <div id="upgradeButtons" style="margin-top:1.5rem;">
+          <button id="upgradeCustomerBtn" class="action-btn">Upgrade to Customer</button>
+          <button id="upgradeSellerBtn" class="action-btn" style="margin-left:1rem;">Upgrade to Seller</button>
+        </div>
+      </div>
+      <!-- Customer Section (hidden unless role is customer) -->
+      <div class="customer-section" style="display:none; margin-top:2rem;">
+        <h2>Customer Details</h2>
+        <!-- Customer input fields here -->
+        <!-- ... -->
+      </div>
+      <!-- Seller Section (hidden unless role is seller) -->
+      <div class="seller-section" style="display:none; margin-top:2rem;">
+        <h2>Seller Details</h2>
+        <div id="sellerPendingNote" style="color:#b85c2a; margin-bottom:1rem; display:none;">Your seller upgrade request is pending admin approval. You can edit your seller info once approved.</div>
+        <!-- Seller input fields here, disabled if not verified -->
+        <!-- ... -->
+      </div>
       <div class="profile-message" id="profileMessage"></div>
       <button type="button" class="action-btn pill-logout" id="logoutBtnProfile" style="width:100%; margin-top:2rem;">Logout</button>
     </form>
@@ -653,6 +674,8 @@
           }
           // Render customer section based on role
           renderCustomerSection(profile.role, profile);
+          // On page load, show/hide upgrade buttons and sections based on user role
+          updateProfileUI(profile);
         }
       })
       .catch(err => {
@@ -721,6 +744,43 @@
     // Load profile on page load
     document.addEventListener('DOMContentLoaded', function() {
       loadProfile();
+    });
+
+    // On page load, show/hide upgrade buttons and sections based on user role
+    function updateProfileUI(user) {
+      if (user.role === 'user') {
+        $('#upgradeButtons').show();
+        $('.customer-section').hide();
+        $('.seller-section').hide();
+      } else {
+        $('#upgradeButtons').hide();
+        if (user.role === 'customer') {
+          $('.customer-section').show();
+          $('.seller-section').hide();
+        } else if (user.role === 'seller') {
+          $('.customer-section').hide();
+          $('.seller-section').show();
+          if (user.is_verified === 0) {
+            $('#sellerPendingNote').show();
+            $('.seller-section input, .seller-section textarea').prop('disabled', true);
+          } else {
+            $('#sellerPendingNote').hide();
+            $('.seller-section input, .seller-section textarea').prop('disabled', false);
+          }
+        }
+      }
+    }
+    $('#upgradeCustomerBtn').on('click', function() {
+      // Show customer section for editing
+      $('.customer-section').show();
+      $('.seller-section').hide();
+    });
+    $('#upgradeSellerBtn').on('click', function() {
+      // Show seller section, fields disabled, show pending note
+      $('.seller-section').show();
+      $('.customer-section').hide();
+      $('#sellerPendingNote').show();
+      $('.seller-section input, .seller-section textarea').prop('disabled', true);
     });
   </script>
 </body>
