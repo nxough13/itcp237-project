@@ -107,7 +107,7 @@
       try {
         // Get seller info for the logged-in user
         const res = await $.get(API_BASE + '/seller/profile');
-        const seller = res.seller;
+        const seller = res.profile; // <-- FIXED
         let html = '';
         if (!seller) {
           html = '<div class="text-danger">Seller information not found.</div>';

@@ -112,5 +112,68 @@
     <a href="product_customer.html" class="cart-back">&#8592; Back to Shop</a>
     <button class="cart-checkout">Checkout: ₱0.00</button>
   </div>
+  <script>
+// Load cart from localStorage and render
+async function loadCart() {
+  let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+  if (!cart.length) {
+    document.querySelector('.cart-container').innerHTML = '<div class="cart-title">Your Shopping Cart</div><div style="text-align:center; color:#888; margin:2em 0;">Your cart is empty.</div>';
+    return;
+  }
+  // Fetch product details for each item
+  let products = [];
+  for (const item of cart) {
+    try {
+      const res = await fetch(`http://localhost:4000/api/v1/products/details/${item.productId}`);
+      const data = await res.json();
+      if (data && data.product) {
+        products.push({ ...data.product, quantity: item.quantity });
+      }
+    } catch {}
+  }
+  // Render cart items
+  let html = '<div class="cart-title">Your Shopping Cart</div>';
+  let total = 0;
+  products.forEach(product => {
+    const subtotal = product.sell_price * product.quantity;
+    total += subtotal;
+    html += `<div class="cart-item">
+      <div class="cart-item-img"><img src="${Array.isArray(product.image) ? product.image[0] : product.image}" style="width:54px;height:54px;object-fit:cover;border-radius:50%;"></div>
+      <div class="cart-item-main">
+        <div class="cart-item-details">
+          <div class="cart-item-name">${product.name}</div>
+          <div class="cart-item-meta">${product.description || ''}</div>
+        </div>
+        <div class="cart-item-qtybox">
+          <button onclick="updateQty(${product.item_id}, -1)">-</button>
+          <input type="text" value="${product.quantity}" readonly>
+          <button onclick="updateQty(${product.item_id}, 1)">+</button>
+        </div>
+        <div class="cart-item-price">₱${(product.sell_price * product.quantity).toLocaleString()}</div>
+        <button class="cart-item-remove" onclick="removeFromCart(${product.item_id})">X</button>
+      </div>
+    </div>`;
+  });
+  html += `<div class="cart-footer"><div>Total: <b>₱${total.toLocaleString()}</b></div></div>`;
+  document.querySelector('.cart-container').innerHTML = html;
+}
+function updateQty(productId, delta) {
+  let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+  const item = cart.find(i => i.productId === productId);
+  if (item) {
+    item.quantity += delta;
+    if (item.quantity < 1) item.quantity = 1;
+    localStorage.setItem('cart', JSON.stringify(cart));
+    loadCart();
+  }
+}
+function removeFromCart(productId) {
+  let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+  cart = cart.filter(i => i.productId !== productId);
+  localStorage.setItem('cart', JSON.stringify(cart));
+  loadCart();
+}
+document.addEventListener('DOMContentLoaded', loadCart);
+</script>
 </body>
 </html> 

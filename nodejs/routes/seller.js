@@ -33,9 +33,17 @@ function requireSellerRole(req, res, next) {
 router.get('/seller/products', authenticateJWT, requireSellerRole, async (req, res) => {
   try {
     const [products] = await db.query('SELECT * FROM item WHERE seller_id = ?', [req.user.id]);
-    // Parse image JSON for each product
+    // Parse image JSON or comma-separated string for each product
     products.forEach(p => {
-      try { p.image = JSON.parse(p.image); } catch { p.image = []; }
+      try {
+        p.image = JSON.parse(p.image);
+        if (!Array.isArray(p.image)) throw new Error();
+      } catch {
+        // Fallback: split by comma if not JSON
+        p.image = typeof p.image === 'string' && p.image.trim() !== ''
+          ? p.image.split(',').map(s => s.trim()).filter(Boolean)
+          : [];
+      }
     });
     res.json({ success: true, products });
   } catch (err) {
@@ -141,6 +149,18 @@ router.delete('/seller/products/:id/image', authenticateJWT, requireSellerRole, 
   }
 });
 
+// DELETE a product
+router.delete('/seller/products/:id', authenticateJWT, requireSellerRole, async (req, res) => {
+  try {
+    // Optionally: delete images from disk here if needed
+    await db.query('DELETE FROM item WHERE item_id = ? AND seller_id = ?', [req.params.id, req.user.id]);
+    await db.query('DELETE FROM stock WHERE item_id = ?', [req.params.id]);
+    res.json({ success: true, message: 'Product deleted.' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to delete product.' });
+  }
+});
+
 // ----------- CATEGORIES CRUD -----------
 // GET all categories (global)
 router.get('/seller/categories', authenticateJWT, requireSellerRole, async (req, res) => {
@@ -199,70 +219,66 @@ router.delete('/seller/categories/:id', authenticateJWT, requireSellerRole, asyn
   }
 });
 
-// ----------- ORDERS FOR SELLER PRODUCTS -----------
+// ----------- ORDERS FOR SELLER DASHBOARD -----------
 // GET all orders for this seller's products
 router.get('/seller/orders', authenticateJWT, requireSellerRole, async (req, res) => {
   try {
-    // Join item, orderline, orderinfo, customer to get all orders for seller's products
+    // Get all products for this seller
+    const [products] = await db.query('SELECT item_id, name, category_id FROM item WHERE seller_id = ?', [req.user.id]);
+    if (!products.length) return res.json({ success: true, orders: [] });
+    const itemIds = products.map(p => p.item_id);
+    // Get all order lines for these products, join with orderinfo and customer
     const [orders] = await db.query(`
       SELECT 
-        oi.orderinfo_id, oi.order_number, oi.date_placed, oi.status AS order_status, oi.payment_status, oi.total_amount,
-        ol.orderline_id, ol.item_id, ol.item_name, ol.quantity, ol.unit_price, ol.total_price,
-        c.customer_id, c.fname AS customer_fname, c.lname AS customer_lname,
-        i.seller_id, i.name AS product_name, i.image AS product_image
+        o.orderinfo_id,
+        o.order_number,
+        o.date_placed,
+        o.status AS order_status,
+        ol.item_id,
+        ol.item_name AS product_name,
+        ol.quantity,
+        c.fname AS customer_fname,
+        c.lname AS customer_lname
       FROM orderline ol
-      JOIN orderinfo oi ON ol.orderinfo_id = oi.orderinfo_id
-      JOIN customer c ON oi.customer_id = c.customer_id
-      JOIN item i ON ol.item_id = i.item_id
-      WHERE i.seller_id = ?
-      ORDER BY oi.date_placed DESC
-    `, [req.user.id]);
-    // Parse product image JSON if needed
-    orders.forEach(o => {
-      try { o.product_image = JSON.parse(o.product_image); } catch { o.product_image = []; }
-    });
+      JOIN orderinfo o ON ol.orderinfo_id = o.orderinfo_id
+      JOIN customer c ON o.customer_id = c.customer_id
+      WHERE ol.item_id IN (${itemIds.map(() => '?').join(',')})
+      ORDER BY o.date_placed DESC
+    `, itemIds);
     res.json({ success: true, orders });
   } catch (err) {
-    res.status(500).json({ success: false, message: 'Failed to fetch seller orders.' });
+    res.status(500).json({ success: false, message: 'Failed to fetch orders.', error: err.message });
   }
 });
 
+// ----------- SELLER PROFILE -----------
 // GET seller profile for the logged-in seller
 router.get('/seller/profile', authenticateJWT, requireSellerRole, async (req, res) => {
   try {
-    const [rows] = await db.query('SELECT * FROM sellers WHERE user_id = ?', [req.user.id]);
-    if (rows.length === 0) {
-      return res.status(404).json({ success: false, message: 'Seller profile not found.' });
-    }
-    res.json({ success: true, seller: rows[0] });
+    console.log('Fetching seller profile for user_id:', req.user.id);
+    const [rows] = await db.query(`
+      SELECT 
+        s.seller_id,
+        s.business_name,
+        s.business_description,
+        s.business_address,
+        s.business_phone,
+        s.business_email,
+        s.is_verified,
+        u.name AS user_name,
+        u.email AS user_email,
+        u.role AS user_role
+      FROM sellers s
+      JOIN users u ON s.user_id = u.id
+      WHERE s.user_id = ?
+      LIMIT 1
+    `, [req.user.id]);
+    console.log('Query result:', rows);
+    if (!rows.length) return res.status(404).json({ success: false, message: 'Seller profile not found.' });
+    res.json({ success: true, profile: rows[0] });
   } catch (err) {
-    res.status(500).json({ success: false, message: 'Failed to fetch seller profile.' });
-  }
-});
-
-// PUBLIC: Get all products for a specific seller (for customer catalog view)
-router.get('/catalog/seller/:seller_id', async (req, res) => {
-  try {
-    const sellerId = req.params.seller_id;
-    // Get seller info
-    const [sellerRows] = await db.query('SELECT * FROM sellers WHERE seller_id = ?', [sellerId]);
-    if (sellerRows.length === 0) {
-      return res.status(404).json({ success: false, message: 'Seller not found.' });
-    }
-    // Get products for this seller, join category for name
-    const [products] = await db.query(`
-      SELECT i.*, c.name AS category_name
-      FROM item i
-      LEFT JOIN categories c ON i.category_id = c.category_id
-      WHERE i.seller_id = ? AND i.status = 'active'
-    `, [sellerId]);
-    // Parse image JSON for each product
-    products.forEach(p => {
-      try { p.image = JSON.parse(p.image); } catch { p.image = p.image; }
-    });
-    res.json({ success: true, products, seller: sellerRows[0] });
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'Failed to fetch seller catalog.' });
+    console.error('Error fetching seller profile:', err);
+    res.status(500).json({ success: false, message: 'Failed to fetch seller profile.', error: err.message });
   }
 });
 

@@ -1099,8 +1099,15 @@
 
     // Add to cart
     function addToCart(productId) {
-      // TODO: Implement cart functionality
-      showToast('Added to cart!');
+      let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+      const existing = cart.find(item => item.productId === productId);
+      if (existing) {
+        existing.quantity += 1;
+      } else {
+        cart.push({ productId, quantity: 1 });
+      }
+      localStorage.setItem('cart', JSON.stringify(cart));
+      showToast ? showToast('Added to cart!') : alert('Added to cart!');
     }
 
     // Quick view
