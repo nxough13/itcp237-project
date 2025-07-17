@@ -588,6 +588,13 @@
   </style>
 </head>
 <body>
+  <div id="headerContainer"></div>
+  <script>
+    $(function() {
+      $("#headerContainer").load("../header.html");
+    });
+  </script>
+  <div style="height:16px;"></div>
   <div class="loading-spinner">
     <div class="spinner"></div>
   </div>
@@ -694,8 +701,10 @@
     let currentPage = 1;
     let productsPerPage = 12;
     let currentView = 'grid';
-    let wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
+    let wishlist = [];
     const API_BASE = 'http://localhost:4000/api/v1';
+    const token = localStorage.getItem('jwt_token');
+    const isLoggedIn = !!token;
 
     // Show loading spinner
     function showLoading() {
@@ -1016,17 +1025,74 @@
       $('html, body').animate({ scrollTop: $('.products-section').offset().top - 100 }, 500);
     }
 
-    // Toggle wishlist
-    function toggleWishlist(productId) {
-      const index = wishlist.indexOf(productId);
-      if (index > -1) {
-        wishlist.splice(index, 1);
-        showToast('Removed from wishlist');
-      } else {
-        wishlist.push(productId);
-        showToast('Added to wishlist');
+    // Fetch wishlist from backend if logged in
+    async function fetchWishlist() {
+      if (!isLoggedIn) {
+        wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
+        return;
       }
-      localStorage.setItem('wishlist', JSON.stringify(wishlist));
+      try {
+        const res = await fetch(`${API_BASE}/wishlist`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const data = await res.json();
+        if (data.success) wishlist = data.wishlist;
+        else wishlist = [];
+      } catch { wishlist = []; }
+    }
+
+    // Add to wishlist (backend or localStorage)
+    async function addToWishlist(productId) {
+      if (!isLoggedIn) {
+        if (!wishlist.includes(productId)) wishlist.push(productId);
+        localStorage.setItem('wishlist', JSON.stringify(wishlist));
+        showToast('Added to wishlist');
+        return;
+      }
+      try {
+        const res = await fetch(`${API_BASE}/wishlist`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ item_id: productId })
+        });
+        const data = await res.json();
+        if (data.success) {
+          if (!wishlist.includes(productId)) wishlist.push(productId);
+          showToast('Added to wishlist');
+        } else {
+          showToast('Failed to add to wishlist', 'error');
+        }
+      } catch { showToast('Failed to add to wishlist', 'error'); }
+    }
+
+    // Remove from wishlist (backend or localStorage)
+    async function removeFromWishlist(productId) {
+      if (!isLoggedIn) {
+        wishlist = wishlist.filter(x => x != productId);
+        localStorage.setItem('wishlist', JSON.stringify(wishlist));
+        showToast('Removed from wishlist');
+        return;
+      }
+      try {
+        const res = await fetch(`${API_BASE}/wishlist/${productId}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (data.success) {
+          wishlist = wishlist.filter(x => x != productId);
+          showToast('Removed from wishlist');
+        } else {
+          showToast('Failed to remove from wishlist', 'error');
+        }
+      } catch { showToast('Failed to remove from wishlist', 'error'); }
+    }
+
+    // Toggle wishlist
+    async function toggleWishlist(productId) {
+      if (wishlist.includes(productId)) {
+        await removeFromWishlist(productId);
+      } else {
+        await addToWishlist(productId);
+      }
       renderProducts();
       renderFeaturedProducts();
     }
@@ -1048,8 +1114,9 @@
       window.location.href = `product-details.html?id=${productId}`;
     }
 
-    // Initialize
-    $(document).ready(function() {
+    // On page load, fetch wishlist and products
+    $(document).ready(async function() {
+      await fetchWishlist();
       loadCategories();
       loadProducts();
       

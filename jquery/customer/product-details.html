@@ -62,7 +62,13 @@
   </style>
 </head>
 <body>
-  <div style="height:64px;"></div>
+  <div id="headerContainer"></div>
+  <script>
+    $(function() {
+      $("#headerContainer").load("../header.html");
+    });
+  </script>
+  <div style="height:16px;"></div>
   <div class="details-container">
     <div class="details-left">
       <div class="carousel-main-img" id="mainImg" style="position:relative;">
@@ -109,7 +115,14 @@
       </div>
     </div>
   </div>
-  <div id="wishlistNotify" style="display:none;position:fixed;top:30px;left:50%;transform:translateX(-50%);background:#8B5C2A;color:#fff;padding:12px 28px;border-radius:8px;font-size:1.05rem;z-index:9999;box-shadow:0 2px 12px rgba(0,0,0,0.13);transition:opacity 0.2s;"></div>
+  <div id="reviewsContainer" style="max-width:1100px;margin:32px auto 0 auto;background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,0.07);padding:24px 18px 18px 18px;">
+    <h2 style="font-size:1.3rem;color:#8B5C2A;margin-bottom:0.7em;">Customer Reviews</h2>
+    <div id="reviewsList">No reviews yet.</div>
+  </div>
+  <div id="wishlistModal" style="display:none;position:fixed;top:50px;left:50%;transform:translateX(-50%,0) scale(0.95);background:#fffbe6;color:#8B5C2A;padding:18px 36px;border-radius:14px;font-size:1.15rem;z-index:9999;box-shadow:0 4px 24px rgba(139,92,42,0.13);transition:opacity 0.2s,transform 0.2s;opacity:0;pointer-events:none;">
+    <span id="wishlistModalIcon" style="font-size:1.7rem;vertical-align:middle;margin-right:0.7em;"></span>
+    <span id="wishlistModalMsg"></span>
+  </div>
   <script>
     // --- Helper: Get product ID from URL ---
     function getProductId() {
@@ -117,32 +130,109 @@
       return params.get('id');
     }
     // --- Wishlist logic (localStorage) ---
-    let wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
+    let wishlist = [];
+    const API_BASE = 'http://localhost:4000/api/v1';
+    const token = localStorage.getItem('jwt_token');
+    const isLoggedIn = !!token;
+
+    // Fetch wishlist from backend if logged in
+    async function fetchWishlist() {
+      if (!isLoggedIn) {
+        wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
+        return;
+      }
+      try {
+        const res = await fetch(`${API_BASE}/wishlist`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const data = await res.json();
+        if (data.success) wishlist = data.wishlist;
+        else wishlist = [];
+      } catch { wishlist = []; }
+    }
+
+    // Add to wishlist (backend or localStorage)
+    async function addToWishlist(productId) {
+      if (!isLoggedIn) {
+        if (!wishlist.includes(productId)) wishlist.push(productId);
+        localStorage.setItem('wishlist', JSON.stringify(wishlist));
+        showWishlistNotify(true);
+        return;
+      }
+      try {
+        const res = await fetch(`${API_BASE}/wishlist`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ item_id: productId })
+        });
+        const data = await res.json();
+        if (data.success) {
+          if (!wishlist.includes(productId)) wishlist.push(productId);
+          showWishlistNotify(true);
+        } else {
+          showWishlistNotify(false, data.error || 'Failed to add to wishlist');
+        }
+      } catch (err) { showWishlistNotify(false, 'Failed to add to wishlist'); }
+    }
+
+    // Remove from wishlist (backend or localStorage)
+    async function removeFromWishlist(productId) {
+      if (!isLoggedIn) {
+        wishlist = wishlist.filter(x => x != productId);
+        localStorage.setItem('wishlist', JSON.stringify(wishlist));
+        showWishlistNotify(false);
+        return;
+      }
+      try {
+        const res = await fetch(`${API_BASE}/wishlist/${productId}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (data.success) {
+          wishlist = wishlist.filter(x => x != productId);
+          showWishlistNotify(false);
+        } else {
+          showWishlistNotify(false, data.error || 'Failed to remove from wishlist');
+        }
+      } catch (err) { showWishlistNotify(false, 'Failed to remove from wishlist'); }
+    }
+
+    // Toggle wishlist
+    async function toggleWishlist(productId) {
+      if (wishlist.includes(productId)) {
+        await removeFromWishlist(productId);
+      } else {
+        await addToWishlist(productId);
+      }
+      updateWishlistBtn(productId);
+    }
+
     function updateWishlistBtn(productId) {
       const isWishlisted = wishlist.includes(productId);
       $('#wishlistBtn i').toggleClass('fas', isWishlisted).toggleClass('far', !isWishlisted);
       $('#wishlistBtn').attr('title', isWishlisted ? 'Remove from Wishlist' : 'Add to Wishlist');
     }
-    function showWishlistNotify(added) {
-      const msg = added ? 'Added to wishlist!' : 'Removed from wishlist.';
-      $('#wishlistNotify').text(msg).css({display:'block',opacity:1});
-      setTimeout(()=>{
-        $('#wishlistNotify').fadeOut(400);
-      }, 1200);
-    }
-    function toggleWishlist(productId) {
-      const idx = wishlist.indexOf(productId);
-      let added = false;
-      if (idx > -1) {
-        wishlist.splice(idx, 1);
-        added = false;
+    function showWishlistNotify(added, errorMsg) {
+      let msg, icon, color;
+      if (errorMsg) {
+        msg = errorMsg;
+        icon = '<i class="fas fa-exclamation-circle"></i>';
+        color = '#e74c3c';
+      } else if (added) {
+        msg = 'Added to wishlist!';
+        icon = '<i class="fas fa-heart"></i>';
+        color = '#8B5C2A';
       } else {
-        wishlist.push(productId);
-        added = true;
+        msg = 'Removed from wishlist.';
+        icon = '<i class="far fa-heart"></i>';
+        color = '#8B5C2A';
       }
-      localStorage.setItem('wishlist', JSON.stringify(wishlist));
-      updateWishlistBtn(productId);
-      showWishlistNotify(added);
+      $('#wishlistModalIcon').html(icon);
+      $('#wishlistModalMsg').text(msg);
+      $('#wishlistModal').css({display:'block',opacity:1,transform:'translateX(-50%,0) scale(1)',pointerEvents:'auto',color:color});
+      setTimeout(()=>{
+        $('#wishlistModal').css({opacity:0,transform:'translateX(-50%,0) scale(0.95)',pointerEvents:'none'});
+        setTimeout(()=>$('#wishlistModal').css('display','none'), 350);
+      }, 1400);
     }
     // --- Carousel logic ---
     let images = [];
@@ -150,11 +240,11 @@
     function renderCarousel() {
       // Main image
       const mainImg = images[currentImgIdx] || '';
-      $('#carouselImage').attr('src', mainImg ? mainImg : '/jquery/img/logo.png');
+      $('#carouselImage').attr('src', mainImg ? mainImg : '../img/logo.png');
       // Thumbnails
       let thumbsHtml = '';
       images.forEach((img, idx) => {
-        thumbsHtml += `<div class="carousel-thumb${idx===currentImgIdx?' selected':''}" data-idx="${idx}"><img src="${img}" alt="Thumb" onerror="this.src='/jquery/img/logo.png'"></div>`;
+        thumbsHtml += `<div class="carousel-thumb${idx===currentImgIdx?' selected':''}" data-idx="${idx}"><img src="${img}" alt="Thumb" onerror="this.src='../img/logo.png'"></div>`;
       });
       $('#thumbsRow').html(thumbsHtml);
     }
@@ -178,14 +268,19 @@
       const id = getProductId();
       if (!id) return;
       try {
-        const res = await fetch(`http://localhost:4000/api/v1/products/${id}`);
+        const res = await fetch(`http://localhost:4000/api/v1/products/details/${id}`);
         const data = await res.json();
         if (!data.success) throw new Error('Product not found');
         const p = data.product;
-        // Images: support comma-separated or single image
-        // BACKEND: To show multiple images, store image field as comma-separated URLs in DB
-        images = p.image ? p.image.split(',').map(s=>s.trim()).filter(Boolean) : [];
-        if (!images.length) images = ['/jquery/img/logo.png'];
+        // Images: support array or JSON string
+        if (Array.isArray(p.image)) {
+          images = p.image;
+        } else if (typeof p.image === 'string') {
+          try { images = JSON.parse(p.image); } catch { images = [p.image]; }
+        } else {
+          images = [];
+        }
+        if (!images.length) images = ['../img/logo.png'];
         currentImgIdx = 0;
         renderCarousel();
         // Title, desc, price, etc
@@ -197,12 +292,12 @@
         $('#qtyAvailable').text(`${maxQty} Piece${maxQty===1?'':'s'} available`);
         $('#qtyInput').val(1); // Reset quantity to 1 on load
         // Seller info
-        $('#sellerInfo').text(p.seller_name ? `Sold by: ${p.seller_name}` : 'Seller info unavailable');
-        if (p.seller_profile_image) {
-          $('#sellerImg').html(`<img src="${p.seller_profile_image}" alt="Seller" onerror="this.src='/jquery/img/logo.png'">`);
+        if (p.business_name) {
+          $('#sellerInfo').html(`Sold by: <b>${p.business_name}</b><br><span style='font-size:0.95em;'>${p.business_email ? p.business_email : ''}</span>`);
         } else {
-          $('#sellerImg').html('<i class="fas fa-user" style="font-size:1.5rem;color:#fff;"></i>');
+          $('#sellerInfo').text('Seller info unavailable');
         }
+        $('#sellerImg').html('<i class="fas fa-user" style="font-size:1.5rem;color:#fff;"></i>');
         // Sold count
         $('#prodSold').text(`${p.sold_count || 0} Sold`);
         // Ratings
@@ -227,7 +322,6 @@
           if (val < maxQty) {
             $('#qtyInput').val(val + 1);
           } else {
-            // Show error popup and highlight
             $('#qtyInput').addClass('qty-error');
             setTimeout(()=>$('#qtyInput').removeClass('qty-error'), 600);
             alert('You cannot add more than the available stock!');
@@ -248,14 +342,15 @@
       } catch (err) {
         $('#prodTitle').text('Product not found');
         $('#desc').text('This product does not exist or could not be loaded.');
-        $('#carouselImage').attr('src', '/jquery/img/logo.png');
+        $('#carouselImage').attr('src', '../img/logo.png');
       }
     }
     // --- Add to Cart/Buy Now (stub) ---
     $('#addToCartBtn').click(function() { alert('Added to cart!'); });
     $('#buyNowBtn').click(function() { alert('Proceed to checkout!'); });
-    // --- On page load ---
-    $(document).ready(function() {
+    // On page load, fetch wishlist and product details
+    $(document).ready(async function() {
+      await fetchWishlist();
       loadProductDetails();
     });
   </script>

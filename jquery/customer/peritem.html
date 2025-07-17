@@ -93,7 +93,13 @@
   </script>
 </head>
 <body>
-  <div style="height:84px;"></div>
+  <div id="headerContainer"></div>
+  <script>
+    $(function() {
+      $("#headerContainer").load("../header.html");
+    });
+  </script>
+  <div style="height:16px;"></div>
   <div class="peritem-container">
     <div class="peritem-left">
       <div class="peritem-main-img" id="mainImg"></div>

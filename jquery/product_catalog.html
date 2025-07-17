@@ -657,16 +657,9 @@
   </style>
 </head>
 <body>
-  <div class="custom-header">
-    <div class="custom-header-inner">
-      <a href="index.html" class="header-logo-link"><img src="img/logo.png" alt="Home Haven Logo" class="header-logo"></a>
-      <a href="index.html" class="header-title">HomeHaven</a>
-      <div class="header-links">
-        <a href="login.html" class="header-link">Login</a>
-        <a href="product_catalog.html" class="header-link">Products</a>
-      </div>
-    </div>
-  </div>
+  <div id="header"></div>
+  <script>$(function(){$('#header').load('header.html');});</script>
+  <div style="height:60px;"></div>
   <div class="loading-spinner">
     <div class="spinner"></div>
   </div>

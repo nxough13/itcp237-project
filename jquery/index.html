@@ -294,12 +294,16 @@
       }
     }
   </style>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 </head>
 <body>
+  <div id="header"></div>
+  <script>
+    $(function() {
+      $('#header').load('header.html');
+    });
+  </script>
 <script src="js/main.js"></script>
-
-<!-- Header Container - will be populated based on authentication status -->
-<div id="header-container"></div>
 
   <section class="hero">
     <div class="hero-art">

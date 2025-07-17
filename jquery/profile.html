@@ -6,6 +6,7 @@
   <title>Home Haven - Profile</title>
   <link rel="stylesheet" href="css/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <style>
     :root {
       --primary-color: #8B5C2A;
@@ -476,6 +477,7 @@
         <input type="text" id="phone" name="phone">
       </div>
       <div style="flex-basis:100%;"></div>
+      <div id="customerSectionWrapper"></div>
       <!-- Save User Details Button -->
       <div style="display:flex; justify-content:flex-end; margin-bottom:2.2rem;">
         <button type="button" class="action-btn" id="saveUserBtn">Save User Details</button>
@@ -593,7 +595,7 @@
         `;
         // Re-attach save handler
         document.getElementById('saveCustomerBtn').addEventListener('click', saveCustomerDetails);
-      } else {
+      } else if (role === 'user') {
         wrapper.innerHTML = `<div style="display:flex; justify-content:center; margin:2rem 0;"><button type="button" class="action-btn" id="upgradeBtn">Upgrade to Customer</button></div>`;
         document.getElementById('upgradeBtn').addEventListener('click', function() {
           const token = localStorage.getItem('jwt_token');
@@ -768,6 +770,10 @@
             $('.seller-section input, .seller-section textarea').prop('disabled', false);
           }
         }
+      }
+      // Always hide upgrade buttons for customer/seller/admin
+      if (user.role !== 'user') {
+        $('#upgradeButtons').hide();
       }
     }
     $('#upgradeCustomerBtn').on('click', function() {

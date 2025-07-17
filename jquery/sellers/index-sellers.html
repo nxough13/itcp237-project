@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seller Dashboard | HomeHaven</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" href="../css/style.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      min-height: 100vh;
+    }
+    .dashboard-header {
+      background: linear-gradient(135deg, #8B5C2A 0%, #A67C52 100%);
+      color: white;
+      padding: 28px 12px 18px 12px;
+      border-radius: 0 0 1rem 1rem;
+      margin-bottom: 2rem;
+      text-align: center;
+      box-shadow: 0 4px 16px rgba(139, 92, 42, 0.18);
+    }
+    .card {
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(139,92,42,0.07);
+      background: white;
+      border: none;
+    }
+    .card-title {
+      color: #8B5C2A;
+      font-weight: 600;
+    }
+    .chart-container {
+      background: white;
+      border-radius: 1rem;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 2px 8px rgba(139,92,42,0.07);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .chart-container canvas {
+      max-width: 400px;
+      max-height: 300px;
+      width: 100% !important;
+      height: auto !important;
+    }
+    .table-responsive {
+      background: white;
+      border-radius: 1rem;
+      padding: 1.5rem;
+      box-shadow: 0 2px 8px rgba(139,92,42,0.07);
+    }
+    .loading-spinner {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 1000;
+    }
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #8B5C2A;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .stat-value {
+      font-size: 2.2rem;
+      color: #A67C52;
+      font-weight: 700;
+    }
+    .stat-label {
+      color: #8B5C2A;
+      font-size: 1.1rem;
+      font-weight: 500;
+    }
+    .table thead th {
+      color: #8B5C2A;
+      font-weight: 600;
+    }
+    .table-striped > tbody > tr:nth-of-type(odd) {
+      background-color: #f5f7fa;
+    }
+  </style>
+</head>
+<body>
+  <div id="header"></div>
+  <script>$(function(){$('#header').load('../header.html');});</script>
+  <div class="dashboard-header">
+    <h1>Welcome, <span id="sellerName">Seller</span>!</h1>
+    <p class="lead">Your business overview and analytics</p>
+  </div>
+  <div class="loading-spinner"><div class="spinner"></div></div>
+  <div class="container">
+    <div class="row mb-4">
+      <div class="col-md-4">
+        <div class="card text-center">
+          <div class="card-body">
+            <div class="stat-label">Total Products</div>
+            <div class="stat-value" id="totalProducts">0</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card text-center">
+          <div class="card-body">
+            <div class="stat-label">Total Orders</div>
+            <div class="stat-value" id="totalOrders">0</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card text-center">
+          <div class="card-body">
+            <div class="stat-label">Most Ordered Product</div>
+            <div class="stat-value" id="mostOrderedProduct">-</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-6">
+        <div class="chart-container">
+          <h5 style="color:#8B5C2A;">Orders per Product</h5>
+          <canvas id="barChart"></canvas>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="chart-container">
+          <h5 style="color:#8B5C2A;">Orders Over Time</h5>
+          <canvas id="lineChart"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-12">
+        <div class="chart-container">
+          <h5 style="color:#8B5C2A;">Product Category Distribution</h5>
+          <canvas id="pieChart"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-12">
+        <div class="table-responsive mt-4">
+          <h5 style="color:#8B5C2A;">Recent Orders</h5>
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th>Order #</th>
+                <th>Product</th>
+                <th>Customer</th>
+                <th>Quantity</th>
+                <th>Status</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody id="recentOrdersTable">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const API_BASE = 'http://localhost:4000/api/v1'; // Updated to match backend route prefix
+    // Show/hide loading spinner
+    function showLoading() { $('.loading-spinner').show(); }
+    function hideLoading() { $('.loading-spinner').hide(); }
+    // Get JWT token from localStorage (adjust if you use cookies/session)
+    function getToken() { return localStorage.getItem('jwt_token'); }
+    // Set up AJAX with token
+    $.ajaxSetup({
+      beforeSend: function(xhr) {
+        const token = getToken();
+        if (token) xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+      }
+    });
+    // Fetch and render dashboard data
+    async function loadDashboard() {
+      showLoading();
+      try {
+        // 1. Fetch seller products
+        const productsRes = await $.get(API_BASE + '/seller/products');
+        const products = productsRes.products || [];
+        $('#totalProducts').text(products.length);
+        // 2. Fetch seller orders
+        const ordersRes = await $.get(API_BASE + '/seller/orders');
+        const orders = ordersRes.orders || [];
+        $('#totalOrders').text(orders.length);
+        // 3. Seller name (from first product or fallback)
+        let sellerName = 'Seller';
+        if (products.length > 0 && products[0].seller_id_name) sellerName = products[0].seller_id_name;
+        else if (orders.length > 0 && orders[0].product_name) sellerName = orders[0].product_name;
+        $('#sellerName').text(sellerName);
+        // 4. Most ordered product
+        const productOrderCounts = {};
+        orders.forEach(o => {
+          productOrderCounts[o.product_name] = (productOrderCounts[o.product_name] || 0) + o.quantity;
+        });
+        let mostOrdered = '-';
+        let maxOrders = 0;
+        Object.entries(productOrderCounts).forEach(([name, count]) => {
+          if (count > maxOrders) { mostOrdered = name; maxOrders = count; }
+        });
+        $('#mostOrderedProduct').text(mostOrdered);
+        // 5. Orders per product (bar chart)
+        const barLabels = Object.keys(productOrderCounts);
+        const barData = Object.values(productOrderCounts);
+        // 6. Orders over time (line chart)
+        const ordersByMonth = {};
+        orders.forEach(o => {
+          const d = new Date(o.date_placed);
+          const label = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+          ordersByMonth[label] = (ordersByMonth[label] || 0) + o.quantity;
+        });
+        const lineLabels = Object.keys(ordersByMonth).sort();
+        const lineData = lineLabels.map(l => ordersByMonth[l]);
+        // 7. Product category distribution (pie chart)
+        // We'll need to fetch categories and map product to category
+        const catRes = await $.get(API_BASE + '/seller/categories');
+        const categories = catRes.categories || [];
+        const catMap = {};
+        categories.forEach(c => { catMap[c.category_id] = c.name; });
+        const catCounts = {};
+        products.forEach(p => {
+          const cat = catMap[p.category_id] || 'Uncategorized';
+          catCounts[cat] = (catCounts[cat] || 0) + 1;
+        });
+        const pieLabels = Object.keys(catCounts);
+        const pieData = Object.values(catCounts);
+        // 8. Recent orders table
+        let rows = '';
+        orders.slice(0, 10).forEach(order => {
+          rows += `<tr>
+            <td>${order.order_number}</td>
+            <td>${order.product_name}</td>
+            <td>${order.customer_fname} ${order.customer_lname}</td>
+            <td>${order.quantity}</td>
+            <td>${order.order_status}</td>
+            <td>${order.date_placed ? order.date_placed.split('T')[0] : ''}</td>
+          </tr>`;
+        });
+        $('#recentOrdersTable').html(rows);
+        // Render charts
+        renderCharts(barLabels, barData, lineLabels, lineData, pieLabels, pieData);
+      } catch (err) {
+        $('#recentOrdersTable').html('<tr><td colspan="6" class="text-danger">Failed to load data. Please try again.</td></tr>');
+      } finally {
+        hideLoading();
+      }
+    }
+    // Render charts
+    function renderCharts(barLabels, barData, lineLabels, lineData, pieLabels, pieData) {
+      // Destroy previous charts if any
+      if (window.barChartObj) window.barChartObj.destroy();
+      if (window.lineChartObj) window.lineChartObj.destroy();
+      if (window.pieChartObj) window.pieChartObj.destroy();
+      // Bar Chart
+      window.barChartObj = new Chart(document.getElementById('barChart'), {
+        type: 'bar',
+        data: {
+          labels: barLabels,
+          datasets: [{
+            label: 'Orders',
+            data: barData,
+            backgroundColor: 'rgba(139, 92, 42, 0.7)'
+          }]
+        },
+        options: { responsive: true, plugins: { legend: { display: false } } }
+      });
+      // Line Chart
+      window.lineChartObj = new Chart(document.getElementById('lineChart'), {
+        type: 'line',
+        data: {
+          labels: lineLabels,
+          datasets: [{
+            label: 'Orders',
+            data: lineData,
+            fill: false,
+            borderColor: 'rgba(166, 124, 82, 0.9)',
+            backgroundColor: 'rgba(166, 124, 82, 0.3)',
+            tension: 0.3
+          }]
+        },
+        options: { responsive: true, plugins: { legend: { display: false } } }
+      });
+      // Pie Chart
+      window.pieChartObj = new Chart(document.getElementById('pieChart'), {
+        type: 'pie',
+        data: {
+          labels: pieLabels,
+          datasets: [{
+            data: pieData,
+            backgroundColor: [
+              'rgba(139, 92, 42, 0.7)',
+              'rgba(166, 124, 82, 0.7)',
+              'rgba(255, 206, 86, 0.7)',
+              'rgba(75, 192, 192, 0.7)',
+              'rgba(153, 102, 255, 0.7)'
+            ]
+          }]
+        },
+        options: { responsive: true }
+      });
+    }
+    $(document).ready(loadDashboard);
+  </script>
+</body>
+</html> 

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>My Wishlist - Home Haven</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <style>
+    body { background: #f7f4f0; margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    .wishlist-container { max-width: 1100px; margin: 32px auto; background: #fff; border-radius: 14px; box-shadow: 0 2px 12px rgba(0,0,0,0.07); padding: 24px 18px 18px 18px; }
+    .wishlist-title { font-size: 1.5rem; color: #8B5C2A; font-weight: 700; margin-bottom: 1.2em; }
+    .wishlist-list { display: flex; flex-wrap: wrap; gap: 24px; }
+    .wishlist-card { background: #f3ede5; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); padding: 18px; width: 260px; display: flex; flex-direction: column; align-items: center; position: relative; }
+    .wishlist-card img { width: 120px; height: 120px; object-fit: cover; border-radius: 10px; margin-bottom: 0.7em; background: #eee; }
+    .wishlist-card-title { font-size: 1.1rem; font-weight: 600; color: #444; margin-bottom: 0.3em; text-align: center; }
+    .wishlist-card-price { color: #8B5C2A; font-size: 1.05rem; font-weight: 700; margin-bottom: 0.5em; }
+    .wishlist-card-actions { display: flex; gap: 0.7em; }
+    .wishlist-card-actions button { background: #bfa77a; color: #fff; border: none; border-radius: 7px; padding: 0.4em 1.1em; font-size: 0.98rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+    .wishlist-card-actions button:hover { background: #8B5C2A; }
+    .wishlist-remove { position: absolute; top: 10px; right: 10px; background: none; border: none; color: #e74c3c; font-size: 1.2rem; cursor: pointer; }
+    .wishlist-remove:hover { color: #c0392b; }
+    .wishlist-empty { text-align: center; color: #888; font-size: 1.1rem; margin: 2.5em 0; }
+    @media (max-width: 900px) { .wishlist-list { flex-direction: column; align-items: center; } .wishlist-card { width: 95vw; max-width: 340px; } }
+  </style>
+</head>
+<body>
+  <div id="headerContainer"></div>
+  <script>
+    $(function() { $("#headerContainer").load("../header.html"); });
+  </script>
+  <div style="height:16px;"></div>
+  <div class="wishlist-container">
+    <div class="wishlist-title"><i class="fa fa-heart" style="color:#e74c3c;"></i> My Wishlist</div>
+    <div id="wishlistList" class="wishlist-list"></div>
+    <div id="wishlistEmpty" class="wishlist-empty" style="display:none;">Your wishlist is empty. Start adding your favorite products!</div>
+  </div>
+  <script>
+    // Helper: Get wishlist from localStorage
+    function getWishlist() {
+      return JSON.parse(localStorage.getItem('wishlist') || '[]');
+    }
+    // Fetch product details for all wishlist items
+    async function fetchWishlistProducts(ids) {
+      if (!ids.length) return [];
+      const res = await fetch(`http://localhost:4000/api/v1/products/wishlist?ids=${ids.join(',')}`);
+      const data = await res.json();
+      return data.products || [];
+    }
+    // Render wishlist
+    async function renderWishlist() {
+      const wishlist = getWishlist();
+      if (!wishlist.length) {
+        $('#wishlistList').empty();
+        $('#wishlistEmpty').show();
+        return;
+      }
+      $('#wishlistEmpty').hide();
+      const products = await fetchWishlistProducts(wishlist);
+      if (!products.length) {
+        $('#wishlistList').empty();
+        $('#wishlistEmpty').show();
+        return;
+      }
+      let html = '';
+      products.forEach(p => {
+        let img = '';
+        if (Array.isArray(p.image) && p.image.length) img = p.image[0];
+        else if (typeof p.image === 'string') {
+          try { const arr = JSON.parse(p.image); img = Array.isArray(arr) && arr.length ? arr[0] : p.image; } catch { img = p.image; }
+        }
+        if (!img) img = '../img/logo.png';
+        html += `<div class="wishlist-card">
+          <button class="wishlist-remove" data-id="${p.item_id}" title="Remove from Wishlist"><i class="fa fa-times"></i></button>
+          <img src="${img}" alt="${p.name}">
+          <div class="wishlist-card-title">${p.name}</div>
+          <div class="wishlist-card-price">₱${parseFloat(p.sell_price).toLocaleString()}</div>
+          <div class="wishlist-card-actions">
+            <button onclick="window.location.href='product-details.html?id=${p.item_id}'">View</button>
+            <button onclick="alert('Added to cart!')">Add to Cart</button>
+          </div>
+        </div>`;
+      });
+      $('#wishlistList').html(html);
+    }
+    // Remove from wishlist
+    $(document).on('click', '.wishlist-remove', function() {
+      const id = $(this).data('id');
+      let wishlist = getWishlist();
+      wishlist = wishlist.filter(x => x != id);
+      localStorage.setItem('wishlist', JSON.stringify(wishlist));
+      renderWishlist();
+    });
+    // On page load
+    $(document).ready(function() {
+      renderWishlist();
+    });
+  </script>
+</body>
+</html> 

@@ -62,7 +62,13 @@
   </script>
 </head>
 <body>
-  <div style="height:84px;"></div>
+  <div id="headerContainer"></div>
+  <script>
+    $(function() {
+      $("#headerContainer").load("../header.html");
+    });
+  </script>
+  <div style="height:16px;"></div>
   <div class="cart-container">
     <div class="cart-title">Your Shopping Cart</div>
     <div class="cart-item">

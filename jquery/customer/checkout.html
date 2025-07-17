@@ -56,7 +56,13 @@
   </script>
 </head>
 <body>
-  <div style="height:84px;"></div>
+  <div id="headerContainer"></div>
+  <script>
+    $(function() {
+      $("#headerContainer").load("../header.html");
+    });
+  </script>
+  <div style="height:16px;"></div>
   <a href="product_customer.html" class="checkout-back">&#8592; Back to Shop</a>
   <div class="checkout-container">
     <div class="checkout-title">Your Order</div>
