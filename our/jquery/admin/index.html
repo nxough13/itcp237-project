@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Home Haven - Admin Dashboard</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary-color: #8B5C2A;
+      --primary-light: #bfa77a;
+      --primary-dark: #6d4c1c;
+      --secondary-color: #b85c2a;
+      --background-light: #f6f3ef;
+      --background-dark: #e5d6c3;
+      --text-dark: #3d2c1c;
+      --text-medium: #7a5420;
+      --text-light: #fffdfa;
+      --shadow-light: 0 4px 20px rgba(139, 92, 42, 0.08);
+      --shadow-medium: 0 8px 32px rgba(139, 92, 42, 0.15);
+      --shadow-dark: 0 12px 40px rgba(139, 92, 42, 0.2);
+      --transition-fast: all 0.15s ease-out;
+      --transition-medium: all 0.3s ease-out;
+      --transition-slow: all 0.5s ease-out;
+      --success-color: #28a745;
+      --warning-color: #ffc107;
+      --danger-color: #dc3545;
+      --info-color: #17a2b8;
+    }
+    
+    body { 
+      background: var(--background-light); 
+      font-family: 'Montserrat', sans-serif;
+      color: var(--text-dark);
+      line-height: 1.6;
+      margin: 0;
+      padding: 0;
+    }
+    
+    .admin-container {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .admin-header {
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      color: white;
+      padding: 1.5rem 2rem;
+      box-shadow: var(--shadow-medium);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .admin-header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="50" cy="10" r="0.5" fill="rgba(255,255,255,0.1)"/><circle cx="10" cy="60" r="0.5" fill="rgba(255,255,255,0.1)"/><circle cx="90" cy="40" r="0.5" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+      opacity: 0.3;
+    }
+    
+    .admin-header-content {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    
+    .admin-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin: 0;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    .admin-subtitle {
+      font-size: 1.1rem;
+      opacity: 0.9;
+      margin-top: 0.5rem;
+    }
+    
+    .admin-nav {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+    
+    .admin-btn {
+      background: rgba(255,255,255,0.2);
+      color: white;
+      border: 1px solid rgba(255,255,255,0.3);
+      padding: 0.7rem 1.5rem;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 500;
+      transition: var(--transition-fast);
+      backdrop-filter: blur(10px);
+    }
+    
+    .admin-btn:hover {
+      background: rgba(255,255,255,0.3);
+      transform: translateY(-2px);
+    }
+    
+    .admin-main {
+      flex: 1;
+      padding: 2rem;
+      max-width: 1400px;
+      margin: 0 auto;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+      margin-bottom: 3rem;
+    }
+    
+    .stat-card {
+      background: white;
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: var(--shadow-light);
+      transition: var(--transition-medium);
+      border: 1px solid rgba(139, 92, 42, 0.1);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: var(--primary-color);
+    }
+    
+    .stat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-medium);
+    }
+    
+    .stat-card.users::before { background: var(--info-color); }
+    .stat-card.customers::before { background: var(--success-color); }
+    .stat-card.sellers::before { background: var(--warning-color); }
+    .stat-card.orders::before { background: var(--danger-color); }
+    
+    .stat-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      opacity: 0.8;
+    }
+    
+    .stat-number {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--primary-color);
+      margin-bottom: 0.5rem;
+      font-family: 'Playfair Display', serif;
+    }
+    
+    .stat-label {
+      font-size: 1.1rem;
+      color: var(--text-medium);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .admin-sections {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 2rem;
+    }
+    
+    .admin-section {
+      background: white;
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: var(--shadow-light);
+      border: 1px solid rgba(139, 92, 42, 0.1);
+    }
+    
+    .section-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.8rem;
+      font-weight: 600;
+      color: var(--text-dark);
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--primary-light);
+    }
+    
+    .quick-actions {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+    
+    .action-btn {
+      background: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 1rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: var(--transition-fast);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+    
+    .action-btn:hover {
+      background: var(--primary-dark);
+      transform: translateY(-2px);
+    }
+    
+    .recent-activity {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    
+    .activity-item {
+      padding: 1rem 0;
+      border-bottom: 1px solid rgba(139, 92, 42, 0.1);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    
+    .activity-item:last-child {
+      border-bottom: none;
+    }
+    
+    .activity-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--primary-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.2rem;
+    }
+    
+    .activity-content {
+      flex: 1;
+    }
+    
+    .activity-title {
+      font-weight: 600;
+      color: var(--text-dark);
+      margin-bottom: 0.25rem;
+    }
+    
+    .activity-time {
+      font-size: 0.9rem;
+      color: var(--text-medium);
+    }
+    
+    .logout-btn {
+      background: var(--danger-color);
+      color: white;
+      border: none;
+      padding: 0.7rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: var(--transition-fast);
+    }
+    
+    .logout-btn:hover {
+      background: #c82333;
+      transform: translateY(-2px);
+    }
+    
+    @media (max-width: 768px) {
+      .admin-header-content {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+      }
+      
+      .admin-title {
+        font-size: 2rem;
+      }
+      
+      .admin-main {
+        padding: 1rem;
+      }
+      
+      .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+      
+      .admin-sections {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+      
+      .quick-actions {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-container">
+    <header class="admin-header">
+      <div class="admin-header-content">
+        <div>
+          <h1 class="admin-title">Admin Dashboard</h1>
+          <p class="admin-subtitle">Welcome back, <span id="adminName">Administrator</span></p>
+        </div>
+        <nav class="admin-nav">
+          <a href="#" class="admin-btn">Settings</a>
+          <a href="#" class="admin-btn">Reports</a>
+          <button class="logout-btn" onclick="logout()">Logout</button>
+        </nav>
+      </div>
+    </header>
+    
+    <main class="admin-main">
+      <!-- Statistics Cards -->
+      <div class="stats-grid">
+        <div class="stat-card users">
+          <div class="stat-icon">👥</div>
+          <div class="stat-number" id="totalUsers">0</div>
+          <div class="stat-label">Total Users</div>
+        </div>
+        <div class="stat-card customers">
+          <div class="stat-icon">🛒</div>
+          <div class="stat-number" id="totalCustomers">0</div>
+          <div class="stat-label">Customers</div>
+        </div>
+        <div class="stat-card sellers">
+          <div class="stat-icon">🏪</div>
+          <div class="stat-number" id="totalSellers">0</div>
+          <div class="stat-label">Sellers</div>
+        </div>
+        <div class="stat-card orders">
+          <div class="stat-icon">📦</div>
+          <div class="stat-number" id="totalOrders">0</div>
+          <div class="stat-label">Orders</div>
+        </div>
+      </div>
+      
+      <!-- Admin Sections -->
+      <div class="admin-sections">
+        <div class="admin-section">
+          <h2 class="section-title">Quick Actions</h2>
+          <div class="quick-actions">
+            <a href="users.html" class="action-btn">👥 View Users</a>
+            <a href="customers.html" class="action-btn">🛒 View Customers</a>
+            <a href="sellers.html" class="action-btn">🏪 View Sellers</a>
+            <button class="action-btn" onclick="viewOrders()">
+              📦 View Orders
+            </button>
+            <button class="action-btn" onclick="manageItems()">
+              📋 Manage Items
+            </button>
+            <button class="action-btn" onclick="systemSettings()">
+              ⚙️ System Settings
+            </button>
+          </div>
+        </div>
+        
+        <div class="admin-section">
+          <h2 class="section-title">Recent Activity</h2>
+          <div class="recent-activity" id="recentActivity">
+            <div class="activity-item">
+              <div class="activity-icon">👤</div>
+              <div class="activity-content">
+                <div class="activity-title">New user registered</div>
+                <div class="activity-time">2 minutes ago</div>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon">🛒</div>
+              <div class="activity-content">
+                <div class="activity-title">Order #HH001 completed</div>
+                <div class="activity-time">15 minutes ago</div>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon">📦</div>
+              <div class="activity-content">
+                <div class="activity-title">New item added to inventory</div>
+                <div class="activity-time">1 hour ago</div>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon">💰</div>
+              <div class="activity-content">
+                <div class="activity-title">Payment processed for Order #HH002</div>
+                <div class="activity-time">2 hours ago</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="admin-section">
+          <h2 class="section-title">Pending Seller Verifications</h2>
+          <div id="pendingSellers"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Check if user is admin
+    const token = localStorage.getItem('jwt_token');
+    const userRole = localStorage.getItem('user_role');
+    
+    if (!token || userRole !== 'admin') {
+      // Redirect to login if not admin
+      window.location.href = 'login.html?reason=unauthorized';
+    }
+    
+    // Load admin data
+    document.addEventListener('DOMContentLoaded', function() {
+      loadAdminData();
+    });
+    
+    function loadAdminData() {
+      // Load admin name
+      const adminName = localStorage.getItem('user_name') || 'Administrator';
+      document.getElementById('adminName').textContent = adminName;
+      
+      // Fetch real statistics from backend
+      fetch('http://localhost:4000/api/v1/admin/stats', {
+        method: 'GET',
+        headers: {
+          'Authorization': 'Bearer ' + token
+        }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          // Update statistics
+          document.getElementById('totalUsers').textContent = data.stats.totalUsers;
+          document.getElementById('totalCustomers').textContent = data.stats.totalCustomers;
+          document.getElementById('totalSellers').textContent = data.stats.totalSellers;
+          document.getElementById('totalOrders').textContent = data.stats.totalOrders;
+          
+          // Update recent activity
+          updateRecentActivity(data.recentActivity);
+        } else {
+          console.error('Failed to load admin stats:', data.message);
+        }
+      })
+      .catch(error => {
+        console.error('Error loading admin stats:', error);
+      });
+    }
+    
+    function updateRecentActivity(activity) {
+      const activityContainer = document.getElementById('recentActivity');
+      activityContainer.innerHTML = '';
+      
+      // Add recent orders
+      if (activity.orders && activity.orders.length > 0) {
+        activity.orders.slice(0, 3).forEach(order => {
+          const orderItem = document.createElement('div');
+          orderItem.className = 'activity-item';
+          orderItem.innerHTML = `
+            <div class="activity-icon">📦</div>
+            <div class="activity-content">
+              <div class="activity-title">Order ${order.order_number} - ${order.status}</div>
+              <div class="activity-time">${formatDate(order.date_placed)}</div>
+            </div>
+          `;
+          activityContainer.appendChild(orderItem);
+        });
+      }
+      
+      // Add recent user registrations
+      if (activity.users && activity.users.length > 0) {
+        activity.users.slice(0, 2).forEach(user => {
+          const userItem = document.createElement('div');
+          userItem.className = 'activity-item';
+          userItem.innerHTML = `
+            <div class="activity-icon">👤</div>
+            <div class="activity-content">
+              <div class="activity-title">New ${user.role} registered: ${user.name}</div>
+              <div class="activity-time">${formatDate(user.created_at)}</div>
+            </div>
+          `;
+          activityContainer.appendChild(userItem);
+        });
+      }
+    }
+    
+    function formatDate(dateString) {
+      if (!dateString) return 'Unknown time';
+      const date = new Date(dateString);
+      const now = new Date();
+      const diffMs = now - date;
+      const diffMins = Math.floor(diffMs / 60000);
+      const diffHours = Math.floor(diffMs / 3600000);
+      const diffDays = Math.floor(diffMs / 86400000);
+      
+      if (diffMins < 1) return 'Just now';
+      if (diffMins < 60) return `${diffMins} minutes ago`;
+      if (diffHours < 24) return `${diffHours} hours ago`;
+      if (diffDays < 7) return `${diffDays} days ago`;
+      return date.toLocaleDateString();
+    }
+    
+    function logout() {
+      localStorage.removeItem('jwt_token');
+      localStorage.removeItem('user_role');
+      localStorage.removeItem('user_name');
+      window.location.href = '../login.html';
+    }
+    
+    // Placeholder functions for admin actions
+    function viewUsers() {
+      alert('View Users functionality will be implemented next!');
+    }
+    
+    function viewCustomers() {
+      alert('View Customers functionality will be implemented next!');
+    }
+    
+    function viewSellers() {
+      alert('View Sellers functionality will be implemented next!');
+    }
+    
+    function viewOrders() {
+      alert('View Orders functionality will be implemented next!');
+    }
+    
+    function manageItems() {
+      alert('Manage Items functionality will be implemented next!');
+    }
+    
+    function systemSettings() {
+      alert('System Settings functionality will be implemented next!');
+    }
+
+    function loadPendingSellers() {
+      $.ajax({
+        url: 'http://localhost:4000/api/v1/admin/sellers/unverified',
+        method: 'GET',
+        headers: { 'Authorization': 'Bearer ' + token },
+        success: function(res) {
+          if (res.success && res.sellers.length > 0) {
+            let html = '<ul style="list-style:none;padding:0;">';
+            res.sellers.forEach(seller => {
+              html += `<li style='margin-bottom:1rem;'>
+                <b>${seller.name}</b> (${seller.business_name})
+                <button class='action-btn' style='margin-left:1rem;' onclick='verifySeller(${seller.seller_id})'>Verify</button>
+              </li>`;
+            });
+            html += '</ul>';
+            $('#pendingSellers').html(html);
+          } else {
+            $('#pendingSellers').html('<span>No pending seller verifications.</span>');
+          }
+        },
+        error: function() {
+          $('#pendingSellers').html('<span>Error loading pending sellers.</span>');
+        }
+      });
+    }
+    function verifySeller(sellerId) {
+      $.ajax({
+        url: `http://localhost:4000/api/v1/admin/sellers/${sellerId}/verify`,
+        method: 'PATCH',
+        headers: { 'Authorization': 'Bearer ' + token },
+        success: function(res) {
+          loadPendingSellers();
+          loadAdminData && loadAdminData(); // refresh stats if available
+        },
+        error: function() {
+          alert('Failed to verify seller.');
+        }
+      });
+    }
+    $(document).ready(function() {
+      loadPendingSellers();
+    });
+  </script>
+</body>
+</html> 

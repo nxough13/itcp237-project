@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Your Order - Home Haven</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <style>
+    body { background: #f7f4f0; margin: 0; font-family: 'Segoe UI', Arial, sans-serif; }
+    .checkout-main { display: flex; gap: 32px; max-width: 1100px; margin: 32px auto 90px auto; }
+    .checkout-left, .checkout-right { background: #fff; border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.07); padding: 28px 24px; }
+    .checkout-left { flex: 2; min-width: 340px; }
+    .checkout-right { flex: 1.2; min-width: 260px; }
+    .checkout-title { font-size: 2.1rem; font-family: Georgia, serif; color: #444; margin-bottom: 18px; font-weight: 600; }
+    .checkout-item { background: #f2e5d2; border-radius: 12px; display: flex; align-items: center; padding: 12px 10px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.03); }
+    .checkout-item-img { width: 54px; height: 54px; border-radius: 50%; background: #d6eaff; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-right: 14px; }
+    .checkout-item-details { flex: 1; }
+    .checkout-item-name { font-size: 1.1rem; font-family: Georgia, serif; font-weight: 600; color: #444; }
+    .checkout-item-meta { color: #7a7a7a; font-size: 0.92rem; margin-bottom: 1px; }
+    .checkout-item-qty { font-size: 1rem; color: #444; margin-left: 10px; }
+    .checkout-item-price { font-size: 1.1rem; font-weight: 700; color: #444; margin-left: 10px; min-width: 70px; text-align: right; }
+    .checkout-summary { margin: 32px 0 0 0; font-size: 1.1rem; color: #444; border-top: 1px solid #eee; padding-top: 18px; }
+    .checkout-summary-row { display: flex; justify-content: flex-end; align-items: center; margin-bottom: 6px; }
+    .checkout-summary-label { min-width: 140px; text-align: right; margin-right: 18px; color: #444; font-size: 1.05rem; }
+    .checkout-summary-value { min-width: 90px; text-align: right; color: #444; font-size: 1.05rem; }
+    .checkout-summary-total { font-weight: 700; color: #5a6a5a; font-size: 1.18rem; }
+    .checkout-footer { position: fixed; left: 0; bottom: 0; width: 100vw; background: #f6e3e3; display: flex; align-items: center; justify-content: flex-end; padding: 0.7em 2.5em 0.7em 2.5em; z-index: 1002; box-shadow: 0 -2px 12px rgba(0,0,0,0.07); }
+    .checkout-order { background: #cfa7a7; color: #fff; font-size: 1.1rem; font-weight: 600; border: none; border-radius: 2em; padding: 0.5em 1.7em; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.07); transition: background 0.2s; margin-right: 6vw; }
+    .checkout-order:hover { background: #b97c7c; }
+    .checkout-back { position: absolute; right: 2.5em; top: 1.5em; color: #444; font-size: 1.1rem; text-decoration: none; }
+    .customer-details-title { font-size: 1.15rem; color: #8B5C2A; font-weight: 600; margin-bottom: 10px; }
+    .customer-details-list { list-style: none; padding: 0; margin: 0; }
+    .customer-details-list li { margin-bottom: 10px; color: #444; font-size: 1.01rem; }
+    @media (max-width: 900px) {
+      .checkout-main { flex-direction: column; gap: 18px; padding: 0 2vw; }
+      .checkout-left, .checkout-right { width: 100%; min-width: 0; }
+      .checkout-footer { flex-direction: column; gap: 0.5em; padding: 0.7em 0.7em; }
+      .checkout-order { margin-right: 0; width: 100%; }
+      .checkout-back { position: static; margin-bottom: 1em; }
+    }
+  </style>
+  <script>
+    function injectHeader() {
+      fetch('header_customer.html')
+        .then(res => res.text())
+        .then(html => {
+          const headerDiv = document.createElement('div');
+          headerDiv.innerHTML = html;
+          document.body.insertBefore(headerDiv, document.body.firstChild);
+        });
+    }
+    document.addEventListener('DOMContentLoaded', injectHeader);
+
+    const API_BASE = 'http://localhost:4000/api/v1';
+    const token = localStorage.getItem('jwt_token');
+    const isLoggedIn = !!token;
+    let customerProfile = null;
+
+    async function fetchCustomerProfile() {
+      if (!isLoggedIn) return null;
+      try {
+        const res = await fetch(`${API_BASE}/profile`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const data = await res.json();
+        if (data.success) return data.profile;
+      } catch {}
+      return null;
+    }
+
+    async function loadCheckoutPage() {
+      // Fetch cart
+      let cart = [];
+      if (isLoggedIn) {
+        try {
+          const res = await fetch(`${API_BASE}/cart`, { headers: { 'Authorization': `Bearer ${token}` } });
+          const data = await res.json();
+          if (data.success) {
+            cart = data.cart.map(item => ({ productId: item.item_id, quantity: item.quantity, price: item.price }));
+          }
+        } catch {}
+      } else {
+        cart = JSON.parse(localStorage.getItem('cart') || '[]');
+      }
+      // Fetch customer profile
+      customerProfile = await fetchCustomerProfile();
+      // Fetch product details for each cart item
+      let products = [];
+      for (const item of cart) {
+        try {
+          const res = await fetch(`${API_BASE}/products/details/${item.productId}`);
+          const data = await res.json();
+          if (data && data.product) {
+            products.push({ ...data.product, quantity: item.quantity, price: item.price });
+          }
+        } catch {}
+      }
+      renderCheckoutUI(products);
+    }
+
+    function renderCheckoutUI(products) {
+      const main = $('<div class="checkout-main"></div>');
+      // Left: Order details
+      let subtotal = 0;
+      const left = $('<div class="checkout-left"></div>');
+      left.append('<div class="checkout-title">Order Details</div>');
+      products.forEach(product => {
+        const price = product.price || product.sell_price;
+        const totalPrice = price * product.quantity;
+        subtotal += totalPrice;
+        left.append(`
+          <div class="checkout-item">
+            <div class="checkout-item-img"><img src="${Array.isArray(product.image) ? product.image[0] : product.image}" style="width:54px;height:54px;object-fit:cover;border-radius:50%;"></div>
+            <div class="checkout-item-details">
+              <div class="checkout-item-name">${product.name}</div>
+              <div class="checkout-item-meta">SKU: ${product.sku}</div>
+              <div class="checkout-item-qty">Qty: ${product.quantity}</div>
+            </div>
+            <div class="checkout-item-price">₱${totalPrice.toLocaleString()}</div>
+          </div>
+        `);
+      });
+      // Summary
+      const shipping = 0;
+      const total = subtotal + shipping;
+      left.append(`
+        <div class="checkout-summary">
+          <div class="checkout-summary-row">
+            <span class="checkout-summary-label">Subtotal:</span>
+            <span class="checkout-summary-value">₱${subtotal.toLocaleString()}</span>
+          </div>
+          <div class="checkout-summary-row">
+            <span class="checkout-summary-label">Shipping Fee:</span>
+            <span class="checkout-summary-value">₱${shipping.toLocaleString()}</span>
+          </div>
+          <div class="checkout-summary-row checkout-summary-total">
+            <span class="checkout-summary-label">Total:</span>
+            <span class="checkout-summary-value">₱${total.toLocaleString()}</span>
+          </div>
+        </div>
+      `);
+      // Right: Customer details
+      const right = $('<div class="checkout-right"></div>');
+      right.append('<div class="customer-details-title">Customer Details</div>');
+      if (customerProfile) {
+        right.append(`<ul class="customer-details-list">
+          <li><b>Name:</b> ${customerProfile.fname || ''} ${customerProfile.lname || customerProfile.name || ''}</li>
+          <li><b>Email:</b> ${customerProfile.email}</li>
+          <li><b>Contact:</b> ${customerProfile.phone || ''}</li>
+          <li><b>Address:</b> ${customerProfile.address || ''}</li>
+          <li><b>Town:</b> ${customerProfile.town || ''}</li>
+          <li><b>Zipcode:</b> ${customerProfile.zipcode || ''}</li>
+        </ul>`);
+      } else {
+        right.append('<div style="color:#888;">Please log in to see your details.</div>');
+      }
+      main.append(left, right);
+      $('.checkout-container').html(main);
+    }
+
+    $(document).ready(function() {
+      loadCheckoutPage();
+    });
+  </script>
+</head>
+<body>
+  <div id="headerContainer"></div>
+  <script>
+    $(function() {
+      $("#headerContainer").load("../header.html");
+    });
+  </script>
+  <div style="height:16px;"></div>
+  <a href="product_customer.html" class="checkout-back">&#8592; Back to Shop</a>
+  <div class="checkout-container">
+    <div class="checkout-title">Your Order</div>
+    <div class="checkout-summary">
+      <div class="checkout-summary-row">
+        <span class="checkout-summary-label">Subtotal:</span>
+        <span class="checkout-summary-value">₱0.00</span>
+      </div>
+      <div class="checkout-summary-row">
+        <span class="checkout-summary-label">Shipping Fee:</span>
+        <span class="checkout-summary-value">₱0.00</span>
+      </div>
+      <div class="checkout-summary-row checkout-summary-total">
+        <span class="checkout-summary-label">Total:</span>
+        <span class="checkout-summary-value">₱0.00</span>
+      </div>
+    </div>
+  </div>
+  <div class="checkout-footer">
+    <button class="checkout-order">Order Now</button>
+  </div>
+  <!-- Terms & Agreement Modal -->
+  <div id="termsModal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.25);z-index:9999;align-items:center;justify-content:center;">
+    <div style="background:#fff;padding:32px 28px;border-radius:16px;max-width:420px;width:90vw;box-shadow:0 8px 32px rgba(0,0,0,0.18);text-align:center;">
+      <h2 style="color:#8B5C2A;margin-bottom:1em;">Order Terms & Agreement</h2>
+      <div style="color:#444;font-size:1.05rem;margin-bottom:1.5em;">
+        By placing this order, you agree that all details are correct and final. Delivery date is set to 1 day after order placement. You will receive an email confirmation. Sellers will be notified of your order. No cancellations after confirmation.
+      </div>
+      <button id="agreeBtn" style="background:#8B5C2A;color:#fff;padding:0.7em 2.2em;border:none;border-radius:8px;font-size:1.1rem;font-weight:600;cursor:pointer;margin-right:1em;">I Agree</button>
+      <button id="cancelModalBtn" style="background:#eee;color:#444;padding:0.7em 2.2em;border:none;border-radius:8px;font-size:1.1rem;font-weight:600;cursor:pointer;">Cancel</button>
+    </div>
+  </div>
+  <script>
+    function showModal() {
+      $('#termsModal').fadeIn(150).css('display','flex');
+    }
+    function hideModal() {
+      $('#termsModal').fadeOut(150);
+    }
+    $('.checkout-order').off('click').on('click', function() {
+      showModal();
+    });
+    $('#cancelModalBtn').off('click').on('click', function() {
+      hideModal();
+    });
+    $('#agreeBtn').off('click').on('click', async function() {
+      hideModal();
+      // Place order
+      await placeOrder();
+    });
+    async function placeOrder() {
+      const API_BASE = 'http://localhost:4000/api/v1';
+      const token = localStorage.getItem('jwt_token');
+      const isLoggedIn = !!token;
+      if (!isLoggedIn) {
+        alert('You must be logged in to place an order.');
+        return;
+      }
+      // Fetch cart from backend
+      let cart = [];
+      try {
+        const res = await fetch(`${API_BASE}/cart`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const data = await res.json();
+        if (data.success) {
+          cart = data.cart.map(item => ({ item_id: item.item_id, quantity: item.quantity, price: item.price }));
+        }
+      } catch {}
+      if (!cart.length) {
+        alert('Your cart is empty.');
+        return;
+      }
+      // Place order via backend
+      try {
+        const res = await fetch(`${API_BASE}/orders/place`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ items: cart })
+        });
+        const data = await res.json();
+        if (data.success) {
+          // Clear cart
+          await fetch(`${API_BASE}/cart/clear`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
+          showOrderNotification(true, 'Order placed successfully! Check your email for confirmation.');
+          setTimeout(()=>window.location.href='product_customer.html', 1800);
+        } else {
+          showOrderNotification(false, data.error || 'Failed to place order.');
+        }
+      } catch {
+        showOrderNotification(false, 'Failed to place order.');
+      }
+    }
+    function showOrderNotification(success, message) {
+      const notification = $('<div>')
+        .addClass('cart-notification')
+        .css({
+          position: 'fixed',
+          top: '20px',
+          right: '20px',
+          background: success ? '#4CAF50' : '#f44336',
+          color: 'white',
+          padding: '15px 20px',
+          borderRadius: '8px',
+          zIndex: '10000',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          transform: 'translateX(100%)',
+          transition: 'transform 0.3s ease'
+        })
+        .text(message || (success ? 'Order placed!' : 'Order failed!'));
+      $('body').append(notification);
+      setTimeout(() => {
+        notification.css('transform', 'translateX(0)');
+      }, 100);
+      setTimeout(() => {
+        notification.css('transform', 'translateX(100%)');
+        setTimeout(() => notification.remove(), 300);
+      }, 2000);
+    }
+  </script>
+</body>
+</html> 

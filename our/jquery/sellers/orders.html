@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Seller Orders - Home Haven</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <style>
+    body { background: #f7f4f0; margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    .orders-container { max-width: 1200px; margin: 32px auto; background: #fff; border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.07); padding: 28px 18px 18px 18px; }
+    .orders-title { font-size: 1.5rem; color: #8B5C2A; font-weight: 700; margin-bottom: 1.2em; }
+    .orders-table { width: 100%; border-collapse: collapse; margin-bottom: 1.5em; }
+    .orders-table th, .orders-table td { padding: 12px 10px; text-align: left; border-bottom: 1px solid #eee; }
+    .orders-table th { background: #f3ede5; color: #8B5C2A; font-size: 1.05rem; font-weight: 700; }
+    .orders-table tr:last-child td { border-bottom: none; }
+    .order-status { padding: 4px 12px; border-radius: 8px; font-size: 0.98rem; font-weight: 600; display: inline-block; }
+    .status-pending { background: #ffe066; color: #8B5C2A; }
+    .status-processing { background: #bfa77a; color: #fff; }
+    .status-shipped { background: #6d7a6d; color: #fff; }
+    .status-delivered { background: #27ae60; color: #fff; }
+    .status-cancelled { background: #e74c3c; color: #fff; }
+    .orders-empty { text-align: center; color: #888; font-size: 1.1rem; margin: 2.5em 0; }
+    .order-actions button { background: #bfa77a; color: #fff; border: none; border-radius: 7px; padding: 0.4em 1.1em; font-size: 0.98rem; font-weight: 600; cursor: pointer; transition: background 0.2s; margin-right: 0.5em; }
+    .order-actions button:hover { background: #8B5C2A; }
+    @media (max-width: 900px) { .orders-table th, .orders-table td { font-size: 0.95rem; padding: 8px 4px; } .orders-container { padding: 10px 2vw; } }
+  </style>
+</head>
+<body>
+  <div id="header"></div>
+  <script>$(function(){$('#header').load('../header.html');});</script>
+  <div style="height:16px;"></div>
+  <div class="orders-container">
+    <div class="orders-title"><i class="fa fa-box" style="color:#8B5C2A;"></i> My Orders</div>
+    <table class="orders-table" id="ordersTable">
+      <thead>
+        <tr>
+          <th>Order #</th>
+          <th>Date</th>
+          <th>Customer</th>
+          <th>Product(s)</th>
+          <th>Quantity</th>
+          <th>Total</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="ordersTbody">
+        <!-- Orders will be loaded here -->
+      </tbody>
+    </table>
+    <div id="ordersEmpty" class="orders-empty" style="display:none;">No orders found for your products.</div>
+  </div>
+  <script>
+    const API_BASE = 'http://localhost:4000/api/v1';
+    const token = localStorage.getItem('jwt_token');
+    function statusClass(status) {
+      switch(status) {
+        case 'pending': return 'status-pending';
+        case 'processing': return 'status-processing';
+        case 'shipped': return 'status-shipped';
+        case 'delivered': return 'status-delivered';
+        case 'cancelled': return 'status-cancelled';
+        default: return '';
+      }
+    }
+    async function loadOrders() {
+      if (!token) return;
+      try {
+        const res = await fetch(`${API_BASE}/seller/orders`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const data = await res.json();
+        if (data.success && data.orders && data.orders.length) {
+          $('#ordersEmpty').hide();
+          let html = '';
+          data.orders.forEach(order => {
+            let products = order.products ? order.products.map(p => `${p.name} <span style='color:#888;font-size:0.95em;'>x${p.quantity}</span>`).join('<br>') : '';
+            let qty = order.products ? order.products.reduce((sum, p) => sum + p.quantity, 0) : order.quantity || 0;
+            html += `<tr>
+              <td>${order.order_number || order.orderinfo_id}</td>
+              <td>${order.date_placed ? new Date(order.date_placed).toLocaleDateString() : ''}</td>
+              <td>${order.customer_name || ''}</td>
+              <td>${products}</td>
+              <td>${qty}</td>
+              <td>₱${parseFloat(order.total_amount || 0).toLocaleString()}</td>
+              <td><span class="order-status ${statusClass(order.status)}">${order.status ? order.status.charAt(0).toUpperCase() + order.status.slice(1) : ''}</span></td>
+              <td class="order-actions">
+                <button onclick="alert('Order details coming soon!')"><i class="fa fa-eye"></i> View</button>
+              </td>
+            </tr>`;
+          });
+          $('#ordersTbody').html(html);
+        } else {
+          $('#ordersTbody').empty();
+          $('#ordersEmpty').show();
+        }
+      } catch (err) {
+        $('#ordersTbody').empty();
+        $('#ordersEmpty').show();
+      }
+    }
+    $(document).ready(function() { loadOrders(); });
+  </script>
+</body>
+</html> 

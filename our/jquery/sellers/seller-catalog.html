@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seller Catalog | HomeHaven</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" href="../css/style.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      min-height: 100vh;
+    }
+    .hero-section {
+      background: linear-gradient(135deg, #8B5C2A 0%, #A67C52 100%);
+      color: white;
+      padding: 28px 12px;
+      border-radius: 12px;
+      text-align: center;
+      margin-bottom: 18px;
+      box-shadow: 0 4px 16px rgba(139, 92, 42, 0.18);
+    }
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+    .product-card {
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      transition: all 0.3s ease;
+      position: relative;
+    }
+    .product-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 10px 25px rgba(139, 92, 42, 0.13);
+    }
+    .product-image {
+      width: 100%;
+      height: 110px;
+      background: linear-gradient(135deg, #f0f0f0 0%, #e0e0e0 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .product-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+    .product-card:hover .product-image img {
+      transform: scale(1.1);
+    }
+    .product-image-placeholder {
+      font-size: 3rem;
+      color: #8B5C2A;
+      opacity: 0.3;
+      height: 110px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .product-content {
+      padding: 10px 8px 8px 8px;
+    }
+    .product-category {
+      color: #8B5C2A;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-bottom: 2px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .product-title {
+      font-size: 1.02rem;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 4px;
+      line-height: 1.3;
+    }
+    .product-description {
+      color: #666;
+      font-size: 0.88rem;
+      line-height: 1.5;
+      margin-bottom: 6px;
+      display: -webkit-box;
+      -webkit-line-clamp: 1;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .product-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .product-price {
+      font-size: 1.08rem;
+      font-weight: 700;
+      color: #8B5C2A;
+    }
+    .product-stock {
+      font-size: 0.85rem;
+      color: #666;
+    }
+    .stock-available {
+      color: #27ae60;
+    }
+    .stock-low {
+      color: #f39c12;
+    }
+    .stock-out {
+      color: #e74c3c;
+    }
+    .no-products {
+      text-align: center;
+      padding: 24px 8px;
+      color: #666;
+      font-size: 1rem;
+    }
+    @media (max-width: 768px) {
+      .hero-section {
+        padding: 12px 4px;
+      }
+      .products-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+      }
+      .product-image {
+        height: 70px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="header"></div>
+  <script>$(function(){$('#header').load('../header.html');});</script>
+  <div class="container mt-4">
+    <div class="hero-section">
+      <h1 id="sellerName">Seller's Catalog</h1>
+      <p id="sellerDesc" style="font-size:1rem; opacity:0.9;"></p>
+    </div>
+    <div class="products-grid" id="sellerCatalogGrid"></div>
+    <div id="noProductsMsg" class="no-products" style="display:none;"></div>
+  </div>
+  <script>
+    const API_BASE = 'http://localhost:4000/api/v1';
+    function getQueryParam(name) {
+      const url = new URL(window.location.href);
+      return url.searchParams.get(name);
+    }
+    async function loadSellerCatalog() {
+      const sellerId = getQueryParam('seller_id');
+      if (!sellerId) {
+        $('#noProductsMsg').text('No seller specified.').show();
+        return;
+      }
+      try {
+        // Fetch products for this seller
+        const res = await $.get(API_BASE + '/catalog/seller/' + sellerId);
+        const products = res.products || [];
+        const grid = $('#sellerCatalogGrid');
+        grid.empty();
+        if (products.length === 0) {
+          $('#noProductsMsg').text('No products found for this seller.').show();
+          return;
+        } else {
+          $('#noProductsMsg').hide();
+        }
+        // Optionally show seller name/desc if available
+        if (res.seller) {
+          $('#sellerName').text(res.seller.business_name + "'s Catalog");
+          $('#sellerDesc').text(res.seller.business_description || '');
+        }
+        products.forEach(product => {
+          grid.append(createProductCard(product));
+        });
+      } catch (err) {
+        $('#noProductsMsg').text('Failed to load products.').show();
+      }
+    }
+    function createProductCard(product) {
+      const stock = parseInt(product.stock_quantity || product.stock || 0);
+      const stockClass = stock === 0 ? 'stock-out' : stock <= 10 ? 'stock-low' : 'stock-available';
+      const stockText = stock === 0 ? 'Out of Stock' : stock <= 10 ? `Only ${stock} left` : 'In Stock';
+      let imageHtml = '';
+      if (product.image) {
+        let imgSrc = '';
+        try {
+          const imgs = typeof product.image === 'string' ? JSON.parse(product.image) : product.image;
+          imgSrc = Array.isArray(imgs) ? imgs[0] : imgs;
+        } catch { imgSrc = product.image; }
+        if (imgSrc) {
+          imageHtml = `<img src="${imgSrc}" alt="${product.name}" style="width:100%; height:110px; object-fit:cover; border-radius:10px 10px 0 0;">`;
+        } else {
+          imageHtml = `<div class="product-image-placeholder"><i class="fas fa-couch"></i></div>`;
+        }
+      } else {
+        imageHtml = `<div class="product-image-placeholder"><i class="fas fa-couch"></i></div>`;
+      }
+      return `
+        <div class="product-card">
+          <div class="product-image">${imageHtml}</div>
+          <div class="product-content">
+            <div class="product-category">${product.category_name || 'Uncategorized'}</div>
+            <h3 class="product-title">${product.name}</h3>
+            <p class="product-description">${product.description}</p>
+            <div class="product-meta">
+              <div class="product-price">₱${parseFloat(product.sell_price).toLocaleString()}</div>
+              <div class="product-stock ${stockClass}">${stockText}</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    $(document).ready(loadSellerCatalog);
+  </script>
+</body>
+</html> 

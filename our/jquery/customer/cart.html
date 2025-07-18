@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Your Shopping Cart - Home Haven</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <style>
+    body { background: #f7f4f0; margin: 0; font-family: 'Segoe UI', Arial, sans-serif; }
+    .cart-container { max-width: 1100px; margin: 8px auto 90px auto; padding: 0 8px; }
+    .cart-title { font-size: 2.1rem; font-family: Georgia, serif; color: #444; margin: 28px 0 18px 0; font-weight: 600; text-align: center; }
+    .cart-item { background: #f2e5d2; border-radius: 16px; display: flex; align-items: center; padding: 12px 16px; margin-bottom: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.03); position: relative; min-height: 70px; }
+    .cart-item-img { width: 54px; height: 54px; border-radius: 50%; background: #d6eaff; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-right: 14px; }
+    .cart-item-main { flex: 1; display: flex; align-items: center; gap: 0.7em; }
+    .cart-item-details { display: flex; flex-direction: column; justify-content: center; min-width: 180px; }
+    .cart-item-name { font-size: 1.1rem; font-family: Georgia, serif; font-weight: 600; color: #444; line-height: 1.1; }
+    .cart-item-meta { color: #7a7a7a; font-size: 0.92rem; margin-bottom: 1px; }
+    .cart-item-color { color: #7a8a7a; font-size: 0.98rem; margin-left: 8px; min-width: 80px; text-align: left; }
+    .cart-item-qtybox { display: flex; align-items: center; background: #e7e0d2; border-radius: 6px; padding: 2px 6px; gap: 0.2em; margin: 0 12px; }
+    .cart-item-qtybox button { background: none; border: none; font-size: 1rem; width: 1.3em; height: 1.3em; cursor: pointer; color: #8B5C2A; padding: 0; }
+    .cart-item-qtybox input { width: 1.7em; text-align: center; font-size: 1rem; border: none; background: transparent; border-radius: 0; padding: 0; }
+    .cart-item-price { font-size: 1.2rem; font-weight: 700; color: #444; margin-left: 10px; min-width: 70px; text-align: right; }
+    .cart-item-remove { font-size: 1.3rem; color: #8B5C2A; background: none; border: none; cursor: pointer; margin-left: 10px; transition: color 0.2s; }
+    .cart-item-remove:hover { color: #c0392b; }
+    .cart-item-check { font-size: 1rem; margin-right: 10px; color: #8B5C2A; display: flex; align-items: center; }
+    .cart-footer { position: fixed; left: 0; bottom: 0; width: 100vw; background: #f6e3e3; display: flex; align-items: center; justify-content: space-between; padding: 0.7em 2.5em 0.7em 2.5em; z-index: 1002; box-shadow: 0 -2px 12px rgba(0,0,0,0.07); }
+    .cart-back { font-size: 1.2rem; color: #444; background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 0.5em; text-decoration: none; font-weight: 500; }
+    .cart-checkout { background: #cfa7a7; color: #fff; font-size: 1.1rem; font-weight: 600; border: none; border-radius: 2em; padding: 0.5em 1.7em; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.07); transition: background 0.2s; margin-right: 6vw; }
+    .cart-checkout:hover { background: #b97c7c; }
+    @media (max-width: 700px) {
+      .cart-title { font-size: 1.3rem; }
+      .cart-container { margin: 12px auto 90px auto; padding: 0 1vw; }
+      .cart-item { flex-direction: column; align-items: flex-start; padding: 10px 4px; }
+      .cart-item-img { margin: 0 0 8px 0; }
+      .cart-item-qtybox { margin: 6px 0; }
+      .cart-item-price { margin: 6px 0 0 0; text-align: left; }
+      .cart-footer { flex-direction: column; gap: 0.5em; padding: 0.7em 0.7em; }
+      .cart-checkout { margin-right: 0; width: 100%; }
+    }
+  </style>
+  <script>
+    function injectHeader() {
+      fetch('header_customer.html')
+        .then(res => res.text())
+        .then(html => {
+          const headerDiv = document.createElement('div');
+          headerDiv.innerHTML = html;
+          document.body.insertBefore(headerDiv, document.body.firstChild);
+        });
+    }
+    document.addEventListener('DOMContentLoaded', injectHeader);
+    $(document).on('click', '.cart-item-qtybox button', function() {
+      const $input = $(this).siblings('input');
+      let val = parseInt($input.val(), 10);
+      if ($(this).text() === '+') {
+        $input.val(val + 1);
+      } else if ($(this).text() === '-' && val > 1) {
+        $input.val(val - 1);
+      }
+    });
+    $(document).on('click', '.cart-checkout', function() {
+      window.location.href = 'checkout.html';
+    });
+  </script>
+</head>
+<body>
+  <div id="headerContainer"></div>
+  <script>
+    $(function() {
+      $("#headerContainer").load("../header.html");
+    });
+  </script>
+  <div style="height:16px;"></div>
+  <div class="cart-container">
+    <div class="cart-title">Your Shopping Cart</div>
+    <div class="cart-item">
+      <span class="cart-item-check"><input type="checkbox" checked></span>
+      <div class="cart-item-img"><span>🌄</span></div>
+      <div class="cart-item-main">
+        <div class="cart-item-details">
+          <div class="cart-item-name">Item Name</div>
+          <div class="cart-item-meta">Item ID? or Order ID?</div>
+        </div>
+        <span class="cart-item-color">Color [if applicable]</span>
+      </div>
+      <div class="cart-item-qtybox">
+        <button>-</button>
+        <input type="text" value="1" readonly>
+        <button>+</button>
+      </div>
+      <div class="cart-item-price">₱0.00</div>
+      <button class="cart-item-remove">X</button>
+    </div>
+    <div class="cart-item">
+      <span class="cart-item-check"><input type="checkbox" checked></span>
+      <div class="cart-item-img"><span>🌄</span></div>
+      <div class="cart-item-main">
+        <div class="cart-item-details">
+          <div class="cart-item-name">Item Name</div>
+          <div class="cart-item-meta">Item ID? or Order ID?</div>
+        </div>
+        <span class="cart-item-color">Beige</span>
+      </div>
+      <div class="cart-item-qtybox">
+        <button>-</button>
+        <input type="text" value="2" readonly>
+        <button>+</button>
+      </div>
+      <div class="cart-item-price">₱0.00</div>
+      <button class="cart-item-remove">X</button>
+    </div>
+  </div>
+  <div class="cart-footer">
+    <a href="product_customer.html" class="cart-back">&#8592; Back to Shop</a>
+    <button class="cart-checkout">Checkout: ₱0.00</button>
+  </div>
+  <script>
+const API_BASE = 'http://localhost:4000/api/v1';
+const token = localStorage.getItem('jwt_token');
+const isLoggedIn = !!token;
+
+// Load cart from backend or localStorage and render
+async function loadCart() {
+  let cart = [];
+  if (isLoggedIn) {
+    // Fetch cart from backend
+    try {
+      const res = await fetch(`${API_BASE}/cart`, { headers: { 'Authorization': `Bearer ${token}` } });
+      const data = await res.json();
+      if (data.success) {
+        cart = data.cart.map(item => ({ productId: item.item_id, quantity: item.quantity, price: item.price }));
+      }
+    } catch {}
+  } else {
+    cart = JSON.parse(localStorage.getItem('cart') || '[]');
+  }
+  if (!cart.length) {
+    document.querySelector('.cart-container').innerHTML = '<div class="cart-title">Your Shopping Cart</div><div style="text-align:center; color:#888; margin:2em 0;">Your cart is empty.</div>';
+    return;
+  }
+  // Fetch product details for each item
+  let products = [];
+  for (const item of cart) {
+    try {
+      const res = await fetch(`${API_BASE}/products/details/${item.productId}`);
+      const data = await res.json();
+      if (data && data.product) {
+        products.push({ ...data.product, quantity: item.quantity, price: item.price });
+      }
+    } catch {}
+  }
+  // Render cart items
+  let html = '<div class="cart-title">Your Shopping Cart</div>';
+  let total = 0;
+  products.forEach(product => {
+    const subtotal = (product.price || product.sell_price) * product.quantity;
+    total += subtotal;
+    html += `<div class="cart-item">
+      <div class="cart-item-img"><img src="${Array.isArray(product.image) ? product.image[0] : product.image}" style="width:54px;height:54px;object-fit:cover;border-radius:50%;"></div>
+      <div class="cart-item-main">
+        <div class="cart-item-details">
+          <div class="cart-item-name">${product.name}</div>
+          <div class="cart-item-meta">${product.description || ''}</div>
+        </div>
+        <div class="cart-item-qtybox">
+          <button onclick="updateQty(${product.item_id}, -1)">-</button>
+          <input type="text" value="${product.quantity}" readonly>
+          <button onclick="updateQty(${product.item_id}, 1)">+</button>
+        </div>
+        <div class="cart-item-price">₱${subtotal.toLocaleString()}</div>
+        <button class="cart-item-remove" onclick="removeFromCart(${product.item_id})">X</button>
+      </div>
+    </div>`;
+  });
+  html += `<div class="cart-footer"><div>Total: <b>₱${total.toLocaleString()}</b></div></div>`;
+  document.querySelector('.cart-container').innerHTML = html;
+}
+
+async function updateQty(productId, delta) {
+  if (isLoggedIn) {
+    // Update quantity in backend
+    let cart = [];
+    try {
+      const res = await fetch(`${API_BASE}/cart`, { headers: { 'Authorization': `Bearer ${token}` } });
+      const data = await res.json();
+      if (data.success) cart = data.cart;
+    } catch {}
+    const item = cart.find(i => i.item_id === productId);
+    if (item) {
+      let newQty = item.quantity + delta;
+      if (newQty < 1) newQty = 1;
+      await fetch(`${API_BASE}/cart/add`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ item_id: productId, quantity: delta, price: item.price })
+      });
+      loadCart();
+    }
+  } else {
+    let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    const item = cart.find(i => i.productId === productId);
+    if (item) {
+      item.quantity += delta;
+      if (item.quantity < 1) item.quantity = 1;
+      localStorage.setItem('cart', JSON.stringify(cart));
+      loadCart();
+    }
+  }
+}
+
+async function removeFromCart(productId) {
+  if (isLoggedIn) {
+    await fetch(`${API_BASE}/cart/remove`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ item_id: productId })
+    });
+    loadCart();
+  } else {
+    let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    cart = cart.filter(i => i.productId !== productId);
+    localStorage.setItem('cart', JSON.stringify(cart));
+    loadCart();
+  }
+}
+document.addEventListener('DOMContentLoaded', loadCart);
+</script>
+</body>
+</html> 

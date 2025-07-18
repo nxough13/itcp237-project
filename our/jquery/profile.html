@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Home Haven - Profile</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <style>
+    :root {
+      --primary-color: #8B5C2A;
+      --primary-light: #bfa77a;
+      --primary-dark: #6d4c1c;
+      --secondary-color: #b85c2a;
+      --background-light: #f6f3ef;
+      --background-dark: #e5d6c3;
+      --text-dark: #3d2c1c;
+      --text-medium: #7a5420;
+      --text-light: #fffdfa;
+      --shadow-light: 0 4px 20px rgba(139, 92, 42, 0.08);
+      --shadow-medium: 0 8px 32px rgba(139, 92, 42, 0.15);
+      --shadow-dark: 0 12px 40px rgba(139, 92, 42, 0.2);
+      --transition-fast: all 0.15s ease-out;
+      --transition-medium: all 0.3s ease-out;
+      --transition-slow: all 0.5s ease-out;
+    }
+    
+    body { 
+      background: var(--background-light); 
+      font-family: 'Montserrat', sans-serif;
+      color: var(--text-dark);
+      line-height: 1.6;
+    }
+    
+    .profile-container { 
+      max-width: 1100px; 
+      margin: 2rem auto; 
+      background: #fff; 
+      border-radius: 24px; 
+      box-shadow: var(--shadow-medium); 
+      padding: 2.5rem 3rem;
+      transform: translateY(20px);
+      opacity: 0;
+      animation: fadeInUp 0.6s ease-out forwards;
+      overflow: hidden;
+      position: relative;
+    }
+    
+    @keyframes fadeInUp {
+      from {
+        transform: translateY(20px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+    
+    .profile-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 8px;
+      background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    }
+    
+    .profile-header { 
+      display: flex; 
+      align-items: flex-start; 
+      gap: 2rem; 
+      margin-bottom: 2rem; 
+      position: relative;
+    }
+    
+    .profile-actions {
+      display: flex;
+      gap: 1rem;
+      margin-left: auto;
+    }
+    
+    .profile-avatar { 
+      width: 160px; 
+      height: 160px; 
+      border-radius: 50%; 
+      background: var(--background-dark); 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      font-size: 6rem; 
+      color: var(--primary-color); 
+      border: 4px solid var(--primary-light); 
+      position: relative;
+      transition: var(--transition-medium);
+      box-shadow: var(--shadow-light);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    
+    .profile-avatar:hover {
+      transform: scale(1.03);
+      box-shadow: var(--shadow-medium);
+    }
+    
+    .profile-avatar:active {
+      transform: scale(0.98);
+    }
+    
+    .profile-avatar-edit { 
+      position: absolute; 
+      bottom: 8px;
+      right: 8px; 
+      background: #fff; 
+      border-radius: 50%; 
+      padding: 6px;
+      border: 1px solid var(--primary-light); 
+      cursor: pointer;
+      transition: var(--transition-fast);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .profile-avatar-edit:hover {
+      background: var(--primary-light);
+      color: white;
+      transform: scale(1.1);
+    }
+    
+    .profile-avatar-edit svg {
+      width: 16px;
+      height: 16px;
+      transition: var(--transition-fast);
+    }
+    
+    .profile-avatar-edit:hover svg {
+      stroke: white;
+    }
+    
+    .profile-title { 
+      font-size: 2.5rem; 
+      font-weight: 700; 
+      color: var(--text-dark); 
+      font-family: 'Playfair Display', serif;
+      letter-spacing: 0.5px;
+      margin-bottom: 0.5rem;
+      position: relative;
+      display: inline-block;
+    }
+    
+    .profile-title::after {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      left: 0;
+      width: 60px;
+      height: 3px;
+      background: var(--primary-light);
+      transition: var(--transition-medium);
+    }
+    
+    .profile-title:hover::after {
+      width: 100%;
+      background: var(--primary-color);
+    }
+    
+    .profile-form { 
+      display: flex; 
+      flex-wrap: wrap; 
+      gap: 2rem; 
+    }
+    
+    .profile-col { 
+      flex: 1 1 350px; 
+      min-width: 320px; 
+      padding: 0 1rem;
+    }
+    
+    .profile-form input[type="text"],
+    .profile-form input[type="email"],
+    .profile-form input[type="password"],
+    .profile-form input[type="date"] {
+      width: 100%;
+      padding: 0.6rem 0.8rem;
+      border: 1.5px solid #d1bfa3;
+      border-radius: 6px;
+      font-size: 1rem;
+      background: #fff;
+      color: var(--text-medium);
+      outline: none;
+      margin-bottom: 1rem;
+      transition: var(--transition-fast);
+      font-family: 'Montserrat', sans-serif;
+      height: 40px;
+    }
+    
+    .profile-form input:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(139, 92, 42, 0.1);
+    }
+    
+    .profile-form input[readonly] {
+      background: #f8f6f3;
+      color: #666;
+      cursor: not-allowed;
+    }
+    
+    .profile-form label {
+      display: block;
+      font-weight: 600;
+      color: var(--text-medium);
+      margin-bottom: 0.8rem;
+      font-size: 1rem;
+    }
+    
+    .input-group {
+      position: relative;
+      width: 100%;
+    }
+    
+    .input-group input[type="password"],
+    .input-group input[type="text"] {
+      width: 100%;
+      box-sizing: border-box;
+      border: 1.5px solid #d1bfa3;
+      border-radius: 6px;
+      background: #fff;
+      outline: none;
+      transition: var(--transition-fast);
+      margin-right: 0;
+      padding-right: 3rem;
+    }
+    
+    .toggle-password {
+      position: absolute;
+      right: 0.5rem;
+      top: 50%;
+      transform: translateY(-50%);
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      cursor: pointer;
+      padding: 0;
+      margin: 0;
+      height: 2rem;
+      width: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+      outline: none;
+      overflow: hidden;
+    }
+    
+    .toggle-password svg {
+      width: 2rem;
+      height: 2rem;
+      display: block;
+      overflow: hidden;
+    }
+    
+    .toggle-password:focus {
+      outline: none;
+      box-shadow: none;
+    }
+    
+    .customer-details-label {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-dark);
+      font-family: 'Playfair Display', serif;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--primary-light);
+    }
+    
+    .customer-fields-row {
+      display: flex;
+      gap: 2rem;
+      flex-wrap: wrap;
+    }
+    
+    .customer-fields-col {
+      flex: 1 1 300px;
+      min-width: 280px;
+    }
+    
+    .profile-message {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-radius: 8px;
+      font-weight: 500;
+      text-align: center;
+      display: none;
+    }
+    
+    .profile-message.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    
+    .profile-message.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    
+    .action-btn {
+      background: #a67c52;
+      color: #fff;
+      border: none;
+      border-radius: 32px;
+      padding: 0.7rem 2rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.18s, box-shadow 0.18s, color 0.18s;
+      box-shadow: 0 2px 8px 0 rgba(139,92,42,0.13);
+      margin-bottom: 0.2rem;
+      letter-spacing: 0.5px;
+      outline: none;
+      display: inline-block;
+      height: 48px;
+      padding: 0 1.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+    .action-btn:hover, .action-btn:focus {
+      background: #8B5C2A;
+      color: #fffbe6;
+      box-shadow: 0 4px 16px 0 rgba(139,92,42,0.18);
+    }
+    .pill-logout {
+      background: #b85c2a;
+    }
+    .pill-logout:hover, .pill-logout:focus {
+      background: #a04a1a;
+    }
+  </style>
+</head>
+<body>
+<script src="js/main.js"></script>
+<!-- Login Redirect Modal -->
+<div id="loginModal" style="display:none; position:fixed; z-index:1000; left:0; top:0; width:100vw; height:100vh; background:rgba(0,0,0,0.4); align-items:center; justify-content:center; backdrop-filter: blur(4px);">
+  <div style="background:#fff; color:#2d2233; border-radius:16px; padding:2rem 2.5rem; min-width:320px; max-width:90vw; box-shadow:0 8px 32px rgba(0,0,0,0.18); position:relative; text-align:center; animation: modalFadeIn 0.4s ease-out;">
+    <div id="loginModalMsg" style="font-size:1.2rem; margin-bottom:1.5rem;">Redirecting to Login page... (<span id="loginModalTimer">5</span>s)</div>
+    <div style="width:100%; height:6px; background:#f0f0f0; border-radius:3px; overflow:hidden; margin-top:1.5rem;">
+      <div id="loginModalProgress" style="height:100%; background:var(--primary-color); width:0%; transition:width 1s linear;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Custom Success/Error Modal -->
+<div id="customModal" style="display:none; position:fixed; z-index:1001; left:0; top:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); align-items:center; justify-content:center; backdrop-filter: blur(4px);">
+  <div style="background:#fff; color:#2d2233; border-radius:20px; padding:2.5rem 3rem; min-width:350px; max-width:90vw; box-shadow:0 12px 40px rgba(0,0,0,0.25); position:relative; text-align:center; animation: modalSlideIn 0.3s ease-out;">
+    <div id="customModalIcon" style="font-size:4rem; margin-bottom:1.5rem;">✅</div>
+    <div id="customModalTitle" style="font-size:1.5rem; font-weight:700; margin-bottom:1rem; color:var(--primary-color);">Success!</div>
+    <div id="customModalMessage" style="font-size:1.1rem; margin-bottom:2rem; line-height:1.5; color:#555;">Your changes have been saved successfully.</div>
+    <div style="width:100%; height:4px; background:#f0f0f0; border-radius:2px; overflow:hidden; margin-top:1rem;">
+      <div id="customModalProgress" style="height:100%; background:var(--primary-color); width:100%; transition:width 3s linear;"></div>
+    </div>
+  </div>
+</div>
+
+<style>
+@keyframes modalSlideIn {
+  from {
+    transform: translateY(-20px) scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+</style>
+<script>
+  const token = localStorage.getItem('jwt_token');
+  if (!token) {
+    document.getElementById('loginModal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    let seconds = 5;
+    const timerSpan = document.getElementById('loginModalTimer');
+    const progressBar = document.getElementById('loginModalProgress');
+    timerSpan.textContent = seconds;
+    progressBar.style.width = '0%';
+    
+    // Start progress bar animation
+    setTimeout(() => {
+      progressBar.style.width = '100%';
+    }, 10);
+    
+    const interval = setInterval(() => {
+      seconds--;
+      if (seconds > 0) {
+        timerSpan.textContent = seconds;
+      } else {
+        clearInterval(interval);
+        window.location.href = 'login.html?reason=notloggedin';
+      }
+    }, 1000);
+  }
+</script>
+  <div class="profile-container">
+    <div class="profile-header" style="display:flex; align-items:flex-start; gap:1.5rem; margin-bottom:2rem;">
+      <div class="profile-avatar" id="profileAvatar" tabindex="0" style="cursor:pointer;">
+        <span id="profileAvatarImg">👤</span>
+        <input type="file" id="avatarFileInput" accept="image/*" style="display:none;" />
+        <span class="profile-avatar-edit" id="profileAvatarEdit" title="Edit avatar"><svg viewBox="0 0 24 24" fill="none" stroke="#8B5C2A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19.5 3 21l1.5-4L16.5 3.5z"/></svg></span>
+      </div>
+      <div style="display:flex; flex-direction:column; justify-content:center; align-items:flex-start;">
+        <div style="font-size:1.2rem; color:#8B5C2A; text-align:left;" id="profileRoleLabel">User</div>
+        <div class="profile-title" id="profileName" style="font-size:2.1rem; font-weight:700; color:#3d2c1c; text-align:left;"></div>
+      </div>
+      <div class="profile-actions">
+        <button type="button" class="action-btn">
+          <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <path d="M16 10a4 4 0 0 1-8 0"></path>
+          </svg>
+          Orders
+        </button>
+        <button type="button" class="action-btn">
+          <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+          </svg>
+          Wishlist
+        </button>
+        <button type="button" class="action-btn">
+          <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          Track
+        </button>
+      </div>
+    </div>
+    <form class="profile-form" id="profileForm" autocomplete="off">
+      <div class="profile-col">
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" required>
+        <label for="password">Change Password:</label>
+        <div class="input-group">
+          <input type="password" id="password" name="password" placeholder="New password">
+          <button type="button" class="toggle-password" tabindex="-1" onclick="togglePassword('password', this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <label for="confirm-password">Confirm Password:</label>
+        <div class="input-group">
+          <input type="password" id="confirm-password" name="confirm-password" placeholder="Confirm new password">
+          <button type="button" class="toggle-password" tabindex="-1" onclick="togglePassword('confirm-password', this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" readonly>
+      </div>
+      <div class="profile-col">
+        <label for="address">Address:</label>
+        <input type="text" id="address" name="address">
+        <label for="phone">Phone Number:</label>
+        <input type="text" id="phone" name="phone">
+      </div>
+      <div style="flex-basis:100%;"></div>
+      <div id="customerSectionWrapper"></div>
+      <!-- Save User Details Button -->
+      <div style="display:flex; justify-content:flex-end; margin-bottom:2.2rem;">
+        <button type="button" class="action-btn" id="saveUserBtn">Save User Details</button>
+      </div>
+      <!-- Profile Section -->
+      <div class="profile-section">
+        <h2>Profile</h2>
+        <!-- Profile fields here -->
+        <!-- ... -->
+        <div id="upgradeButtons" style="margin-top:1.5rem;">
+          <button id="upgradeCustomerBtn" class="action-btn">Upgrade to Customer</button>
+          <button id="upgradeSellerBtn" class="action-btn" style="margin-left:1rem;">Upgrade to Seller</button>
+        </div>
+      </div>
+      <!-- Customer Section (hidden unless role is customer) -->
+      <div class="customer-section" style="display:none; margin-top:2rem;">
+        <h2>Customer Details</h2>
+        <!-- Customer input fields here -->
+        <!-- ... -->
+      </div>
+      <!-- Seller Section (hidden unless role is seller) -->
+      <div class="seller-section" style="display:none; margin-top:2rem;">
+        <h2>Seller Details</h2>
+        <div id="sellerPendingNote" style="color:#b85c2a; margin-bottom:1rem; display:none;">Your seller upgrade request is pending admin approval. You can edit your seller info once approved.</div>
+        <!-- Seller input fields here, disabled if not verified -->
+        <!-- ... -->
+      </div>
+      <div class="profile-message" id="profileMessage"></div>
+      <button type="button" class="action-btn pill-logout" id="logoutBtnProfile" style="width:100%; margin-top:2rem;">Logout</button>
+    </form>
+  </div>
+  <script>
+    // Toggle password visibility
+    function togglePassword(fieldId, btn) {
+      const input = document.getElementById(fieldId);
+      if (input.type === 'password') {
+        input.type = 'text';
+        btn.querySelector('svg').style.opacity = 0.5;
+      } else {
+        input.type = 'password';
+        btn.querySelector('svg').style.opacity = 1;
+      }
+    }
+
+    // Show custom modal
+    function showCustomModal(title, message, icon = '✅') {
+      document.getElementById('customModalIcon').textContent = icon;
+      document.getElementById('customModalTitle').textContent = title;
+      document.getElementById('customModalMessage').textContent = message;
+      document.getElementById('customModal').style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+      
+      // Auto-close after 3 seconds
+      setTimeout(() => {
+        document.getElementById('customModal').style.display = 'none';
+        document.body.style.overflow = 'auto';
+      }, 3000);
+    }
+
+    // Avatar click logic
+    document.getElementById('profileAvatar').addEventListener('click', function() {
+      document.getElementById('avatarFileInput').click();
+    });
+    document.getElementById('profileAvatarEdit').addEventListener('click', function(e) {
+      e.stopPropagation();
+      document.getElementById('avatarFileInput').click();
+    });
+    document.getElementById('avatarFileInput').addEventListener('change', function() {
+      const file = this.files[0];
+      if (!file) return;
+      const token = localStorage.getItem('jwt_token');
+      const formData = new FormData();
+      formData.append('profile_image', file);
+      fetch('http://localhost:4000/api/v1/profile', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.image_path) {
+          document.getElementById('profileAvatarImg').innerHTML = `<img src="${data.image_path}" alt="Profile" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
+          showCustomModal('Success', 'Profile image updated!', '✅');
+        } else {
+          showCustomModal('Error', data.message || 'Failed to update image', '❌');
+        }
+      })
+      .catch(() => showCustomModal('Error', 'Failed to update image', '❌'));
+    });
+
+    // Render customer section based on role
+    function renderCustomerSection(role, profile) {
+      const wrapper = document.getElementById('customerSectionWrapper');
+      wrapper.innerHTML = '';
+      if (role === 'customer' || role === 'seller' || role === 'admin') {
+        wrapper.innerHTML = `
+          <div class="customer-details-label" style="margin-top:0.7rem; margin-bottom:0.7rem;">Customer Details</div>
+          <div class="customer-fields-row" style="margin-bottom:2rem;">
+            <div class="customer-fields-col">
+              <label for="fname">First Name:</label>
+              <input type="text" id="fname" name="fname" value="${profile.fname || ''}">
+              <label for="lname">Last Name:</label>
+              <input type="text" id="lname" name="lname" value="${profile.lname || ''}">
+            </div>
+            <div class="customer-fields-col">
+              <label for="town">Town:</label>
+              <input type="text" id="town" name="town" value="${profile.town || ''}">
+              <label for="zipcode">Zipcode:</label>
+              <input type="text" id="zipcode" name="zipcode" value="${profile.zipcode || ''}">
+            </div>
+          </div>
+          <div style="display:flex; justify-content:center; margin-bottom:2.2rem;">
+            <button type="button" class="action-btn" id="saveCustomerBtn">Save Customer Details</button>
+          </div>
+        `;
+        // Re-attach save handler
+        document.getElementById('saveCustomerBtn').addEventListener('click', saveCustomerDetails);
+      } else if (role === 'user') {
+        wrapper.innerHTML = `<div style="display:flex; justify-content:center; margin:2rem 0;"><button type="button" class="action-btn" id="upgradeBtn">Upgrade to Customer</button></div>`;
+        document.getElementById('upgradeBtn').addEventListener('click', function() {
+          const token = localStorage.getItem('jwt_token');
+          fetch('http://localhost:4000/api/v1/upgrade-to-customer', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              showCustomModal('Success', 'You are now a customer!', '✅');
+              setTimeout(() => window.location.reload(), 1200);
+            } else {
+              showCustomModal('Error', data.message || 'Failed to upgrade', '❌');
+            }
+          })
+          .catch(() => showCustomModal('Error', 'Failed to upgrade', '❌'));
+        });
+      }
+    }
+
+    // Save customer details handler
+    function saveCustomerDetails() {
+      const token = localStorage.getItem('jwt_token');
+      if (!token) return;
+      const fname = document.getElementById('fname').value.trim();
+      const lname = document.getElementById('lname').value.trim();
+      const address = document.getElementById('address').value.trim();
+      const phone = document.getElementById('phone').value.trim();
+      const town = document.getElementById('town').value.trim();
+      const zipcode = document.getElementById('zipcode').value.trim();
+      const formData = new FormData();
+      formData.append('fname', fname);
+      formData.append('lname', lname);
+      formData.append('address', address);
+      formData.append('phone', phone);
+      formData.append('town', town);
+      formData.append('zipcode', zipcode);
+      fetch('http://localhost:4000/api/v1/profile', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          showCustomModal('Success', 'Customer details updated successfully!', '✅');
+        } else {
+          showCustomModal('Error', data.message || 'Failed to update customer details', '❌');
+        }
+      })
+      .catch(() => showCustomModal('Error', 'Failed to update customer details', '❌'));
+    }
+
+    // Load profile data (updated)
+    function loadProfile() {
+      const token = localStorage.getItem('jwt_token');
+      if (!token) return;
+      fetch('http://localhost:4000/api/v1/profile', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          const profile = data.profile;
+          // Set user details
+          if (document.getElementById('name')) document.getElementById('name').value = profile.name || '';
+          if (document.getElementById('email')) document.getElementById('email').value = profile.email || '';
+          if (document.getElementById('profileName')) document.getElementById('profileName').textContent = profile.name || '';
+          if (document.getElementById('profileRoleLabel')) document.getElementById('profileRoleLabel').textContent = profile.role || 'User';
+          if (document.getElementById('address')) document.getElementById('address').value = profile.address || '';
+          if (document.getElementById('phone')) document.getElementById('phone').value = profile.phone || '';
+          // Set profile image if available
+          const imgSrc = profile.profile_image || profile.image_path;
+          if (imgSrc) {
+            const fullImgSrc = imgSrc.startsWith('http') ? imgSrc : `http://localhost:4000${imgSrc}`;
+            document.getElementById('profileAvatarImg').innerHTML = `<img src="${fullImgSrc}" alt="Profile" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
+          }
+          // Render customer section based on role
+          renderCustomerSection(profile.role, profile);
+          // On page load, show/hide upgrade buttons and sections based on user role
+          updateProfileUI(profile);
+        }
+      })
+      .catch(err => {
+        console.error('Failed to load profile:', err);
+      });
+    }
+
+    // Save user details
+    document.getElementById('saveUserBtn').addEventListener('click', function() {
+      const token = localStorage.getItem('jwt_token');
+      if (!token) return;
+
+      const name = document.getElementById('name').value.trim();
+      const password = document.getElementById('password').value;
+      const confirmPassword = document.getElementById('confirm-password').value;
+
+      if (password && password !== confirmPassword) {
+        showCustomModal('Error', 'Passwords do not match!', '❌');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('name', name);
+      if (password) {
+        formData.append('password', password);
+      }
+
+      fetch('http://localhost:4000/api/v1/profile', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          showCustomModal('Success', 'User details updated successfully!', '✅');
+          // Update localStorage
+          if (name) {
+            localStorage.setItem('user_name', name);
+            if (typeof updateHeaderLoginState === 'function') {
+              updateHeaderLoginState();
+            }
+          }
+          // Clear password fields
+          document.getElementById('password').value = '';
+          document.getElementById('confirm-password').value = '';
+        } else {
+          showCustomModal('Error', data.message || 'Failed to update user details', '❌');
+        }
+      })
+      .catch(err => {
+        showCustomModal('Error', 'Failed to update user details', '❌');
+      });
+    });
+
+    // Logout functionality
+    document.getElementById('logoutBtnProfile').addEventListener('click', function() {
+      localStorage.removeItem('jwt_token');
+      localStorage.removeItem('user_name');
+      localStorage.removeItem('user_role');
+      window.location.href = 'index.html';
+    });
+
+    // Load profile on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      loadProfile();
+    });
+
+    // On page load, show/hide upgrade buttons and sections based on user role
+    function updateProfileUI(user) {
+      if (user.role === 'user') {
+        $('#upgradeButtons').show();
+        $('.customer-section').hide();
+        $('.seller-section').hide();
+      } else {
+        $('#upgradeButtons').hide();
+        if (user.role === 'customer') {
+          $('.customer-section').show();
+          $('.seller-section').hide();
+        } else if (user.role === 'seller') {
+          $('.customer-section').hide();
+          $('.seller-section').show();
+          if (user.is_verified === 0) {
+            $('#sellerPendingNote').show();
+            $('.seller-section input, .seller-section textarea').prop('disabled', true);
+          } else {
+            $('#sellerPendingNote').hide();
+            $('.seller-section input, .seller-section textarea').prop('disabled', false);
+          }
+        }
+      }
+      // Always hide upgrade buttons for customer/seller/admin
+      if (user.role !== 'user') {
+        $('#upgradeButtons').hide();
+      }
+    }
+    $('#upgradeCustomerBtn').on('click', function() {
+      // Show customer section for editing
+      $('.customer-section').show();
+      $('.seller-section').hide();
+    });
+    $('#upgradeSellerBtn').on('click', function() {
+      // Show seller section, fields disabled, show pending note
+      $('.seller-section').show();
+      $('.customer-section').hide();
+      $('#sellerPendingNote').show();
+      $('.seller-section input, .seller-section textarea').prop('disabled', true);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seller Profile | HomeHaven</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" href="../css/style.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      min-height: 100vh;
+    }
+    .profile-header {
+      background: linear-gradient(135deg, #8B5C2A 0%, #A67C52 100%);
+      color: white;
+      padding: 28px 12px 18px 12px;
+      border-radius: 0 0 1rem 1rem;
+      margin-bottom: 2rem;
+      text-align: center;
+      box-shadow: 0 4px 16px rgba(139, 92, 42, 0.18);
+    }
+    .profile-card {
+      max-width: 500px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 1rem;
+      box-shadow: 0 2px 8px rgba(139,92,42,0.07);
+      padding: 2rem 2.5rem 2rem 2.5rem;
+      margin-bottom: 2rem;
+    }
+    .profile-label {
+      color: #8B5C2A;
+      font-weight: 600;
+      font-size: 1.05rem;
+    }
+    .profile-value {
+      color: #444;
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+    }
+    .verified {
+      color: #27ae60;
+      font-weight: 700;
+    }
+    .not-verified {
+      color: #e67e22;
+      font-weight: 700;
+    }
+    .loading-spinner {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 1000;
+    }
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #8B5C2A;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div id="header"></div>
+  <script>$(function(){$('#header').load('../header.html');});</script>
+  <div class="profile-header">
+    <h1>Seller Profile</h1>
+    <p class="lead">View and manage your business information</p>
+  </div>
+  <div class="loading-spinner"><div class="spinner"></div></div>
+  <div class="profile-card" id="profileCard">
+    <!-- Seller info will be loaded here -->
+  </div>
+  <div class="container" id="sellerCatalogPreviewContainer">
+    <div class="hero-section" style="margin-bottom:18px;">
+      <h2 style="font-size:1.3rem; font-weight:600;">Product Catalog Preview</h2>
+      <p style="font-size:0.98rem; opacity:0.9;">This is how your products appear to customers.</p>
+    </div>
+    <div class="products-grid" id="sellerProductsGrid" style="margin-bottom:18px;"></div>
+    <div id="noProductsMsg" style="display:none; text-align:center; color:#888; font-size:1.1rem; padding:24px 8px;"></div>
+  </div>
+  <script>
+    const API_BASE = 'http://localhost:4000/api/v1';
+    function showLoading() { $('.loading-spinner').show(); }
+    function hideLoading() { $('.loading-spinner').hide(); }
+    function getToken() { return localStorage.getItem('jwt_token'); }
+    $.ajaxSetup({
+      beforeSend: function(xhr) {
+        const token = getToken();
+        if (token) xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+      }
+    });
+    async function loadSellerProfile() {
+      showLoading();
+      try {
+        // Get seller info for the logged-in user
+        const res = await $.get(API_BASE + '/seller/profile');
+        const seller = res.profile; // <-- FIXED
+        let html = '';
+        if (!seller) {
+          html = '<div class="text-danger">Seller information not found.</div>';
+        } else {
+          html += `<div class="mb-3 text-center">
+            <i class="fas fa-store fa-3x" style="color:#8B5C2A;"></i>
+          </div>`;
+          html += `<div class="profile-label">Business Name</div><div class="profile-value">${seller.business_name || '-'}</div>`;
+          html += `<div class="profile-label">Description</div><div class="profile-value">${seller.business_description || '-'}</div>`;
+          html += `<div class="profile-label">Address</div><div class="profile-value">${seller.business_address || '-'}</div>`;
+          html += `<div class="profile-label">Phone</div><div class="profile-value">${seller.business_phone || '-'}</div>`;
+          html += `<div class="profile-label">Email</div><div class="profile-value">${seller.business_email || '-'}</div>`;
+          html += `<div class="profile-label">Verification Status</div><div class="profile-value">${seller.is_verified ? '<span class=\'verified\'>Verified</span>' : '<span class=\'not-verified\'>Not Verified</span>'}</div>`;
+          html += `<div class="profile-label">Joined</div><div class="profile-value">${seller.created_at ? seller.created_at.split('T')[0] : '-'}</div>`;
+        }
+        $('#profileCard').html(html);
+      } catch (err) {
+        $('#profileCard').html('<div class="text-danger">Failed to load seller profile. Please try again.</div>');
+      } finally {
+        hideLoading();
+      }
+    }
+    async function loadSellerProductsPreview() {
+      try {
+        const res = await $.get(API_BASE + '/seller/products');
+        const products = res.products || [];
+        const grid = $('#sellerProductsGrid');
+        grid.empty();
+        if (products.length === 0) {
+          $('#noProductsMsg').text('No products found.').show();
+          return;
+        } else {
+          $('#noProductsMsg').hide();
+        }
+        products.forEach(product => {
+          grid.append(createProductCardPreview(product));
+        });
+      } catch (err) {
+        $('#noProductsMsg').text('Failed to load products.').show();
+      }
+    }
+    function createProductCardPreview(product) {
+      const stock = parseInt(product.stock_quantity || product.stock || 0);
+      const stockClass = stock === 0 ? 'stock-out' : stock <= 10 ? 'stock-low' : 'stock-available';
+      const stockText = stock === 0 ? 'Out of Stock' : stock <= 10 ? `Only ${stock} left` : 'In Stock';
+      let imageHtml = '';
+      if (product.image) {
+        let imgSrc = '';
+        try {
+          const imgs = typeof product.image === 'string' ? JSON.parse(product.image) : product.image;
+          imgSrc = Array.isArray(imgs) ? imgs[0] : imgs;
+        } catch { imgSrc = product.image; }
+        if (imgSrc) {
+          imageHtml = `<img src="${imgSrc}" alt="${product.name}" style="width:100%; height:110px; object-fit:cover; border-radius:10px 10px 0 0;">`;
+        } else {
+          imageHtml = `<div class="product-image-placeholder" style="font-size:3rem; color:#8B5C2A; opacity:0.3; height:110px; display:flex; align-items:center; justify-content:center;"><i class="fas fa-couch"></i></div>`;
+        }
+      } else {
+        imageHtml = `<div class="product-image-placeholder" style="font-size:3rem; color:#8B5C2A; opacity:0.3; height:110px; display:flex; align-items:center; justify-content:center;"><i class="fas fa-couch"></i></div>`;
+      }
+      return `
+        <div class="product-card" style="background:white; border-radius:10px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.07); margin-bottom:10px;">
+          <div class="product-image">${imageHtml}</div>
+          <div class="product-content" style="padding:10px 8px 8px 8px;">
+            <div class="product-category" style="color:#8B5C2A; font-size:0.8rem; font-weight:600; margin-bottom:2px; text-transform:uppercase; letter-spacing:1px;">${product.category_name || 'Uncategorized'}</div>
+            <h3 class="product-title" style="font-size:1.02rem; font-weight:600; color:#333; margin-bottom:4px; line-height:1.3;">${product.name}</h3>
+            <p class="product-description" style="color:#666; font-size:0.88rem; line-height:1.5; margin-bottom:6px;">${product.description}</p>
+            <div class="product-meta" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <div class="product-price" style="font-size:1.08rem; font-weight:700; color:#8B5C2A;">₱${parseFloat(product.sell_price).toLocaleString()}</div>
+              <div class="product-stock ${stockClass}" style="font-size:0.85rem;">${stockText}</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    $(document).ready(function() {
+      loadSellerProfile();
+      loadSellerProductsPreview();
+    });
+  </script>
+</body>
+</html> 
