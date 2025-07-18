@@ -59,6 +59,9 @@
         $input.val(val - 1);
       }
     });
+    $(document).on('click', '.cart-checkout', function() {
+      window.location.href = 'checkout.html';
+    });
   </script>
 </head>
 <body>
@@ -113,9 +116,25 @@
     <button class="cart-checkout">Checkout: ₱0.00</button>
   </div>
   <script>
-// Load cart from localStorage and render
+const API_BASE = 'http://localhost:4000/api/v1';
+const token = localStorage.getItem('jwt_token');
+const isLoggedIn = !!token;
+
+// Load cart from backend or localStorage and render
 async function loadCart() {
-  let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+  let cart = [];
+  if (isLoggedIn) {
+    // Fetch cart from backend
+    try {
+      const res = await fetch(`${API_BASE}/cart`, { headers: { 'Authorization': `Bearer ${token}` } });
+      const data = await res.json();
+      if (data.success) {
+        cart = data.cart.map(item => ({ productId: item.item_id, quantity: item.quantity, price: item.price }));
+      }
+    } catch {}
+  } else {
+    cart = JSON.parse(localStorage.getItem('cart') || '[]');
+  }
   if (!cart.length) {
     document.querySelector('.cart-container').innerHTML = '<div class="cart-title">Your Shopping Cart</div><div style="text-align:center; color:#888; margin:2em 0;">Your cart is empty.</div>';
     return;
@@ -124,10 +143,10 @@ async function loadCart() {
   let products = [];
   for (const item of cart) {
     try {
-      const res = await fetch(`http://localhost:4000/api/v1/products/details/${item.productId}`);
+      const res = await fetch(`${API_BASE}/products/details/${item.productId}`);
       const data = await res.json();
       if (data && data.product) {
-        products.push({ ...data.product, quantity: item.quantity });
+        products.push({ ...data.product, quantity: item.quantity, price: item.price });
       }
     } catch {}
   }
@@ -135,7 +154,7 @@ async function loadCart() {
   let html = '<div class="cart-title">Your Shopping Cart</div>';
   let total = 0;
   products.forEach(product => {
-    const subtotal = product.sell_price * product.quantity;
+    const subtotal = (product.price || product.sell_price) * product.quantity;
     total += subtotal;
     html += `<div class="cart-item">
       <div class="cart-item-img"><img src="${Array.isArray(product.image) ? product.image[0] : product.image}" style="width:54px;height:54px;object-fit:cover;border-radius:50%;"></div>
@@ -149,7 +168,7 @@ async function loadCart() {
           <input type="text" value="${product.quantity}" readonly>
           <button onclick="updateQty(${product.item_id}, 1)">+</button>
         </div>
-        <div class="cart-item-price">₱${(product.sell_price * product.quantity).toLocaleString()}</div>
+        <div class="cart-item-price">₱${subtotal.toLocaleString()}</div>
         <button class="cart-item-remove" onclick="removeFromCart(${product.item_id})">X</button>
       </div>
     </div>`;
@@ -157,21 +176,53 @@ async function loadCart() {
   html += `<div class="cart-footer"><div>Total: <b>₱${total.toLocaleString()}</b></div></div>`;
   document.querySelector('.cart-container').innerHTML = html;
 }
-function updateQty(productId, delta) {
-  let cart = JSON.parse(localStorage.getItem('cart') || '[]');
-  const item = cart.find(i => i.productId === productId);
-  if (item) {
-    item.quantity += delta;
-    if (item.quantity < 1) item.quantity = 1;
+
+async function updateQty(productId, delta) {
+  if (isLoggedIn) {
+    // Update quantity in backend
+    let cart = [];
+    try {
+      const res = await fetch(`${API_BASE}/cart`, { headers: { 'Authorization': `Bearer ${token}` } });
+      const data = await res.json();
+      if (data.success) cart = data.cart;
+    } catch {}
+    const item = cart.find(i => i.item_id === productId);
+    if (item) {
+      let newQty = item.quantity + delta;
+      if (newQty < 1) newQty = 1;
+      await fetch(`${API_BASE}/cart/add`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ item_id: productId, quantity: delta, price: item.price })
+      });
+      loadCart();
+    }
+  } else {
+    let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    const item = cart.find(i => i.productId === productId);
+    if (item) {
+      item.quantity += delta;
+      if (item.quantity < 1) item.quantity = 1;
+      localStorage.setItem('cart', JSON.stringify(cart));
+      loadCart();
+    }
+  }
+}
+
+async function removeFromCart(productId) {
+  if (isLoggedIn) {
+    await fetch(`${API_BASE}/cart/remove`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ item_id: productId })
+    });
+    loadCart();
+  } else {
+    let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    cart = cart.filter(i => i.productId !== productId);
     localStorage.setItem('cart', JSON.stringify(cart));
     loadCart();
   }
-}
-function removeFromCart(productId) {
-  let cart = JSON.parse(localStorage.getItem('cart') || '[]');
-  cart = cart.filter(i => i.productId !== productId);
-  localStorage.setItem('cart', JSON.stringify(cart));
-  loadCart();
 }
 document.addEventListener('DOMContentLoaded', loadCart);
 </script>

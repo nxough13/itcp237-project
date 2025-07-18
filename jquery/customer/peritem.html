@@ -89,6 +89,94 @@
           $input.val(val - 1);
         }
       });
+
+      // Add to Cart functionality
+      function addToCart(productId, quantity = 1) {
+        // Get current cart from localStorage
+        let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        
+        // Check if item already exists in cart
+        const existingItem = cart.find(item => item.productId === productId);
+        
+        if (existingItem) {
+          // Increment quantity if item exists
+          existingItem.quantity += quantity;
+        } else {
+          // Add new item to cart
+          cart.push({
+            productId: productId,
+            quantity: quantity,
+            addedAt: new Date().toISOString()
+          });
+        }
+        
+        // Save updated cart to localStorage
+        localStorage.setItem('cart', JSON.stringify(cart));
+        
+        // Show success notification
+        showCartNotification(true);
+      }
+
+      function showCartNotification(success, message = '') {
+        const notification = $('<div>')
+          .addClass('cart-notification')
+          .css({
+            position: 'fixed',
+            top: '20px',
+            right: '20px',
+            background: success ? '#4CAF50' : '#f44336',
+            color: 'white',
+            padding: '15px 20px',
+            borderRadius: '8px',
+            zIndex: '10000',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            transform: 'translateX(100%)',
+            transition: 'transform 0.3s ease'
+          })
+          .text(message || (success ? 'Added to cart!' : 'Failed to add to cart'));
+        
+        $('body').append(notification);
+        
+        // Animate in
+        setTimeout(() => {
+          notification.css('transform', 'translateX(0)');
+        }, 100);
+        
+        // Animate out and remove
+        setTimeout(() => {
+          notification.css('transform', 'translateX(100%)');
+          setTimeout(() => notification.remove(), 300);
+        }, 2000);
+      }
+
+      // Add to Cart button click
+      $('.peritem-actions button:first').click(function() {
+        const productId = 1; // You can make this dynamic based on the product
+        const quantity = parseInt($('.peritem-qtybox input').val(), 10);
+        
+        if (productId && quantity > 0) {
+          addToCart(productId, quantity);
+        } else {
+          showCartNotification(false, 'Invalid product or quantity');
+        }
+      });
+
+      // Buy Now button click
+      $('.peritem-actions button:last').click(function() {
+        const productId = 1; // You can make this dynamic based on the product
+        const quantity = parseInt($('.peritem-qtybox input').val(), 10);
+        
+        if (productId && quantity > 0) {
+          // Add to cart first
+          addToCart(productId, quantity);
+          // Then redirect to checkout
+          setTimeout(() => {
+            window.location.href = 'checkout.html';
+          }, 500);
+        } else {
+          showCartNotification(false, 'Invalid product or quantity');
+        }
+      });
     });
   </script>
 </head>

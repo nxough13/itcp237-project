@@ -345,9 +345,99 @@
         $('#carouselImage').attr('src', '../img/logo.png');
       }
     }
-    // --- Add to Cart/Buy Now (stub) ---
-    $('#addToCartBtn').click(function() { alert('Added to cart!'); });
-    $('#buyNowBtn').click(function() { alert('Proceed to checkout!'); });
+    // --- Add to Cart functionality ---
+    function addToCart(productId, quantity = 1) {
+      const token = localStorage.getItem('jwt_token');
+      const isLoggedIn = !!token;
+      if (isLoggedIn) {
+        // Fetch product price from the page
+        const priceText = $('#prodPrice').text().replace(/[^\d.]/g, '');
+        const price = parseFloat(priceText) || 0;
+        fetch(`${API_BASE}/cart/add`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ item_id: productId, quantity, price })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) showCartNotification(true);
+          else showCartNotification(false, 'Failed to add to cart');
+        })
+        .catch(() => showCartNotification(false, 'Failed to add to cart'));
+        return;
+      }
+      // Guest: use localStorage
+      let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+      const existingItem = cart.find(item => item.productId === productId);
+      if (existingItem) {
+        existingItem.quantity += quantity;
+      } else {
+        cart.push({ productId: productId, quantity: quantity, addedAt: new Date().toISOString() });
+      }
+      localStorage.setItem('cart', JSON.stringify(cart));
+      showCartNotification(true);
+    }
+
+    function showCartNotification(success, message = '') {
+      const notification = $('<div>')
+        .addClass('cart-notification')
+        .css({
+          position: 'fixed',
+          top: '20px',
+          right: '20px',
+          background: success ? '#4CAF50' : '#f44336',
+          color: 'white',
+          padding: '15px 20px',
+          borderRadius: '8px',
+          zIndex: '10000',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          transform: 'translateX(100%)',
+          transition: 'transform 0.3s ease'
+        })
+        .text(message || (success ? 'Added to cart!' : 'Failed to add to cart'));
+      
+      $('body').append(notification);
+      
+      // Animate in
+      setTimeout(() => {
+        notification.css('transform', 'translateX(0)');
+      }, 100);
+      
+      // Animate out and remove
+      setTimeout(() => {
+        notification.css('transform', 'translateX(100%)');
+        setTimeout(() => notification.remove(), 300);
+      }, 2000);
+    }
+
+    // Add to Cart button click
+    $('#addToCartBtn').click(function() {
+      const productId = getProductId();
+      const quantity = parseInt($('#qtyInput').val(), 10);
+      
+      if (productId && quantity > 0) {
+        addToCart(productId, quantity);
+      } else {
+        showCartNotification(false, 'Invalid product or quantity');
+      }
+    });
+
+    // Buy Now button click
+    $('#buyNowBtn').click(function() {
+      const productId = getProductId();
+      const quantity = parseInt($('#qtyInput').val(), 10);
+      
+      if (productId && quantity > 0) {
+        // Add to cart first
+        addToCart(productId, quantity);
+        // Then redirect to checkout
+        setTimeout(() => {
+          window.location.href = 'checkout.html';
+        }, 500);
+      } else {
+        showCartNotification(false, 'Invalid product or quantity');
+      }
+    });
     // On page load, fetch wishlist and product details
     $(document).ready(async function() {
       await fetchWishlist();

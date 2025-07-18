@@ -727,6 +727,33 @@
       }, 3000);
     }
 
+    function showCartNotification(success, message = '') {
+      const notification = $('<div>')
+        .addClass('cart-notification')
+        .css({
+          position: 'fixed',
+          top: '20px',
+          right: '20px',
+          background: success ? '#4CAF50' : '#f44336',
+          color: 'white',
+          padding: '15px 20px',
+          borderRadius: '8px',
+          zIndex: '10000',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          transform: 'translateX(100%)',
+          transition: 'transform 0.3s ease'
+        })
+        .text(message || (success ? 'Added to cart!' : 'Failed to add to cart'));
+      $('body').append(notification);
+      setTimeout(() => {
+        notification.css('transform', 'translateX(0)');
+      }, 100);
+      setTimeout(() => {
+        notification.css('transform', 'translateX(100%)');
+        setTimeout(() => notification.remove(), 300);
+      }, 2000);
+    }
+
     // Load categories
     async function loadCategories() {
       try {
@@ -1099,6 +1126,26 @@
 
     // Add to cart
     function addToCart(productId) {
+      const token = localStorage.getItem('jwt_token');
+      const isLoggedIn = !!token;
+      if (isLoggedIn) {
+        // Find product price from allProducts
+        const product = allProducts.find(p => p.item_id === productId);
+        const price = product ? product.sell_price : 0;
+        fetch(`${API_BASE}/cart/add`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ item_id: productId, quantity: 1, price })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) showCartNotification(true, 'Added to cart!');
+          else showCartNotification(false, 'Failed to add to cart');
+        })
+        .catch(() => showCartNotification(false, 'Failed to add to cart'));
+        return;
+      }
+      // Guest: use localStorage
       let cart = JSON.parse(localStorage.getItem('cart') || '[]');
       const existing = cart.find(item => item.productId === productId);
       if (existing) {
@@ -1107,7 +1154,7 @@
         cart.push({ productId, quantity: 1 });
       }
       localStorage.setItem('cart', JSON.stringify(cart));
-      showToast ? showToast('Added to cart!') : alert('Added to cart!');
+      showCartNotification(true, 'Added to cart!');
     }
 
     // Quick view
