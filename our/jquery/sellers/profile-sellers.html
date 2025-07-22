@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <link rel="stylesheet" href="../css/style.css">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -188,5 +188,21 @@
       loadSellerProductsPreview();
     });
   </script>
+  <script>
+$(function() {
+  $(document).on('submit', '#sellerProfileForm', function(e) {
+    let valid = true;
+    $('.profile-error').remove();
+    const name = $('#business_name').val().trim();
+    const email = $('#business_email').val().trim();
+    const phone = $('#business_phone').val().trim();
+    if (!name) { $('#business_name').after('<div class="profile-error" style="color:#c00;font-size:0.95em;margin-top:2px;">Business name is required.</div>'); valid = false; }
+    if (!email) { $('#business_email').after('<div class="profile-error" style="color:#c00;font-size:0.95em;margin-top:2px;">Email is required.</div>'); valid = false; }
+    else if (!/^\S+@\S+\.\S+$/.test(email)) { $('#business_email').after('<div class="profile-error" style="color:#c00;font-size:0.95em;margin-top:2px;">Enter a valid email.</div>'); valid = false; }
+    if (!phone) { $('#business_phone').after('<div class="profile-error" style="color:#c00;font-size:0.95em;margin-top:2px;">Phone is required.</div>'); valid = false; }
+    if (!valid) { e.preventDefault(); return false; }
+  });
+});
+</script>
 </body>
 </html> 

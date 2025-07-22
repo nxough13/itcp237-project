@@ -367,64 +367,47 @@
     </div>
   </div>
   <div class="footer">@Kung ano mang pwedeng ilagay here</div>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script>
-    // Still force lowercase for pasted or autofilled text
-    document.getElementById('email').addEventListener('input', function(e) {
-      const start = this.selectionStart;
-      const end = this.selectionEnd;
-      this.value = this.value.toLowerCase();
-      this.setSelectionRange(start, end);
-    });
-
-    // Toggle password visibility
-    function togglePassword(fieldId, btn) {
-      const input = document.getElementById(fieldId);
-      if (input.type === 'password') {
-        input.type = 'text';
-        btn.querySelector('svg').style.opacity = 0.5;
-      } else {
-        input.type = 'password';
-        btn.querySelector('svg').style.opacity = 1;
-      }
+$(function() {
+  $('#signupForm').on('submit', function(e) {
+    let valid = true;
+    $('.signup-error').remove();
+    const name = $('#name').val().trim();
+    const email = $('#email').val().trim();
+    const password = $('#password').val();
+    const confirm = $('#confirm_password').val();
+    if (!name) {
+      $('#name').after('<div class="signup-error" style="color:#c00;font-size:0.95em;margin-top:2px;">Name is required.</div>');
+      valid = false;
     }
-
-    function showSuccessModal(message) {
-      document.getElementById('successMessage').textContent = message;
-      document.getElementById('successModal').style.display = 'flex';
+    if (!email) {
+      $('#email').after('<div class="signup-error" style="color:#c00;font-size:0.95em;margin-top:2px;">Email is required.</div>');
+      valid = false;
+    } else if (!/^\S+@\S+\.\S+$/.test(email)) {
+      $('#email').after('<div class="signup-error" style="color:#c00;font-size:0.95em;margin-top:2px;">Enter a valid email.</div>');
+      valid = false;
     }
-
-    function closeSuccessModal() {
-      document.getElementById('successModal').style.display = 'none';
-      window.location.href = 'login.html';
+    if (!password) {
+      $('#password').after('<div class="signup-error" style="color:#c00;font-size:0.95em;margin-top:2px;">Password is required.</div>');
+      valid = false;
+    } else if (password.length < 6) {
+      $('#password').after('<div class="signup-error" style="color:#c00;font-size:0.95em;margin-top:2px;">Password must be at least 6 characters.</div>');
+      valid = false;
     }
-
-    document.getElementById('signupForm').addEventListener('submit', function(e) {
+    if (!confirm) {
+      $('#confirm_password').after('<div class="signup-error" style="color:#c00;font-size:0.95em;margin-top:2px;">Please confirm your password.</div>');
+      valid = false;
+    } else if (password !== confirm) {
+      $('#confirm_password').after('<div class="signup-error" style="color:#c00;font-size:0.95em;margin-top:2px;">Passwords do not match.</div>');
+      valid = false;
+    }
+    if (!valid) {
       e.preventDefault();
-      const name = document.getElementById('name').value.trim();
-      const email = document.getElementById('email').value.trim();
-      const password = document.getElementById('password').value;
-      const confirmPassword = document.getElementById('confirm-password').value;
-      
-      if (password !== confirmPassword) {
-        alert('Passwords do not match.');
-        return;
-      }
-      
-      fetch('http://localhost:4000/api/v1/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password })
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          showSuccessModal('Registration successful! Please check your email to verify your account.');
-        } else {
-          alert('Registration failed: ' + (data.message || 'Please try again.'));
-        }
-      })
-      .catch(() => alert('Registration failed. Please try again.'));
-    });
+      return false;
+    }
+  });
+});
   </script>
 </body>
 </html>

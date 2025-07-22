@@ -5,7 +5,7 @@
   <title>Your Shopping Cart - Home Haven</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="css/style.css">
-  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <style>
     body { background: #f7f4f0; margin: 0; font-family: 'Segoe UI', Arial, sans-serif; }
     .cart-container { max-width: 1100px; margin: 8px auto 90px auto; padding: 0 8px; }
@@ -58,9 +58,6 @@
       } else if ($(this).text() === '-' && val > 1) {
         $input.val(val - 1);
       }
-    });
-    $(document).on('click', '.cart-checkout', function() {
-      window.location.href = 'checkout.html';
     });
   </script>
 </head>
@@ -115,6 +112,7 @@
     <a href="product_customer.html" class="cart-back">&#8592; Back to Shop</a>
     <button class="cart-checkout">Checkout: ₱0.00</button>
   </div>
+  <div id="outOfStockToast" class="out-of-stock-toast" style="display:none;"></div>
   <script>
 const API_BASE = 'http://localhost:4000/api/v1';
 const token = localStorage.getItem('jwt_token');
@@ -137,6 +135,7 @@ async function loadCart() {
   }
   if (!cart.length) {
     document.querySelector('.cart-container').innerHTML = '<div class="cart-title">Your Shopping Cart</div><div style="text-align:center; color:#888; margin:2em 0;">Your cart is empty.</div>';
+    document.querySelector('.cart-footer').innerHTML = '<a href="product_customer.html" class="cart-back">&#8592; Back to Shop</a><button class="cart-checkout">Checkout: ₱0.00</button>';
     return;
   }
   // Fetch product details for each item
@@ -156,7 +155,7 @@ async function loadCart() {
   products.forEach(product => {
     const subtotal = (product.price || product.sell_price) * product.quantity;
     total += subtotal;
-    html += `<div class="cart-item">
+    html += `<div class="cart-item" data-product-id="${product.item_id}" data-stock="${product.stock_quantity}">
       <div class="cart-item-img"><img src="${Array.isArray(product.image) ? product.image[0] : product.image}" style="width:54px;height:54px;object-fit:cover;border-radius:50%;"></div>
       <div class="cart-item-main">
         <div class="cart-item-details">
@@ -173,8 +172,31 @@ async function loadCart() {
       </div>
     </div>`;
   });
-  html += `<div class="cart-footer"><div>Total: <b>₱${total.toLocaleString()}</b></div></div>`;
   document.querySelector('.cart-container').innerHTML = html;
+  document.querySelector('.cart-footer').innerHTML = `<a href="product_customer.html" class="cart-back">&#8592; Back to Shop</a><button class="cart-checkout" type="button">Checkout: ₱${total.toLocaleString()}</button>`;
+
+  // Attach checkout handler using jQuery event delegation
+  $(document).off('click', '.cart-checkout').on('click', '.cart-checkout', async function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    const cartItems = document.querySelectorAll('.cart-item');
+    const outOfStockItems = [];
+    cartItems.forEach(item => {
+      const qtyInput = item.querySelector('.cart-item-qtybox input');
+      const quantity = parseInt(qtyInput.value, 10);
+      const stock = parseInt(item.getAttribute('data-stock'), 10);
+      const name = item.querySelector('.cart-item-name').textContent;
+      if (stock === 0 || quantity > stock) {
+        outOfStockItems.push(name);
+      }
+    });
+    if (outOfStockItems.length) {
+      showOutOfStockToast(outOfStockItems);
+      return false;
+    }
+    window.location.href = 'checkout.html';
+    return false;
+  });
 }
 
 async function updateQty(productId, delta) {
@@ -225,6 +247,44 @@ async function removeFromCart(productId) {
   }
 }
 document.addEventListener('DOMContentLoaded', loadCart);
+
+function showOutOfStockToast(items) {
+  const toast = document.getElementById('outOfStockToast');
+  toast.innerHTML = `<strong>Cannot Checkout</strong><br>The following items are out of stock or exceed available stock:<br><b>${items.join(", ")}</b>`;
+  toast.style.display = 'block';
+  setTimeout(() => {
+    toast.style.display = 'none';
+  }, 4000);
+}
+
+// In your checkout button click handler, before redirecting to checkout.html:
+// Example:
+document.querySelector('.cart-checkout').onclick = function(e) {
+  // Assume cartItems is your array of cart items, each with name, quantity, and stock_quantity
+  const cartItems = document.querySelectorAll('.cart-item');
+  const outOfStockItems = [];
+  cartItems.forEach(item => {
+    const qtyInput = item.querySelector('.cart-item-qtybox input');
+    const quantity = parseInt(qtyInput.value, 10);
+    const productId = item.querySelector('.cart-item-remove').dataset.productId; // Assuming productId is on the remove button
+    try {
+      const res = fetch(`${API_BASE}/products/details/${productId}`);
+      const data = res.json();
+      if (data && data.product && data.product.stock_quantity < quantity) {
+        outOfStockItems.push(data.product.name);
+      }
+    } catch (error) {
+      console.error("Error fetching product details for stock check:", error);
+    }
+  });
+
+  if (outOfStockItems.length) {
+    showOutOfStockToast(outOfStockItems);
+    e.preventDefault();
+    return false;
+  }
+  // ... existing code to proceed to checkout ...
+};
 </script>
 </body>
 </html> 

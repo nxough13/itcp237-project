@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin - View Orders</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <style>
+    .admin-orders-table { width: 100%; border-collapse: collapse; margin-top: 24px; }
+    .admin-orders-table th, .admin-orders-table td { border: 1px solid #bfa77a; padding: 10px; text-align: left; }
+    .admin-orders-table th { background: #bfa77a; color: #fff; }
+    .admin-orders-table tr:nth-child(even) { background: #f9f6f1; }
+    .order-status { font-weight: bold; }
+    .order-details-modal { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.4); z-index: 1000; justify-content: center; align-items: center; }
+    .order-details-content { background: #fff; padding: 32px; border-radius: 12px; min-width: 350px; max-width: 90vw; }
+    .close-modal { float: right; cursor: pointer; font-size: 1.3em; color: #bfa77a; }
+    .admin-orders-filter { margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <div id="header"></div>
+  <div class="container">
+    <h1>Admin - View Orders</h1>
+    <div class="admin-orders-filter">
+      <label for="orderStatusFilter">Filter by Status:</label>
+      <select id="orderStatusFilter">
+        <option value="">All</option>
+        <option value="pending">Pending</option>
+        <option value="processing">Processing</option>
+        <option value="shipped">Shipped</option>
+        <option value="delivered">Delivered</option>
+        <option value="cancelled">Cancelled</option>
+      </select>
+    </div>
+    <table class="admin-orders-table">
+      <thead>
+        <tr>
+          <th>Order #</th>
+          <th>Date</th>
+          <th>Customer</th>
+          <th>Status</th>
+          <th>Total</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="ordersTableBody">
+        <tr><td colspan="6" style="text-align:center; color:#888;">Loading orders...</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="order-details-modal" id="orderDetailsModal">
+    <div class="order-details-content">
+      <span class="close-modal" id="closeOrderModal">&times;</span>
+      <div id="orderDetailsContent">Loading...</div>
+    </div>
+  </div>
+  <script>
+    $('#header').load('../header.html');
+    const API_BASE = 'http://localhost:4000/api/v1';
+    let orders = [];
+    function fetchOrders() {
+      $('#ordersTableBody').html('<tr><td colspan="6" style="text-align:center; color:#888;">Loading orders...</td></tr>');
+      $.ajax({
+        url: API_BASE + '/admin/orders',
+        headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('jwt_token') || '') },
+        success: function(res) {
+          if (res.success && res.orders.length) {
+            orders = res.orders;
+            renderOrders();
+          } else {
+            $('#ordersTableBody').html('<tr><td colspan="6" style="text-align:center; color:#888;">No orders found.</td></tr>');
+          }
+        },
+        error: function() {
+          $('#ordersTableBody').html('<tr><td colspan="6" style="text-align:center; color:#c00;">Failed to load orders.</td></tr>');
+        }
+      });
+    }
+    function renderOrders() {
+      const statusFilter = $('#orderStatusFilter').val();
+      let filtered = orders;
+      if (statusFilter) filtered = orders.filter(o => o.status === statusFilter);
+      if (!filtered.length) {
+        $('#ordersTableBody').html('<tr><td colspan="6" style="text-align:center; color:#888;">No orders found.</td></tr>');
+        return;
+      }
+      $('#ordersTableBody').html(filtered.map(o => `
+        <tr>
+          <td>${o.order_number}</td>
+          <td>${new Date(o.date_placed).toLocaleString()}</td>
+          <td>${o.customer_name || ''}</td>
+          <td class="order-status">${o.status}</td>
+          <td>₱${parseFloat(o.total_amount).toFixed(2)}</td>
+          <td><button class="view-order-btn" data-id="${o.orderinfo_id}">View</button></td>
+        </tr>
+      `).join(''));
+    }
+    $(document).on('change', '#orderStatusFilter', renderOrders);
+    $(document).on('click', '.view-order-btn', function() {
+      const id = $(this).data('id');
+      const order = orders.find(o => o.orderinfo_id == id);
+      if (!order) return;
+      $('#orderDetailsContent').html('<b>Order #:</b> ' + order.order_number + '<br><b>Date:</b> ' + new Date(order.date_placed).toLocaleString() + '<br><b>Status:</b> ' + order.status + '<br><b>Customer:</b> ' + (order.customer_name || '') + '<br><b>Total:</b> ₱' + parseFloat(order.total_amount).toFixed(2) + '<br><br><b>Items:</b><ul>' + (order.items ? order.items.map(i => `<li>${i.name} x${i.quantity}</li>`).join('') : '') + '</ul>');
+      $('#orderDetailsModal').fadeIn(200);
+    });
+    $('#closeOrderModal').on('click', function() { $('#orderDetailsModal').fadeOut(200); });
+    $(document).on('click', function(e) { if ($(e.target).is('#orderDetailsModal')) $('#orderDetailsModal').fadeOut(200); });
+    $(document).ready(fetchOrders);
+  </script>
+  <script>
+$(function() {
+  // Validate status filter
+  $('#orderStatusFilter').on('change', function() {
+    const val = $(this).val();
+    if (val && !['pending','processing','shipped','delivered','cancelled'].includes(val)) {
+      alert('Invalid status filter.');
+      $(this).val('');
+      return false;
+    }
+  });
+  // Validate view button
+  $(document).on('click', '.view-order-btn', function(e) {
+    const id = $(this).data('id');
+    if (!id || isNaN(id)) {
+      alert('Invalid order ID.');
+      e.preventDefault();
+      return false;
+    }
+  });
+});
+</script>
+</body>
+</html> 

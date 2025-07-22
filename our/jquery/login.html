@@ -352,7 +352,31 @@
     </div>
   </div>
   <div class="footer">@Kung ano mang pwedeng ilagay here</div>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script>
+    $(function() {
+      $('#loginForm').on('submit', function(e) {
+        let valid = true;
+        $('.login-error').remove();
+        const email = $('#email').val().trim();
+        const password = $('#password').val().trim();
+        if (!email) {
+          $('#email').after('<div class="login-error" style="color:#c00;font-size:0.95em;margin-top:2px;">Email is required.</div>');
+          valid = false;
+        } else if (!/^\S+@\S+\.\S+$/.test(email)) {
+          $('#email').after('<div class="login-error" style="color:#c00;font-size:0.95em;margin-top:2px;">Enter a valid email.</div>');
+          valid = false;
+        }
+        if (!password) {
+          $('#password').after('<div class="login-error" style="color:#c00;font-size:0.95em;margin-top:2px;">Password is required.</div>');
+          valid = false;
+        }
+        if (!valid) {
+          e.preventDefault();
+          return false;
+        }
+      });
+    });
     // Toggle password visibility
     function togglePassword(fieldId, btn) {
       const input = document.getElementById(fieldId);

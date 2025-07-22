@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin - Manage Items</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <style>
+    .admin-items-table { width: 100%; border-collapse: collapse; margin-top: 24px; }
+    .admin-items-table th, .admin-items-table td { border: 1px solid #bfa77a; padding: 10px; text-align: left; }
+    .admin-items-table th { background: #bfa77a; color: #fff; }
+    .admin-items-table tr:nth-child(even) { background: #f9f6f1; }
+    .admin-items-filter { margin-top: 20px; }
+    .item-action-btn { margin-right: 8px; }
+    .modal-bg { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.4); z-index: 1000; justify-content: center; align-items: center; }
+    .modal-content { background: #fff; padding: 32px; border-radius: 12px; min-width: 350px; max-width: 90vw; }
+    .close-modal { float: right; cursor: pointer; font-size: 1.3em; color: #bfa77a; }
+  </style>
+</head>
+<body>
+  <div id="header"></div>
+  <div class="container">
+    <h1>Admin - Manage Items</h1>
+    <div class="admin-items-filter">
+      <label for="categoryFilter">Category:</label>
+      <select id="categoryFilter"><option value="">All</option></select>
+      <label for="sellerFilter" style="margin-left:16px;">Seller:</label>
+      <select id="sellerFilter"><option value="">All</option></select>
+      <button id="addItemBtn" style="margin-left:24px;">Add Item</button>
+    </div>
+    <table class="admin-items-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>SKU</th>
+          <th>Category</th>
+          <th>Price</th>
+          <th>Stock</th>
+          <th>Seller</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="itemsTableBody">
+        <tr><td colspan="8" style="text-align:center; color:#888;">Loading items...</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="modal-bg" id="itemModal">
+    <div class="modal-content">
+      <span class="close-modal" id="closeItemModal">&times;</span>
+      <div id="itemModalContent">Loading...</div>
+    </div>
+  </div>
+  <script>
+    $('#header').load('../header.html');
+    const API_BASE = 'http://localhost:4000/api/v1/admin';
+    let allItems = [], allCategories = [], allSellers = [];
+    function showLoadingItems() {
+      $('#itemsTableBody').html('<tr><td colspan="8" style="text-align:center; color:#888;">Loading items...</td></tr>');
+    }
+    function showErrorItems(msg) {
+      $('#itemsTableBody').html('<tr><td colspan="8" style="text-align:center; color:#c00;">'+msg+'</td></tr>');
+    }
+    function showEmptyItems() {
+      $('#itemsTableBody').html('<tr><td colspan="8" style="text-align:center; color:#888;">No items found.</td></tr>');
+    }
+    function renderItems() {
+      const cat = $('#categoryFilter').val();
+      const seller = $('#sellerFilter').val();
+      let filtered = allItems;
+      if (cat) filtered = filtered.filter(i => String(i.category_id) === cat);
+      if (seller) filtered = filtered.filter(i => String(i.seller_id) === seller);
+      if (!filtered.length) return showEmptyItems();
+      $('#itemsTableBody').html(filtered.map(i => `
+        <tr>
+          <td>${i.name}</td>
+          <td>${i.sku}</td>
+          <td>${i.category_name || ''}</td>
+          <td>₱${parseFloat(i.sell_price).toFixed(2)}</td>
+          <td>${i.stock_quantity != null ? i.stock_quantity : '-'}</td>
+          <td>${i.seller_name || ''}</td>
+          <td>${i.status}</td>
+          <td>
+            <button class="item-action-btn toggle-status-btn" data-id="${i.item_id}" data-status="${i.status}">
+              ${i.status === 'active' ? 'Disable' : 'Enable'}
+            </button>
+          </td>
+        </tr>
+      `).join(''));
+    }
+    function loadCategories() {
+      return $.ajax({
+        url: API_BASE + '/categories',
+        headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('jwt_token') || '') },
+        success: function(res) {
+          if (res.success) {
+            allCategories = res.categories;
+            $('#categoryFilter').html('<option value="">All</option>' + allCategories.map(c => `<option value="${c.category_id}">${c.name}</option>`).join(''));
+          }
+        }
+      });
+    }
+    function loadSellers() {
+      return $.ajax({
+        url: API_BASE + '/sellers/all',
+        headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('jwt_token') || '') },
+        success: function(res) {
+          if (res.success) {
+            allSellers = res.sellers;
+            $('#sellerFilter').html('<option value="">All</option>' + allSellers.map(s => `<option value="${s.seller_id}">${s.seller_name}</option>`).join(''));
+          }
+        }
+      });
+    }
+    function loadItems() {
+      showLoadingItems();
+      $.ajax({
+        url: API_BASE + '/items',
+        headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('jwt_token') || '') },
+        success: function(res) {
+          if (res.success) {
+            allItems = res.items;
+            renderItems();
+          } else {
+            showErrorItems('Failed to load items.');
+          }
+        },
+        error: function() { showErrorItems('Failed to load items.'); }
+      });
+    }
+    $(document).on('change', '#categoryFilter, #sellerFilter', renderItems);
+    $(document).on('click', '.toggle-status-btn', function() {
+      const itemId = $(this).data('id');
+      const currentStatus = $(this).data('status');
+      const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+      $(this).prop('disabled', true).text('Updating...');
+      $.ajax({
+        url: API_BASE + '/items/' + itemId + '/status',
+        method: 'PATCH',
+        contentType: 'application/json',
+        data: JSON.stringify({ status: newStatus }),
+        headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('jwt_token') || '') },
+        success: function(res) {
+          if (res.success) {
+            loadItems();
+          } else {
+            alert('Failed to update status.');
+            loadItems();
+          }
+        },
+        error: function() {
+          alert('Failed to update status.');
+          loadItems();
+        }
+      });
+    });
+    $(document).ready(function() {
+      $.when(loadCategories(), loadSellers()).then(loadItems);
+    });
+  </script>
+</body>
+</html> 

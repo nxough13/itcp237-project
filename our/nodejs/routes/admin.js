@@ -158,4 +158,88 @@ router.patch('/items/:itemId/status', adminOnly, async (req, res) => {
   }
 });
 
+// GET all orders with customer and item info (admin only)
+router.get('/orders', adminOnly, async (req, res) => {
+  try {
+    // Get all orders with customer info
+    const [orders] = await db.query(`
+      SELECT o.orderinfo_id, o.order_number, o.date_placed, o.status, o.total_amount,
+             c.fname AS customer_fname, c.lname AS customer_lname, u.email AS customer_email
+      FROM orderinfo o
+      JOIN customer c ON o.customer_id = c.customer_id
+      JOIN users u ON c.user_id = u.id
+      ORDER BY o.date_placed DESC
+    `);
+    if (!orders.length) return res.json({ success: true, orders: [] });
+    // Get all orderlines for these orders
+    const orderIds = orders.map(o => o.orderinfo_id);
+    const [orderlines] = await db.query(`
+      SELECT ol.orderinfo_id, ol.item_name, ol.quantity
+      FROM orderline ol
+      WHERE ol.orderinfo_id IN (${orderIds.map(() => '?').join(',')})
+    `, orderIds);
+    // Group items by order
+    const orderItemsMap = {};
+    for (const ol of orderlines) {
+      if (!orderItemsMap[ol.orderinfo_id]) orderItemsMap[ol.orderinfo_id] = [];
+      orderItemsMap[ol.orderinfo_id].push({ name: ol.item_name, quantity: ol.quantity });
+    }
+    // Attach items and customer name to each order
+    const result = orders.map(o => ({
+      orderinfo_id: o.orderinfo_id,
+      order_number: o.order_number,
+      date_placed: o.date_placed,
+      status: o.status,
+      total_amount: o.total_amount,
+      customer_name: `${o.customer_fname} ${o.customer_lname}`.trim(),
+      customer_email: o.customer_email,
+      items: orderItemsMap[o.orderinfo_id] || []
+    }));
+    res.json({ success: true, orders: result });
+  } catch (err) {
+    console.error('Admin orders error:', err);
+    res.status(500).json({ success: false, message: 'Failed to fetch orders', error: err.message });
+  }
+});
+
+// GET all items with category, stock, and seller info (admin only)
+router.get('/items', adminOnly, async (req, res) => {
+  try {
+    const [items] = await db.query(`
+      SELECT i.item_id, i.name, i.sku, i.sell_price, i.status, i.created_at,
+             c.name AS category_name, c.category_id,
+             st.quantity AS stock_quantity,
+             u.id AS seller_id, u.name AS seller_name
+      FROM item i
+      LEFT JOIN categories c ON i.category_id = c.category_id
+      LEFT JOIN stock st ON i.item_id = st.item_id
+      LEFT JOIN users u ON i.seller_id = u.id
+      ORDER BY i.created_at DESC
+    `);
+    res.json({ success: true, items });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to fetch items', error: err.message });
+  }
+});
+
+// GET all categories (admin only)
+router.get('/categories', adminOnly, async (req, res) => {
+  try {
+    const [categories] = await db.query('SELECT category_id, name FROM categories WHERE is_active = 1 ORDER BY name');
+    res.json({ success: true, categories });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to fetch categories', error: err.message });
+  }
+});
+
+// GET all sellers (admin only)
+router.get('/sellers/all', adminOnly, async (req, res) => {
+  try {
+    const [sellers] = await db.query('SELECT u.id AS seller_id, u.name AS seller_name FROM users u WHERE u.role = "seller" ORDER BY u.name');
+    res.json({ success: true, sellers });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to fetch sellers', error: err.message });
+  }
+});
+
 module.exports = router; 

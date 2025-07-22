@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <link rel="stylesheet" href="../css/style.css">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -222,7 +222,98 @@
         </div>
       `;
     }
-    $(document).ready(loadSellerCatalog);
+    // Infinite scroll for seller catalog
+    let allProducts = [];
+    let currentPage = 1;
+    let productsPerPage = 12;
+    let isLoadingMore = false;
+    async function loadSellerCatalogInfinite(append = false) {
+      const sellerId = getQueryParam('seller_id');
+      if (!sellerId) {
+        $('#noProductsMsg').text('No seller specified.').show();
+        return;
+      }
+      try {
+        // Fetch products for this seller (fetch all at once for now)
+        const res = await $.get(API_BASE + '/catalog/seller/' + sellerId);
+        if (!allProducts.length) allProducts = res.products || [];
+        const grid = $('#sellerCatalogGrid');
+        if (!append) grid.empty();
+        if (allProducts.length === 0) {
+          $('#noProductsMsg').text('No products found for this seller.').show();
+          return;
+        } else {
+          $('#noProductsMsg').hide();
+        }
+        // Optionally show seller name/desc if available
+        if (res.seller) {
+          $('#sellerName').text(res.seller.business_name + "'s Catalog");
+          $('#sellerDesc').text(res.seller.business_description || '');
+        }
+        const startIndex = (currentPage - 1) * productsPerPage;
+        const endIndex = startIndex + productsPerPage;
+        const pageProducts = allProducts.slice(startIndex, endIndex);
+        pageProducts.forEach(product => {
+          grid.append(createProductCard(product));
+        });
+      } catch (err) {
+        $('#noProductsMsg').text('Failed to load products.').show();
+      }
+    }
+    function handleInfiniteScrollSeller() {
+      if (isLoadingMore) return;
+      const grid = document.getElementById('sellerCatalogGrid');
+      if (!grid) return;
+      const scrollY = window.scrollY || window.pageYOffset;
+      const windowH = window.innerHeight;
+      const gridBottom = grid.getBoundingClientRect().bottom + scrollY;
+      if (scrollY + windowH + 200 >= gridBottom) {
+        const totalPages = Math.ceil(allProducts.length / productsPerPage);
+        if (currentPage < totalPages) {
+          isLoadingMore = true;
+          currentPage++;
+          setTimeout(() => {
+            loadSellerCatalogInfinite(true);
+            isLoadingMore = false;
+          }, 300);
+        }
+      }
+    }
+    $(document).ready(function() {
+      allProducts = [];
+      currentPage = 1;
+      loadSellerCatalogInfinite(false);
+      $(window).off('scroll.sellerinf').on('scroll.sellerinf', handleInfiniteScrollSeller);
+    });
   </script>
+  <script>
+$(function() {
+  $(document).on('click', '.add-to-cart-btn', function(e) {
+    const $row = $(this).closest('.product-card');
+    const $qty = $row.find('.product-qty');
+    if ($qty.length) {
+      const val = parseInt($qty.val(), 10);
+      const max = parseInt($qty.attr('max'), 10);
+      $('.product-qty-error').remove();
+      if (isNaN(val) || val < 1) {
+        $qty.after('<div class="product-qty-error" style="color:#c00;font-size:0.95em;margin-top:2px;">Quantity must be at least 1.</div>');
+        e.preventDefault();
+        return false;
+      } else if (max && val > max) {
+        $qty.after('<div class="product-qty-error" style="color:#c00;font-size:0.95em;margin-top:2px;">Exceeds stock.</div>');
+        e.preventDefault();
+        return false;
+      }
+    }
+  });
+  // Optional: validate search input
+  $('#searchInput').on('input', function() {
+    $('.search-error').remove();
+    if ($(this).val().length > 0 && $(this).val().length < 2) {
+      $(this).after('<div class="search-error" style="color:#c00;font-size:0.95em;margin-top:2px;">Enter at least 2 characters to search.</div>');
+    }
+  });
+});
+</script>
 </body>
 </html> 

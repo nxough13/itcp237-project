@@ -5,7 +5,7 @@
   <title>Your Order - Home Haven</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="css/style.css">
-  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <style>
     body { background: #f7f4f0; margin: 0; font-family: 'Segoe UI', Arial, sans-serif; }
     .checkout-main { display: flex; gap: 32px; max-width: 1100px; margin: 32px auto 90px auto; }
@@ -226,6 +226,8 @@
       <button id="cancelModalBtn" style="background:#eee;color:#444;padding:0.7em 2.2em;border:none;border-radius:8px;font-size:1.1rem;font-weight:600;cursor:pointer;">Cancel</button>
     </div>
   </div>
+  <!-- Custom Out-of-Stock Popup -->
+  <div id="outOfStockToast" class="out-of-stock-toast" style="display:none;"></div>
   <script>
     function showModal() {
       $('#termsModal').fadeIn(150).css('display','flex');
@@ -271,15 +273,16 @@
         try {
           const res = await fetch(`${API_BASE}/products/details/${item.item_id}`);
           const data = await res.json();
-          if (!data.product || parseInt(data.product.stock_quantity || 0) === 0) {
+          if (!data.product || parseInt(data.product.stock_quantity || 0) < item.quantity) {
             outOfStockItems.push(data.product ? data.product.name : `ID ${item.item_id}`);
           }
         } catch {
           outOfStockItems.push(`ID ${item.item_id}`);
         }
       }
+      console.log('Out of stock items:', outOfStockItems);
       if (outOfStockItems.length) {
-        alert('Cannot checkout. The following items are out of stock:\n' + outOfStockItems.join(', '));
+        showOutOfStockToast(outOfStockItems);
         return;
       }
       // Get payment method
@@ -369,6 +372,52 @@
         setTimeout(() => notification.remove(), 300);
       }, 2000);
     }
+    function showOutOfStockToast(items) {
+      const toast = document.getElementById('outOfStockToast');
+      toast.innerHTML = `<strong>Cannot Checkout</strong><br>The following items are out of stock:<br><b>${items.join(", ")}</b>`;
+      toast.style.display = 'block';
+      setTimeout(() => {
+        toast.style.display = 'none';
+      }, 4000);
+    }
   </script>
+  <script>
+$(function() {
+  $('#checkoutForm').on('submit', function(e) {
+    let valid = true;
+    $('.checkout-error').remove();
+    const fname = $('#ship_fname').val().trim();
+    const lname = $('#ship_lname').val().trim();
+    const address = $('#ship_address').val().trim();
+    const town = $('#ship_town').val().trim();
+    const zipcode = $('#ship_zipcode').val().trim();
+    const phone = $('#ship_phone').val().trim();
+    const payment = $('input[name="payment_method"]:checked').val();
+    const gcashPhone = $('#gcash_phone').val();
+    const gcashReceipt = $('#gcash_receipt').val();
+    if (!fname) { $('#ship_fname').after('<div class="checkout-error" style="color:#c00;font-size:0.95em;margin-top:2px;">First name is required.</div>'); valid = false; }
+    if (!lname) { $('#ship_lname').after('<div class="checkout-error" style="color:#c00;font-size:0.95em;margin-top:2px;">Last name is required.</div>'); valid = false; }
+    if (!address) { $('#ship_address').after('<div class="checkout-error" style="color:#c00;font-size:0.95em;margin-top:2px;">Address is required.</div>'); valid = false; }
+    if (!town) { $('#ship_town').after('<div class="checkout-error" style="color:#c00;font-size:0.95em;margin-top:2px;">Town is required.</div>'); valid = false; }
+    if (!zipcode) { $('#ship_zipcode').after('<div class="checkout-error" style="color:#c00;font-size:0.95em;margin-top:2px;">Zipcode is required.</div>'); valid = false; }
+    if (!phone) { $('#ship_phone').after('<div class="checkout-error" style="color:#c00;font-size:0.95em;margin-top:2px;">Phone is required.</div>'); valid = false; }
+    if (!payment) {
+      $('#paymentSection').after('<div class="checkout-error" style="color:#c00;font-size:0.95em;margin-top:2px;">Select a payment method.</div>');
+      valid = false;
+    }
+    if (payment === 'gcash') {
+      if (!gcashPhone) {
+        $('#gcash_phone').after('<div class="checkout-error" style="color:#c00;font-size:0.95em;margin-top:2px;">GCash phone is required.</div>');
+        valid = false;
+      }
+      if (!gcashReceipt) {
+        $('#gcash_receipt').after('<div class="checkout-error" style="color:#c00;font-size:0.95em;margin-top:2px;">GCash receipt is required.</div>');
+        valid = false;
+      }
+    }
+    if (!valid) { e.preventDefault(); return false; }
+  });
+});
+</script>
 </body>
 </html> 

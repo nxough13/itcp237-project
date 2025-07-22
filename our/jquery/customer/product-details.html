@@ -118,6 +118,7 @@
   <div id="reviewsContainer" style="max-width:1100px;margin:32px auto 0 auto;background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,0.07);padding:24px 18px 18px 18px;">
     <h2 style="font-size:1.3rem;color:#8B5C2A;margin-bottom:0.7em;">Customer Reviews</h2>
     <div id="reviewsList">No reviews yet.</div>
+    <div id="reviewFormContainer"></div>
   </div>
   <div id="wishlistModal" style="display:none;position:fixed;top:50px;left:50%;transform:translateX(-50%,0) scale(0.95);background:#fffbe6;color:#8B5C2A;padding:18px 36px;border-radius:14px;font-size:1.15rem;z-index:9999;box-shadow:0 4px 24px rgba(139,92,42,0.13);transition:opacity 0.2s,transform 0.2s;opacity:0;pointer-events:none;">
     <span id="wishlistModalIcon" style="font-size:1.7rem;vertical-align:middle;margin-right:0.7em;"></span>
@@ -441,6 +442,7 @@
     // --- REVIEWS ---
     function renderReviews(reviews) {
       let html = '';
+      const userId = localStorage.getItem('user_id');
       if (!reviews.length) {
         html = '<div style="color:#888;">No reviews yet for this product.</div>';
       } else {
@@ -448,16 +450,22 @@
           html += `<div class='review-box' style='border-bottom:1px solid #eee;padding:10px 0;'>
             <div style='font-weight:600;'>${r.fname} ${r.lname} <span style='color:#f5b301;'>${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</span></div>
             <div style='margin:4px 0 0 0;'>${r.review_text ? r.review_text.replace(/</g,'&lt;') : ''}</div>
-            <div style='font-size:0.95em;color:#aaa;'>${new Date(r.created_at).toLocaleString()}</div>
-          </div>`;
+            <div style='font-size:0.95em;color:#aaa;'>${new Date(r.created_at).toLocaleString()}</div>`;
+          if (r.is_own_review) {
+            html += `<button class='edit-review-btn' data-review-id='${r.review_id}' data-rating='${r.rating}' data-text='${r.review_text}'>Edit</button>
+            <button class='delete-review-btn' data-review-id='${r.review_id}'>Delete</button>`;
+          }
+          html += `</div>`;
         });
       }
       $('#reviewsList').html(html);
     }
     async function loadReviews(item_id) {
-      const res = await fetch(`${API_BASE}/products/${item_id}/reviews`);
+      const res = await fetch(`${API_BASE}/products/${item_id}/reviews`, { headers: { 'Authorization': `Bearer ${token}` } });
       const data = await res.json();
       if (data.success) renderReviews(data.reviews);
+      // After loading reviews, check eligibility
+      checkReviewEligibility(item_id);
     }
     async function checkReviewEligibility(item_id) {
       const token = localStorage.getItem('jwt_token');
@@ -465,10 +473,7 @@
         $('#reviewFormContainer').html('<div style="color:#888;">Log in as a customer to leave a review.</div>');
         return;
       }
-      // Check if eligible by trying to post a dummy review (simulate, but don't actually post)
-      // Instead, fetch delivered orders and reviews for this user/product
-      const res = await fetch(`${API_BASE}/products/${item_id}/reviews`, { headers: { 'Authorization': `Bearer ${token}` } });
-      // If backend supports a GET for eligibility, use it. For now, show form and handle error on submit.
+      // Always show the review form for eligible users (multiple reviews allowed)
       $('#reviewFormContainer').html(`<form id='reviewForm'>
         <label for='reviewRating'>Your Rating:</label>
         <select id='reviewRating' required>
@@ -516,6 +521,67 @@
         loadReviews(productId);
         checkReviewEligibility(productId);
       }
+    });
+    // Edit and delete review handlers
+    $(document).on('click', '.edit-review-btn', function() {
+      const reviewId = $(this).data('review-id');
+      const rating = $(this).data('rating');
+      const text = $(this).data('text');
+      $('#reviewFormContainer').html(`<form id='editReviewForm'>
+        <label for='editReviewRating'>Edit Rating:</label>
+        <select id='editReviewRating' required>
+          <option value=''>Select</option>
+          <option value='5' ${rating==5?'selected':''}>★★★★★</option>
+          <option value='4' ${rating==4?'selected':''}>★★★★</option>
+          <option value='3' ${rating==3?'selected':''}>★★★</option>
+          <option value='2' ${rating==2?'selected':''}>★★</option>
+          <option value='1' ${rating==1?'selected':''}>★</option>
+        </select><br>
+        <label for='editReviewText'>Edit Review:</label><br>
+        <textarea id='editReviewText' rows='3' style='width:100%'>${text}</textarea><br>
+        <button type='submit'>Save Changes</button>
+      </form>`);
+      $('#editReviewForm').on('submit', async function(e) {
+        e.preventDefault();
+        const newRating = parseInt($('#editReviewRating').val());
+        const newText = $('#editReviewText').val();
+        if (!newRating) return alert('Please select a rating.');
+        try {
+          const resp = await fetch(`${API_BASE}/products/${getProductId()}/reviews/${reviewId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ rating: newRating, review_text: newText })
+          });
+          const data = await resp.json();
+          if (data.success) {
+            alert('Review updated!');
+            loadReviews(getProductId());
+            $('#reviewFormContainer').html('<div style="color:#27ae60;">Review updated.</div>');
+          } else {
+            alert(data.message || 'Could not update review.');
+          }
+        } catch {
+          alert('Could not update review.');
+        }
+      });
+    });
+    $(document).on('click', '.delete-review-btn', function() {
+      if (!confirm('Are you sure you want to delete this review?')) return;
+      const reviewId = $(this).data('review-id');
+      fetch(`${API_BASE}/products/${getProductId()}/reviews/${reviewId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          alert('Review deleted!');
+          loadReviews(getProductId());
+        } else {
+          alert(data.message || 'Could not delete review.');
+        }
+      })
+      .catch(() => alert('Could not delete review.'));
     });
   </script>
 </body>

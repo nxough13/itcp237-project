@@ -6,6 +6,7 @@
   <title>Product Management</title>
   <link rel="stylesheet" href="../css/style.css">
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <style>
     body {
       background: #f5f3f0;
@@ -408,5 +409,99 @@ async function loadReviews(item_id) {
     });
   </script>
   <script src="../js/seller.js"></script>
+  <script>
+    $(function() {
+      $(document).on('submit', '#productForm', function(e) {
+        let valid = true;
+        $('.product-error').remove();
+        const name = $('#productName').val().trim();
+        const sku = $('#productSKU').val().trim();
+        const price = parseFloat($('#productPrice').val());
+        const category = $('#productCategory').val();
+        const stock = parseInt($('#productStock').val(), 10);
+        const images = $('#productImages')[0] ? $('#productImages')[0].files : null;
+        if (!name) { $('#productName').after('<div class="product-error" style="color:#c00;font-size:0.95em;margin-top:2px;">Name is required.</div>'); valid = false; }
+        if (!sku) { $('#productSKU').after('<div class="product-error" style="color:#c00;font-size:0.95em;margin-top:2px;">SKU is required.</div>'); valid = false; }
+        if (isNaN(price) || price <= 0) { $('#productPrice').after('<div class="product-error" style="color:#c00;font-size:0.95em;margin-top:2px;">Enter a valid price.</div>'); valid = false; }
+        if (!category) { $('#productCategory').after('<div class="product-error" style="color:#c00;font-size:0.95em;margin-top:2px;">Select a category.</div>'); valid = false; }
+        if (isNaN(stock) || stock < 0) { $('#productStock').after('<div class="product-error" style="color:#c00;font-size:0.95em;margin-top:2px;">Enter a valid stock quantity.</div>'); valid = false; }
+        // Only require images for add (not edit)
+        if ($(this).data('mode') === 'add' && (!images || images.length === 0)) {
+          $('#productImages').after('<div class="product-error" style="color:#c00;font-size:0.95em;margin-top:2px;">At least one image is required.</div>');
+          valid = false;
+        }
+        if (!valid) { e.preventDefault(); return false; }
+      });
+    });
+  </script>
+  <script>
+    // Infinite scroll for seller products table
+    let allProducts = [];
+    let currentPage = 1;
+    let productsPerPage = 12;
+    let isLoadingMore = false;
+    async function loadSellerProductsInfinite(append = false) {
+      try {
+        // Fetch all products for this seller (or use your existing fetch logic)
+        if (!allProducts.length) {
+          const res = await fetch('http://localhost:4000/api/v1/seller/products', { headers: { 'Authorization': `Bearer ${localStorage.getItem('jwt_token')}` } });
+          const data = await res.json();
+          if (data.success) allProducts = data.products || [];
+        }
+        const tbody = $('#productsTable tbody');
+        if (!append) tbody.empty();
+        if (allProducts.length === 0) {
+          tbody.append('<tr><td colspan="7" style="text-align:center;color:#888;">No products found.</td></tr>');
+          return;
+        }
+        const startIndex = (currentPage - 1) * productsPerPage;
+        const endIndex = startIndex + productsPerPage;
+        const pageProducts = allProducts.slice(startIndex, endIndex);
+        pageProducts.forEach(product => {
+          tbody.append(createProductRow(product));
+        });
+      } catch (err) {
+        $('#productsTable tbody').append('<tr><td colspan="7" style="text-align:center;color:#e74c3c;">Failed to load products.</td></tr>');
+      }
+    }
+    function handleInfiniteScrollSellerTable() {
+      if (isLoadingMore) return;
+      const table = document.getElementById('productsTable');
+      if (!table) return;
+      const scrollY = window.scrollY || window.pageYOffset;
+      const windowH = window.innerHeight;
+      const tableBottom = table.getBoundingClientRect().bottom + scrollY;
+      if (scrollY + windowH + 200 >= tableBottom) {
+        const totalPages = Math.ceil(allProducts.length / productsPerPage);
+        if (currentPage < totalPages) {
+          isLoadingMore = true;
+          currentPage++;
+          setTimeout(() => {
+            loadSellerProductsInfinite(true);
+            isLoadingMore = false;
+          }, 300);
+        }
+      }
+    }
+    // Helper to create a product row (reuse your existing logic)
+    function createProductRow(product) {
+      // You may want to update this to match your table columns
+      return `<tr>
+        <td>${product.item_id}</td>
+        <td>${product.name}</td>
+        <td>₱${parseFloat(product.sell_price).toLocaleString()}</td>
+        <td>${product.category_name || ''}</td>
+        <td>${product.image ? `<img src="${product.image}" class="img-thumb">` : ''}</td>
+        <td><span class="status-badge ${product.status === 'inactive' ? 'status-inactive' : ''}">${product.status}</span></td>
+        <td><!-- Actions here --></td>
+      </tr>`;
+    }
+    $(document).ready(function() {
+      allProducts = [];
+      currentPage = 1;
+      loadSellerProductsInfinite(false);
+      $(window).off('scroll.sellercrud').on('scroll.sellercrud', handleInfiniteScrollSellerTable);
+    });
+  </script>
 </body>
 </html> 

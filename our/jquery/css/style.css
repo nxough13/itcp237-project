@@ -16,3 +16,57 @@ button {
   font-size: 18px;
   color: #333;
 }
+
+.custom-modal {
+  position: fixed;
+  z-index: 9999;
+  left: 0; top: 0; width: 100vw; height: 100vh;
+  background: rgba(0,0,0,0.7);
+  display: flex; align-items: center; justify-content: center;
+}
+.custom-modal-content {
+  background: #231942;
+  color: #fff;
+  border-radius: 12px;
+  padding: 32px 24px;
+  min-width: 320px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  text-align: center;
+  position: relative;
+}
+.custom-modal-btn {
+  margin-top: 24px;
+  background: #ff5e8e;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 32px;
+  font-size: 1.1em;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.custom-modal-btn:hover {
+  background: #ff2e6e;
+}
+
+.out-of-stock-toast {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10000;
+  background: #ff5e8e;
+  color: #fff;
+  padding: 18px 32px;
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  font-size: 1.1em;
+  min-width: 220px;
+  max-width: 350px;
+  opacity: 0.97;
+  animation: slideInCenter 0.4s;
+}
+@keyframes slideInCenter {
+  from { transform: translate(-50%, -100%); opacity: 0; }
+  to   { transform: translate(-50%, -50%); opacity: 0.97; }
+}

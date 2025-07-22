@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin - System Settings</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <style>
+    .admin-users-table { width: 100%; border-collapse: collapse; margin-top: 24px; }
+    .admin-users-table th, .admin-users-table td { border: 1px solid #bfa77a; padding: 10px; text-align: left; }
+    .admin-users-table th { background: #bfa77a; color: #fff; }
+    .admin-users-table tr:nth-child(even) { background: #f9f6f1; }
+    .user-action-btn { margin-right: 8px; }
+    .modal-bg { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.4); z-index: 1000; justify-content: center; align-items: center; }
+    .modal-content { background: #fff; padding: 32px; border-radius: 12px; min-width: 350px; max-width: 90vw; }
+    .close-modal { float: right; cursor: pointer; font-size: 1.3em; color: #bfa77a; }
+  </style>
+</head>
+<body>
+  <div id="header"></div>
+  <div class="container">
+    <h1>Admin - System Settings</h1>
+    <table class="admin-users-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Status</th>
+          <th>Created</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="usersTableBody">
+        <tr><td colspan="6" style="text-align:center; color:#888;">Loading users...</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="modal-bg" id="userModal">
+    <div class="modal-content">
+      <span class="close-modal" id="closeUserModal">&times;</span>
+      <div id="userModalContent">Loading...</div>
+    </div>
+  </div>
+  <script>
+    $('#header').load('../header.html');
+    const API_BASE = 'http://localhost:4000/api/v1/admin';
+    let allUsers = [];
+    function showLoadingUsers() {
+      $('#usersTableBody').html('<tr><td colspan="6" style="text-align:center; color:#888;">Loading users...</td></tr>');
+    }
+    function showErrorUsers(msg) {
+      $('#usersTableBody').html('<tr><td colspan="6" style="text-align:center; color:#c00;">'+msg+'</td></tr>');
+    }
+    function showEmptyUsers() {
+      $('#usersTableBody').html('<tr><td colspan="6" style="text-align:center; color:#888;">No users found.</td></tr>');
+    }
+    function renderUsers() {
+      if (!allUsers.length) return showEmptyUsers();
+      $('#usersTableBody').html(allUsers.map(u => `
+        <tr>
+          <td>${u.name}</td>
+          <td>${u.email}</td>
+          <td>
+            <select class="user-role-select" data-id="${u.id}">
+              <option value="user" ${u.role==='user'?'selected':''}>User</option>
+              <option value="customer" ${u.role==='customer'?'selected':''}>Customer</option>
+              <option value="seller" ${u.role==='seller'?'selected':''}>Seller</option>
+              <option value="admin" ${u.role==='admin'?'selected':''}>Admin</option>
+            </select>
+          </td>
+          <td>
+            <button class="user-status-btn" data-id="${u.id}" data-status="${u.status}">
+              ${u.status === 'active' ? 'Deactivate' : 'Activate'}
+            </button>
+            <span style="margin-left:8px;">${u.status}</span>
+          </td>
+          <td>${u.created_at ? new Date(u.created_at).toLocaleString() : ''}</td>
+          <td></td>
+        </tr>
+      `).join(''));
+    }
+    function loadUsers() {
+      showLoadingUsers();
+      $.ajax({
+        url: API_BASE + '/users',
+        headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('jwt_token') || '') },
+        success: function(res) {
+          if (res.success) {
+            allUsers = res.users;
+            renderUsers();
+          } else {
+            showErrorUsers('Failed to load users.');
+          }
+        },
+        error: function() { showErrorUsers('Failed to load users.'); }
+      });
+    }
+    $(document).on('change', '.user-role-select', function() {
+      const userId = $(this).data('id');
+      const newRole = $(this).val();
+      $(this).prop('disabled', true);
+      $.ajax({
+        url: API_BASE + '/users/' + userId + '/role',
+        method: 'PATCH',
+        contentType: 'application/json',
+        data: JSON.stringify({ role: newRole }),
+        headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('jwt_token') || '') },
+        success: function(res) {
+          if (res.success) {
+            loadUsers();
+          } else {
+            alert('Failed to update role.');
+            loadUsers();
+          }
+        },
+        error: function() {
+          alert('Failed to update role.');
+          loadUsers();
+        }
+      });
+    });
+    $(document).on('click', '.user-status-btn', function() {
+      const userId = $(this).data('id');
+      const currentStatus = $(this).data('status');
+      const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+      $(this).prop('disabled', true).text('Updating...');
+      $.ajax({
+        url: API_BASE + '/users/' + userId + '/status',
+        method: 'PATCH',
+        contentType: 'application/json',
+        data: JSON.stringify({ status: newStatus }),
+        headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('jwt_token') || '') },
+        success: function(res) {
+          if (res.success) {
+            loadUsers();
+          } else {
+            alert('Failed to update status.');
+            loadUsers();
+          }
+        },
+        error: function() {
+          alert('Failed to update status.');
+          loadUsers();
+        }
+      });
+    });
+    $(document).ready(loadUsers);
+  </script>
+  <script>
+$(function() {
+  $(document).on('change', '.user-role-select', function(e) {
+    const val = $(this).val();
+    if (!['user','customer','seller','admin'].includes(val)) {
+      alert('Invalid role selected.');
+      e.preventDefault();
+      return false;
+    }
+  });
+  $(document).on('click', '.user-status-btn', function(e) {
+    const status = $(this).data('status');
+    if (status !== 'active' && status !== 'inactive') {
+      alert('Invalid status.');
+      e.preventDefault();
+      return false;
+    }
+  });
+});
+</script>
+</body>
+</html> 

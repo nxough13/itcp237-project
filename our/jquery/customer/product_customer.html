@@ -984,18 +984,68 @@
       `;
     }
 
-    // Render products
+    // Render products (infinite scroll version)
+    function renderProductsInfiniteScroll(append = false) {
+      const startIndex = (currentPage - 1) * productsPerPage;
+      const endIndex = startIndex + productsPerPage;
+      const pageProducts = filteredProducts.slice(startIndex, endIndex);
+      const grid = $('#productsGrid');
+      const list = $('#productsList');
+      if (!append) {
+        grid.empty();
+        list.empty();
+      }
+      if (pageProducts.length === 0 && !append) {
+        const noProductsHtml = '<div class="no-products"><i class="fas fa-search"></i><p>No products found matching your criteria</p></div>';
+        grid.append(noProductsHtml);
+        list.append(noProductsHtml);
+        $('#pagination').hide();
+        return;
+      }
+      // Render grid view
+      pageProducts.forEach(product => {
+        grid.append(createProductCard(product));
+      });
+      // Render list view
+      pageProducts.forEach(product => {
+        list.append(createProductListItem(product));
+      });
+      // Hide classic pagination
+      $('#pagination').hide();
+    }
+
+    // Infinite scroll logic
+    let isLoadingMore = false;
+    function handleInfiniteScroll() {
+      if (isLoadingMore) return;
+      const grid = document.getElementById('productsGrid');
+      if (!grid) return;
+      const scrollY = window.scrollY || window.pageYOffset;
+      const windowH = window.innerHeight;
+      const gridBottom = grid.getBoundingClientRect().bottom + scrollY;
+      if (scrollY + windowH + 200 >= gridBottom) {
+        // Load next page if available
+        const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
+        if (currentPage < totalPages) {
+          isLoadingMore = true;
+          currentPage++;
+          setTimeout(() => {
+            renderProductsInfiniteScroll(true);
+            isLoadingMore = false;
+          }, 300);
+        }
+      }
+    }
+
+    // Restore classic pagination for customer product catalog
     function renderProducts() {
       const startIndex = (currentPage - 1) * productsPerPage;
       const endIndex = startIndex + productsPerPage;
       const pageProducts = filteredProducts.slice(startIndex, endIndex);
-      
       const grid = $('#productsGrid');
       const list = $('#productsList');
-      
       grid.empty();
       list.empty();
-      
       if (pageProducts.length === 0) {
         const noProductsHtml = '<div class="no-products"><i class="fas fa-search"></i><p>No products found matching your criteria</p></div>';
         grid.append(noProductsHtml);
@@ -1003,33 +1053,25 @@
         $('#pagination').empty();
         return;
       }
-      
       // Render grid view
       pageProducts.forEach(product => {
         grid.append(createProductCard(product));
       });
-      
       // Render list view
       pageProducts.forEach(product => {
         list.append(createProductListItem(product));
       });
-      
       renderPagination();
     }
-
-    // Render pagination
     function renderPagination() {
       const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
       const pagination = $('#pagination');
       pagination.empty();
-      
       if (totalPages <= 1) return;
-      
       // Previous button
       if (currentPage > 1) {
         pagination.append(`<button class="page-btn" onclick="changePage(${currentPage - 1})">Previous</button>`);
       }
-      
       // Page numbers
       for (let i = 1; i <= totalPages; i++) {
         if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
@@ -1038,19 +1080,18 @@
           pagination.append('<span>...</span>');
         }
       }
-      
       // Next button
       if (currentPage < totalPages) {
         pagination.append(`<button class="page-btn" onclick="changePage(${currentPage + 1})">Next</button>`);
       }
     }
-
-    // Change page
     function changePage(page) {
       currentPage = page;
       renderProducts();
       $('html, body').animate({ scrollTop: $('.products-section').offset().top - 100 }, 500);
     }
+    // Remove infinite scroll event
+    $(window).off('scroll.infinite');
 
     // Fetch wishlist from backend if logged in
     async function fetchWishlist() {
@@ -1206,6 +1247,84 @@
           $('#productsList').show();
         }
       });
+
+      // Remove infinite scroll event
+      $(window).off('scroll.infinite');
+      // Reset on filter/search
+      function resetInfiniteScroll() {
+        currentPage = 1;
+        renderProductsInfiniteScroll(false);
+      }
+      // Update filterProducts to reset infinite scroll
+      function filterProducts() {
+        let filtered = [...allProducts];
+        
+        // Search filter
+        const searchTerm = $('#searchInput').val().toLowerCase();
+        if (searchTerm) {
+          filtered = filtered.filter(product => 
+            product.name.toLowerCase().includes(searchTerm) ||
+            product.description.toLowerCase().includes(searchTerm) ||
+            (product.category_name && product.category_name.toLowerCase().includes(searchTerm))
+          );
+        }
+        
+        // Category filter
+        const selectedCategory = $('.category-tab.active').data('category');
+        if (selectedCategory) {
+          filtered = filtered.filter(product => product.category_id == selectedCategory);
+        }
+        
+        // Price filter
+        const priceFilter = $('#priceFilter').val();
+        if (priceFilter) {
+          const [min, max] = priceFilter.split('-').map(Number);
+          filtered = filtered.filter(product => {
+            const price = parseFloat(product.sell_price);
+            if (max) {
+              return price >= min && price <= max;
+            } else {
+              return price >= min;
+            }
+          });
+        }
+        
+        // Stock filter
+        const stockFilter = $('#stockFilter').val();
+        if (stockFilter) {
+          filtered = filtered.filter(product => {
+            const stock = parseInt(product.stock_quantity || 0);
+            switch (stockFilter) {
+              case 'in-stock': return stock > 10;
+              case 'low-stock': return stock > 0 && stock <= 10;
+              case 'out-of-stock': return stock === 0;
+              default: return true;
+            }
+          });
+        }
+        
+        // Sort products
+        const sortBy = $('#sortSelect').val();
+        switch (sortBy) {
+          case 'price-low':
+            filtered.sort((a, b) => parseFloat(a.sell_price) - parseFloat(b.sell_price));
+            break;
+          case 'price-high':
+            filtered.sort((a, b) => parseFloat(b.sell_price) - parseFloat(a.sell_price));
+            break;
+          case 'name':
+            filtered.sort((a, b) => a.name.localeCompare(b.name));
+            break;
+          case 'stock':
+            filtered.sort((a, b) => parseInt(b.stock_quantity || 0) - parseInt(a.stock_quantity || 0));
+            break;
+          default:
+            filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        }
+        
+        filteredProducts = filtered;
+        resetInfiniteScroll();
+      }
     });
 
     $(document).on('click', '.wishlist-heart', function(e) {
@@ -1214,5 +1333,34 @@
       toggleWishlist(id);
     });
   </script>
+  <script>
+$(function() {
+  $(document).on('click', '.add-to-cart-btn', function(e) {
+    const $row = $(this).closest('.product-card');
+    const $qty = $row.find('.product-qty');
+    if ($qty.length) {
+      const val = parseInt($qty.val(), 10);
+      const max = parseInt($qty.attr('max'), 10);
+      $('.product-qty-error').remove();
+      if (isNaN(val) || val < 1) {
+        $qty.after('<div class="product-qty-error" style="color:#c00;font-size:0.95em;margin-top:2px;">Quantity must be at least 1.</div>');
+        e.preventDefault();
+        return false;
+      } else if (max && val > max) {
+        $qty.after('<div class="product-qty-error" style="color:#c00;font-size:0.95em;margin-top:2px;">Exceeds stock.</div>');
+        e.preventDefault();
+        return false;
+      }
+    }
+  });
+  // Optional: validate search input
+  $('#searchInput').on('input', function() {
+    $('.search-error').remove();
+    if ($(this).val().length > 0 && $(this).val().length < 2) {
+      $(this).after('<div class="search-error" style="color:#c00;font-size:0.95em;margin-top:2px;">Enter at least 2 characters to search.</div>');
+    }
+  });
+});
+</script>
 </body>
 </html>

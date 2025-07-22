@@ -6,6 +6,8 @@ const SECRET = process.env.JWT_SECRET || 'devsecret';
 const nodemailer = require('nodemailer');
 const multer = require('multer');
 const path = require('path');
+const PDFDocument = require('pdfkit');
+const fs = require('fs');
 // Multer setup for GCash receipt upload
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -278,21 +280,36 @@ router.delete('/products/:id', async (req, res) => {
 
 // GET /products/:id/reviews - fetch all reviews for a product
 router.get('/products/:id/reviews', async (req, res) => {
+  const item_id = req.params.id;
+  let user_id = null;
+  let customer_id = null;
+  // Try to get user_id from JWT if present
   try {
-    const [rows] = await db.query(`
-      SELECT r.review_id, r.rating, r.review_text, r.created_at, c.fname, c.lname
-      FROM reviews r
-      JOIN customer c ON r.customer_id = c.customer_id
-      WHERE r.item_id = ?
-      ORDER BY r.created_at DESC
-    `, [req.params.id]);
-    res.json({ success: true, reviews: rows });
+    const auth = req.headers.authorization;
+    if (auth && auth.startsWith('Bearer ')) {
+      const jwt = require('jsonwebtoken');
+      const SECRET = process.env.JWT_SECRET || 'devsecret';
+      const decoded = jwt.verify(auth.slice(7), SECRET);
+      user_id = decoded.id;
+    }
+  } catch {}
+  if (user_id) {
+    const [custRows] = await db.query('SELECT customer_id FROM customer WHERE user_id = ?', [user_id]);
+    if (custRows.length) customer_id = custRows[0].customer_id;
+  }
+  try {
+    const [reviews] = await db.query('SELECT r.*, c.fname, c.lname FROM reviews r JOIN customer c ON r.customer_id = c.customer_id WHERE r.item_id = ?', [item_id]);
+    const reviewsWithFlag = reviews.map(r => ({
+      ...r,
+      is_own_review: customer_id && r.customer_id === customer_id
+    }));
+    res.json({ success: true, reviews: reviewsWithFlag });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Failed to fetch reviews.' });
   }
 });
 
-// POST /products/:id/reviews - add a review (must have delivered order, not already reviewed)
+// POST /products/:id/reviews - add a review (must have delivered order)
 router.post('/products/:id/reviews', authRequired, async (req, res) => {
   const { rating, review_text } = req.body;
   const item_id = req.params.id;
@@ -305,9 +322,6 @@ router.post('/products/:id/reviews', authRequired, async (req, res) => {
     const [custRows] = await db.query('SELECT customer_id FROM customer WHERE user_id = ?', [user_id]);
     if (!custRows.length) return res.status(403).json({ success: false, message: 'Not a customer.' });
     const customer_id = custRows[0].customer_id;
-    // Check if already reviewed
-    const [revRows] = await db.query('SELECT 1 FROM reviews WHERE item_id = ? AND customer_id = ?', [item_id, customer_id]);
-    if (revRows.length) return res.status(400).json({ success: false, message: 'You have already reviewed this product.' });
     // Check for delivered order
     const [orderRows] = await db.query(`
       SELECT 1 FROM orderline ol
@@ -316,11 +330,59 @@ router.post('/products/:id/reviews', authRequired, async (req, res) => {
       LIMIT 1
     `, [item_id, customer_id]);
     if (!orderRows.length) return res.status(403).json({ success: false, message: 'You can only review products you have received (delivered).' });
-    // Insert review
+    // If this is an eligibility check, do not insert a review
+    if (review_text === '__eligibility_check__') {
+      return res.json({ success: true, eligible: true });
+    }
+    // Insert review (allow multiple reviews)
     await db.query('INSERT INTO reviews (item_id, customer_id, rating, review_text) VALUES (?, ?, ?, ?)', [item_id, customer_id, rating, review_text || null]);
     res.json({ success: true, message: 'Review submitted.' });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Failed to submit review.' });
+  }
+});
+
+// PUT /products/:id/reviews/:review_id - edit a review (only by owner)
+router.put('/products/:id/reviews/:review_id', authRequired, async (req, res) => {
+  const { rating, review_text } = req.body;
+  const item_id = req.params.id;
+  const review_id = req.params.review_id;
+  const user_id = req.user_id;
+  if (!rating || rating < 1 || rating > 5) {
+    return res.status(400).json({ success: false, message: 'Rating must be 1-5.' });
+  }
+  try {
+    // Get customer_id for this user
+    const [custRows] = await db.query('SELECT customer_id FROM customer WHERE user_id = ?', [user_id]);
+    if (!custRows.length) return res.status(403).json({ success: false, message: 'Not a customer.' });
+    const customer_id = custRows[0].customer_id;
+    // Check ownership
+    const [revRows] = await db.query('SELECT * FROM reviews WHERE review_id = ? AND item_id = ? AND customer_id = ?', [review_id, item_id, customer_id]);
+    if (!revRows.length) return res.status(403).json({ success: false, message: 'You can only edit your own review.' });
+    await db.query('UPDATE reviews SET rating = ?, review_text = ? WHERE review_id = ?', [rating, review_text, review_id]);
+    res.json({ success: true, message: 'Review updated.' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to update review.' });
+  }
+});
+
+// DELETE /products/:id/reviews/:review_id - delete a review (only by owner)
+router.delete('/products/:id/reviews/:review_id', authRequired, async (req, res) => {
+  const item_id = req.params.id;
+  const review_id = req.params.review_id;
+  const user_id = req.user_id;
+  try {
+    // Get customer_id for this user
+    const [custRows] = await db.query('SELECT customer_id FROM customer WHERE user_id = ?', [user_id]);
+    if (!custRows.length) return res.status(403).json({ success: false, message: 'Not a customer.' });
+    const customer_id = custRows[0].customer_id;
+    // Check ownership
+    const [revRows] = await db.query('SELECT * FROM reviews WHERE review_id = ? AND item_id = ? AND customer_id = ?', [review_id, item_id, customer_id]);
+    if (!revRows.length) return res.status(403).json({ success: false, message: 'You can only delete your own review.' });
+    await db.query('DELETE FROM reviews WHERE review_id = ?', [review_id]);
+    res.json({ success: true, message: 'Review deleted.' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to delete review.' });
   }
 });
 
@@ -369,10 +431,43 @@ router.post('/orders/place', authRequired, upload.single('gcash_receipt'), async
       subtotal += total_price;
       await conn.query('INSERT INTO orderline (orderinfo_id, item_id, item_name, quantity, unit_price, total_price) VALUES (?, ?, ?, ?, ?, ?)',
         [orderinfo_id, item.item_id, prodRows[0].name, item.quantity, unit_price, total_price]);
+      // Decrement stock for this item
+      await conn.query('UPDATE stock SET quantity = quantity - ? WHERE item_id = ?', [item.quantity, item.item_id]);
     }
     // Update subtotal, total_amount
     await conn.query('UPDATE orderinfo SET subtotal=?, total_amount=? WHERE orderinfo_id=?', [subtotal, subtotal, orderinfo_id]);
     await conn.commit();
+    // Generate PDF receipt
+    function generateOrderPDF(order, items, customer) {
+      return new Promise((resolve, reject) => {
+        const doc = new PDFDocument();
+        const buffers = [];
+        doc.on('data', buffers.push.bind(buffers));
+        doc.on('end', () => {
+          const pdfData = Buffer.concat(buffers);
+          resolve(pdfData);
+        });
+        doc.fontSize(20).text('Order Receipt', { align: 'center' });
+        doc.moveDown();
+        doc.fontSize(12).text(`Order Number: ${order.order_number}`);
+        doc.text(`Date: ${new Date(order.date_placed || Date.now()).toLocaleString()}`);
+        doc.text(`Customer: ${customer.fname} ${customer.lname}`);
+        doc.text(`Address: ${customer.addressline}, ${customer.town}, ${customer.zipcode}`);
+        doc.text(`Phone: ${customer.phone}`);
+        doc.moveDown();
+        doc.fontSize(14).text('Items:', { underline: true });
+        items.forEach(item => {
+          doc.fontSize(12).text(`${item.item_name} (x${item.quantity}) - ₱${item.unit_price} each`);
+        });
+        doc.moveDown();
+        doc.fontSize(14).text(`Total: ₱${order.total_amount}`);
+        doc.end();
+      });
+    }
+    // Fetch orderinfo and orderline for PDF
+    const [[orderInfoRow]] = await conn.query('SELECT * FROM orderinfo WHERE orderinfo_id = ?', [orderinfo_id]);
+    const [orderLineRows] = await conn.query('SELECT * FROM orderline WHERE orderinfo_id = ?', [orderinfo_id]);
+    const pdfBuffer = await generateOrderPDF(orderInfoRow, orderLineRows, custRows[0]);
     // Send emails (customer and sellers)
     try {
       // Setup nodemailer using environment variables
@@ -390,7 +485,13 @@ router.post('/orders/place', authRequired, upload.single('gcash_receipt'), async
         from: 'Home Haven <your_email@gmail.com>',
         to: customerEmail,
         subject: 'Order Confirmation',
-        text: `Thank you for your order! Order Number: ${order_number}`
+        text: `Thank you for your order! Order Number: ${order_number}`,
+        attachments: [
+          {
+            filename: `OrderReceipt_${order_number}.pdf`,
+            content: pdfBuffer
+          }
+        ]
       });
       // Seller emails
       const [sellerRows] = await conn.query('SELECT DISTINCT u.email FROM item i JOIN users u ON i.seller_id = u.id WHERE i.item_id IN (?)', [items.map(i=>i.item_id)]);

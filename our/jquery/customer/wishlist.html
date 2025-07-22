@@ -5,7 +5,7 @@
   <title>My Wishlist - Home Haven</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <style>
     body { background: #f7f4f0; margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
     .wishlist-container { max-width: 1100px; margin: 32px auto; background: #fff; border-radius: 14px; box-shadow: 0 2px 12px rgba(0,0,0,0.07); padding: 24px 18px 18px 18px; }
@@ -96,5 +96,27 @@
       renderWishlist();
     });
   </script>
+  <script>
+$(function() {
+  $(document).on('click', '.add-to-cart-btn', function(e) {
+    const $row = $(this).closest('.wishlist-item');
+    const $qty = $row.find('.wishlist-qty');
+    if ($qty.length) {
+      const val = parseInt($qty.val(), 10);
+      const max = parseInt($qty.attr('max'), 10);
+      $('.wishlist-qty-error').remove();
+      if (isNaN(val) || val < 1) {
+        $qty.after('<div class="wishlist-qty-error" style="color:#c00;font-size:0.95em;margin-top:2px;">Quantity must be at least 1.</div>');
+        e.preventDefault();
+        return false;
+      } else if (max && val > max) {
+        $qty.after('<div class="wishlist-qty-error" style="color:#c00;font-size:0.95em;margin-top:2px;">Exceeds stock.</div>');
+        e.preventDefault();
+        return false;
+      }
+    }
+  });
+});
+</script>
 </body>
 </html> 
