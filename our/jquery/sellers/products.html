@@ -353,6 +353,35 @@
     </div>
   </div>
 
+  <!-- Add this to your product details modal or details section -->
+<div id="reviewsSection" style="margin-top:24px;">
+  <h3>Customer Reviews</h3>
+  <div id="reviewsList"></div>
+</div>
+<script>
+function renderReviews(reviews) {
+  let html = '';
+  if (!reviews.length) {
+    html = '<div style="color:#888;">No reviews yet for this product.</div>';
+  } else {
+    reviews.forEach(r => {
+      html += `<div class='review-box' style='border-bottom:1px solid #eee;padding:10px 0;'>
+        <div style='font-weight:600;'>${r.fname} ${r.lname} <span style='color:#f5b301;'>${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</span></div>
+        <div style='margin:4px 0 0 0;'>${r.review_text ? r.review_text.replace(/</g,'&lt;') : ''}</div>
+        <div style='font-size:0.95em;color:#aaa;'>${new Date(r.created_at).toLocaleString()}</div>
+      </div>`;
+    });
+  }
+  $('#reviewsList').html(html);
+}
+async function loadReviews(item_id) {
+  const res = await fetch(`${API_BASE}/products/${item_id}/reviews`);
+  const data = await res.json();
+  if (data.success) renderReviews(data.reviews);
+}
+// After loading product details, call:
+// loadReviews(productId);
+</script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     // Modal open/close logic: always allow opening after closing

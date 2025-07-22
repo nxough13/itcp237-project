@@ -4,6 +4,19 @@ const db = require('../db');  // use the db.js file you made
 const jwt = require('jsonwebtoken');
 const SECRET = process.env.JWT_SECRET || 'devsecret';
 const nodemailer = require('nodemailer');
+const multer = require('multer');
+const path = require('path');
+// Multer setup for GCash receipt upload
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, path.join(__dirname, '../../uploads'));
+  },
+  filename: function (req, file, cb) {
+    const ext = path.extname(file.originalname);
+    cb(null, 'gcash_' + Date.now() + '_' + Math.round(Math.random() * 1E9) + ext);
+  }
+});
+const upload = multer({ storage });
 
 // Middleware to get user_id from JWT
 function authRequired(req, res, next) {
@@ -263,11 +276,71 @@ router.delete('/products/:id', async (req, res) => {
   }
 });
 
-// POST /orders/place - place an order for the logged-in user
-router.post('/orders/place', authRequired, async (req, res) => {
+// GET /products/:id/reviews - fetch all reviews for a product
+router.get('/products/:id/reviews', async (req, res) => {
+  try {
+    const [rows] = await db.query(`
+      SELECT r.review_id, r.rating, r.review_text, r.created_at, c.fname, c.lname
+      FROM reviews r
+      JOIN customer c ON r.customer_id = c.customer_id
+      WHERE r.item_id = ?
+      ORDER BY r.created_at DESC
+    `, [req.params.id]);
+    res.json({ success: true, reviews: rows });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to fetch reviews.' });
+  }
+});
+
+// POST /products/:id/reviews - add a review (must have delivered order, not already reviewed)
+router.post('/products/:id/reviews', authRequired, async (req, res) => {
+  const { rating, review_text } = req.body;
+  const item_id = req.params.id;
   const user_id = req.user_id;
-  const items = req.body.items;
+  if (!rating || rating < 1 || rating > 5) {
+    return res.status(400).json({ success: false, message: 'Rating must be 1-5.' });
+  }
+  try {
+    // Get customer_id for this user
+    const [custRows] = await db.query('SELECT customer_id FROM customer WHERE user_id = ?', [user_id]);
+    if (!custRows.length) return res.status(403).json({ success: false, message: 'Not a customer.' });
+    const customer_id = custRows[0].customer_id;
+    // Check if already reviewed
+    const [revRows] = await db.query('SELECT 1 FROM reviews WHERE item_id = ? AND customer_id = ?', [item_id, customer_id]);
+    if (revRows.length) return res.status(400).json({ success: false, message: 'You have already reviewed this product.' });
+    // Check for delivered order
+    const [orderRows] = await db.query(`
+      SELECT 1 FROM orderline ol
+      JOIN orderinfo o ON ol.orderinfo_id = o.orderinfo_id
+      WHERE ol.item_id = ? AND o.customer_id = ? AND o.status = 'delivered'
+      LIMIT 1
+    `, [item_id, customer_id]);
+    if (!orderRows.length) return res.status(403).json({ success: false, message: 'You can only review products you have received (delivered).' });
+    // Insert review
+    await db.query('INSERT INTO reviews (item_id, customer_id, rating, review_text) VALUES (?, ?, ?, ?)', [item_id, customer_id, rating, review_text || null]);
+    res.json({ success: true, message: 'Review submitted.' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to submit review.' });
+  }
+});
+
+// POST /orders/place - place an order for the logged-in user
+router.post('/orders/place', authRequired, upload.single('gcash_receipt'), async (req, res) => {
+  const user_id = req.user_id;
+  let items, payment_method, gcash_phone, gcash_receipt;
+  if (req.is('multipart/form-data')) {
+    items = JSON.parse(req.body.items);
+    payment_method = req.body.payment_method;
+    gcash_phone = req.body.gcash_phone;
+    gcash_receipt = req.file ? '/uploads/' + req.file.filename : null;
+  } else {
+    items = req.body.items;
+    payment_method = req.body.payment_method;
+    gcash_phone = req.body.gcash_phone;
+    gcash_receipt = null;
+  }
   if (!Array.isArray(items) || !items.length) return res.status(400).json({ success: false, error: 'No items in order.' });
+  if (!payment_method || !['cash','gcash'].includes(payment_method)) return res.status(400).json({ success: false, error: 'Invalid payment method.' });
   const conn = await db.getConnection();
   try {
     await conn.beginTransaction();
@@ -275,13 +348,15 @@ router.post('/orders/place', authRequired, async (req, res) => {
     const [custRows] = await conn.query('SELECT customer_id, fname, lname, addressline, town, zipcode, phone FROM customer WHERE user_id = ?', [user_id]);
     if (!custRows.length) throw new Error('Customer not found');
     const customer_id = custRows[0].customer_id;
+    // Set payment_status
+    let payment_status = payment_method === 'cash' ? 'pending' : 'paid';
     // Insert orderinfo
     const now = new Date();
     const deliveryDate = new Date(now.getTime() + 24*60*60*1000); // +1 day
     const order_number = 'ORD-' + Date.now();
     const [orderRes] = await conn.query(
-      'INSERT INTO orderinfo (customer_id, order_number, date_placed, status, payment_status, subtotal, shipping, total_amount, ship_fname, ship_lname, ship_address, ship_town, ship_zipcode, ship_phone, created_at) VALUES (?, ?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
-      [customer_id, order_number, 'confirmed', 'pending', 0, 0, 0, custRows[0].fname, custRows[0].lname, custRows[0].addressline, custRows[0].town, custRows[0].zipcode, custRows[0].phone]
+      'INSERT INTO orderinfo (customer_id, order_number, date_placed, status, payment_status, payment_method, gcash_phone, gcash_receipt, subtotal, shipping, total_amount, ship_fname, ship_lname, ship_address, ship_town, ship_zipcode, ship_phone, created_at) VALUES (?, ?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
+      [customer_id, order_number, 'confirmed', payment_status, payment_method, gcash_phone || null, gcash_receipt, 0, 0, 0, custRows[0].fname, custRows[0].lname, custRows[0].addressline, custRows[0].town, custRows[0].zipcode, custRows[0].phone]
     );
     const orderinfo_id = orderRes.insertId;
     let subtotal = 0;

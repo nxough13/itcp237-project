@@ -1126,11 +1126,15 @@
 
     // Add to cart
     function addToCart(productId) {
+      const product = allProducts.find(p => p.item_id === productId);
+      if (!product || parseInt(product.stock_quantity || 0) === 0) {
+        showCartNotification(false, 'Out of stock!');
+        return;
+      }
       const token = localStorage.getItem('jwt_token');
       const isLoggedIn = !!token;
       if (isLoggedIn) {
         // Find product price from allProducts
-        const product = allProducts.find(p => p.item_id === productId);
         const price = product ? product.sell_price : 0;
         fetch(`${API_BASE}/cart/add`, {
           method: 'POST',

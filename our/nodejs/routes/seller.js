@@ -227,13 +227,14 @@ router.get('/seller/orders', authenticateJWT, requireSellerRole, async (req, res
     const [products] = await db.query('SELECT item_id, name, category_id FROM item WHERE seller_id = ?', [req.user.id]);
     if (!products.length) return res.json({ success: true, orders: [] });
     const itemIds = products.map(p => p.item_id);
-    // Get all order lines for these products, join with orderinfo and customer
-    const [orders] = await db.query(`
+    console.log('Seller', req.user.id, 'itemIds:', itemIds);
+    let sql = `
       SELECT 
         o.orderinfo_id,
         o.order_number,
         o.date_placed,
         o.status AS order_status,
+        o.total_amount,
         ol.item_id,
         ol.item_name AS product_name,
         ol.quantity,
@@ -244,10 +245,88 @@ router.get('/seller/orders', authenticateJWT, requireSellerRole, async (req, res
       JOIN customer c ON o.customer_id = c.customer_id
       WHERE ol.item_id IN (${itemIds.map(() => '?').join(',')})
       ORDER BY o.date_placed DESC
-    `, itemIds);
+    `;
+    console.log('SQL:', sql);
+    const [rows] = await db.query(sql, itemIds);
+    // Group by orderinfo_id
+    const ordersMap = {};
+    for (const row of rows) {
+      if (!ordersMap[row.orderinfo_id]) {
+        ordersMap[row.orderinfo_id] = {
+          orderinfo_id: row.orderinfo_id,
+          order_number: row.order_number,
+          date_placed: row.date_placed,
+          order_status: row.order_status,
+          customer_fname: row.customer_fname,
+          customer_lname: row.customer_lname,
+          total_amount: row.total_amount,
+          products: [],
+          quantity: 0
+        };
+      }
+      ordersMap[row.orderinfo_id].products.push({ name: row.product_name, quantity: row.quantity });
+      ordersMap[row.orderinfo_id].quantity += row.quantity;
+    }
+    const orders = Object.values(ordersMap);
+    console.log('Orders result:', orders);
     res.json({ success: true, orders });
   } catch (err) {
+    console.error('Error in /seller/orders:', err);
     res.status(500).json({ success: false, message: 'Failed to fetch orders.', error: err.message });
+  }
+});
+
+// PATCH /seller/orders/:orderinfo_id/status - update order status (cancelled/delivered)
+router.patch('/seller/orders/:orderinfo_id/status', authenticateJWT, requireSellerRole, async (req, res) => {
+  const { status } = req.body;
+  const validStatuses = ['cancelled', 'delivered'];
+  if (!validStatuses.includes(status)) {
+    return res.status(400).json({ success: false, message: 'Invalid status.' });
+  }
+  const orderinfo_id = req.params.orderinfo_id;
+  const conn = await db.getConnection();
+  try {
+    // Get all item_ids for this seller
+    const [sellerItems] = await conn.query('SELECT item_id FROM item WHERE seller_id = ?', [req.user.id]);
+    const itemIds = sellerItems.map(i => i.item_id);
+    if (!itemIds.length) return res.status(403).json({ success: false, message: 'No products for this seller.' });
+    // Check if this order contains at least one of the seller's items
+    const [orderLines] = await conn.query('SELECT item_id FROM orderline WHERE orderinfo_id = ?', [orderinfo_id]);
+    const found = orderLines.some(ol => itemIds.includes(ol.item_id));
+    if (!found) return res.status(403).json({ success: false, message: 'Order does not belong to your products.' });
+    // Update order status
+    await conn.query('UPDATE orderinfo SET status=? WHERE orderinfo_id=?', [status, orderinfo_id]);
+    // Get customer email
+    const [orderInfo] = await conn.query('SELECT o.order_number, u.email FROM orderinfo o JOIN customer c ON o.customer_id = c.customer_id JOIN users u ON c.user_id = u.id WHERE o.orderinfo_id = ?', [orderinfo_id]);
+    if (orderInfo.length) {
+      const nodemailer = require('nodemailer');
+      const transporter = nodemailer.createTransport({
+        service: process.env.EMAIL_SERVICE || 'gmail',
+        auth: {
+          user: process.env.EMAIL_USER || 'homehaven984@gmail.com',
+          pass: process.env.EMAIL_PASS || 'nfiopcrbahrmxvru'
+        }
+      });
+      let subject = '', text = '';
+      if (status === 'cancelled') {
+        subject = 'Order Cancelled';
+        text = `Your order ${orderInfo[0].order_number} has been cancelled by the seller.`;
+      } else if (status === 'delivered') {
+        subject = 'Order Delivered';
+        text = `Your order ${orderInfo[0].order_number} has been marked as delivered by the seller.`;
+      }
+      await transporter.sendMail({
+        from: 'Home Haven <your_email@gmail.com>',
+        to: orderInfo[0].email,
+        subject,
+        text
+      });
+    }
+    res.json({ success: true, message: 'Order status updated and customer notified.' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to update order status.', error: err.message });
+  } finally {
+    conn.release();
   }
 });
 

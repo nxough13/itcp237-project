@@ -438,10 +438,84 @@
         showCartNotification(false, 'Invalid product or quantity');
       }
     });
+    // --- REVIEWS ---
+    function renderReviews(reviews) {
+      let html = '';
+      if (!reviews.length) {
+        html = '<div style="color:#888;">No reviews yet for this product.</div>';
+      } else {
+        reviews.forEach(r => {
+          html += `<div class='review-box' style='border-bottom:1px solid #eee;padding:10px 0;'>
+            <div style='font-weight:600;'>${r.fname} ${r.lname} <span style='color:#f5b301;'>${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</span></div>
+            <div style='margin:4px 0 0 0;'>${r.review_text ? r.review_text.replace(/</g,'&lt;') : ''}</div>
+            <div style='font-size:0.95em;color:#aaa;'>${new Date(r.created_at).toLocaleString()}</div>
+          </div>`;
+        });
+      }
+      $('#reviewsList').html(html);
+    }
+    async function loadReviews(item_id) {
+      const res = await fetch(`${API_BASE}/products/${item_id}/reviews`);
+      const data = await res.json();
+      if (data.success) renderReviews(data.reviews);
+    }
+    async function checkReviewEligibility(item_id) {
+      const token = localStorage.getItem('jwt_token');
+      if (!token) {
+        $('#reviewFormContainer').html('<div style="color:#888;">Log in as a customer to leave a review.</div>');
+        return;
+      }
+      // Check if eligible by trying to post a dummy review (simulate, but don't actually post)
+      // Instead, fetch delivered orders and reviews for this user/product
+      const res = await fetch(`${API_BASE}/products/${item_id}/reviews`, { headers: { 'Authorization': `Bearer ${token}` } });
+      // If backend supports a GET for eligibility, use it. For now, show form and handle error on submit.
+      $('#reviewFormContainer').html(`<form id='reviewForm'>
+        <label for='reviewRating'>Your Rating:</label>
+        <select id='reviewRating' required>
+          <option value=''>Select</option>
+          <option value='5'>★★★★★</option>
+          <option value='4'>★★★★</option>
+          <option value='3'>★★★</option>
+          <option value='2'>★★</option>
+          <option value='1'>★</option>
+        </select><br>
+        <label for='reviewText'>Your Review:</label><br>
+        <textarea id='reviewText' rows='3' style='width:100%;'></textarea><br>
+        <button type='submit'>Submit Review</button>
+      </form>`);
+      $('#reviewForm').on('submit', async function(e) {
+        e.preventDefault();
+        const rating = parseInt($('#reviewRating').val());
+        const review_text = $('#reviewText').val();
+        if (!rating) return alert('Please select a rating.');
+        try {
+          const resp = await fetch(`${API_BASE}/products/${item_id}/reviews`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ rating, review_text })
+          });
+          const data = await resp.json();
+          if (data.success) {
+            alert('Review submitted!');
+            loadReviews(item_id);
+            $('#reviewFormContainer').html('<div style="color:#27ae60;">Thank you for your review!</div>');
+          } else {
+            alert(data.message || 'Could not submit review.');
+          }
+        } catch {
+          alert('Could not submit review.');
+        }
+      });
+    }
     // On page load, fetch wishlist and product details
     $(document).ready(async function() {
       await fetchWishlist();
       loadProductDetails();
+      const productId = getProductId();
+      if (productId) {
+        loadReviews(productId);
+        checkReviewEligibility(productId);
+      }
     });
   </script>
 </body>

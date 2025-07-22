@@ -138,6 +138,22 @@
           </div>
         </div>
       `);
+      // Payment Method
+      left.append(`
+        <div class="checkout-summary" id="paymentSection">
+          <label for="paymentMethod" style="font-weight:600;">Payment Method:</label><br>
+          <select id="paymentMethod" style="margin:8px 0 12px 0;padding:6px 12px;border-radius:6px;">
+            <option value="cash">Cash</option>
+            <option value="gcash">GCash</option>
+          </select>
+          <div id="gcashFields" style="display:none;">
+            <label for="gcashPhone">GCash Phone Number:</label><br>
+            <input type="text" id="gcashPhone" style="width:100%;margin-bottom:8px;padding:6px 10px;border-radius:6px;border:1px solid #ccc;" placeholder="09xxxxxxxxx"><br>
+            <label for="gcashReceipt">Upload GCash Receipt:</label><br>
+            <input type="file" id="gcashReceipt" accept="image/*" style="margin-bottom:8px;">
+          </div>
+        </div>
+      `);
       // Right: Customer details
       const right = $('<div class="checkout-right"></div>');
       right.append('<div class="customer-details-title">Customer Details</div>');
@@ -155,6 +171,14 @@
       }
       main.append(left, right);
       $('.checkout-container').html(main);
+      // Payment method toggle
+      $('#paymentMethod').on('change', function() {
+        if ($(this).val() === 'gcash') {
+          $('#gcashFields').slideDown(120);
+        } else {
+          $('#gcashFields').slideUp(120);
+        }
+      });
     }
 
     $(document).ready(function() {
@@ -241,16 +265,74 @@
         alert('Your cart is empty.');
         return;
       }
-      // Place order via backend
+      // Stock check: fetch latest stock for each item
+      let outOfStockItems = [];
+      for (const item of cart) {
+        try {
+          const res = await fetch(`${API_BASE}/products/details/${item.item_id}`);
+          const data = await res.json();
+          if (!data.product || parseInt(data.product.stock_quantity || 0) === 0) {
+            outOfStockItems.push(data.product ? data.product.name : `ID ${item.item_id}`);
+          }
+        } catch {
+          outOfStockItems.push(`ID ${item.item_id}`);
+        }
+      }
+      if (outOfStockItems.length) {
+        alert('Cannot checkout. The following items are out of stock:\n' + outOfStockItems.join(', '));
+        return;
+      }
+      // Get payment method
+      const paymentMethod = $('#paymentMethod').val();
+      if (!paymentMethod) {
+        alert('Please select a payment method.');
+        return;
+      }
+      if (paymentMethod === 'gcash') {
+        const gcashPhone = $('#gcashPhone').val().trim();
+        const gcashReceipt = $('#gcashReceipt')[0].files[0];
+        if (!gcashPhone || !/^09\d{9}$/.test(gcashPhone)) {
+          alert('Please enter a valid GCash phone number (09xxxxxxxxx).');
+          return;
+        }
+        if (!gcashReceipt) {
+          alert('Please upload your GCash payment receipt.');
+          return;
+        }
+        // Send as multipart/form-data
+        const formData = new FormData();
+        formData.append('items', JSON.stringify(cart));
+        formData.append('payment_method', 'gcash');
+        formData.append('gcash_phone', gcashPhone);
+        formData.append('gcash_receipt', gcashReceipt);
+        try {
+          const res = await fetch(`${API_BASE}/orders/place`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` },
+            body: formData
+          });
+          const data = await res.json();
+          if (data.success) {
+            await fetch(`${API_BASE}/cart/clear`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
+            showOrderNotification(true, 'Order placed successfully! Check your email for confirmation.');
+            setTimeout(()=>window.location.href='product_customer.html', 1800);
+          } else {
+            showOrderNotification(false, data.error || 'Failed to place order.');
+          }
+        } catch {
+          showOrderNotification(false, 'Failed to place order.');
+        }
+        return;
+      }
+      // Cash: send as JSON
       try {
         const res = await fetch(`${API_BASE}/orders/place`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-          body: JSON.stringify({ items: cart })
+          body: JSON.stringify({ items: cart, payment_method: 'cash' })
         });
         const data = await res.json();
         if (data.success) {
-          // Clear cart
           await fetch(`${API_BASE}/cart/clear`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
           showOrderNotification(true, 'Order placed successfully! Check your email for confirmation.');
           setTimeout(()=>window.location.href='product_customer.html', 1800);

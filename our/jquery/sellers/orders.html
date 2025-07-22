@@ -51,6 +51,12 @@
     </table>
     <div id="ordersEmpty" class="orders-empty" style="display:none;">No orders found for your products.</div>
   </div>
+  <div id="orderDetailsModal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.25);z-index:99999;align-items:center;justify-content:center;">
+    <div style="background:#fff;padding:32px 24px 18px 24px;border-radius:14px;max-width:420px;width:95vw;box-shadow:0 2px 16px rgba(0,0,0,0.18);position:relative;">
+      <button id="closeOrderModal" style="position:absolute;top:10px;right:12px;font-size:1.3em;background:none;border:none;color:#8B5C2A;cursor:pointer;">&times;</button>
+      <div id="orderDetailsContent"></div>
+    </div>
+  </div>
   <script>
     const API_BASE = 'http://localhost:4000/api/v1';
     const token = localStorage.getItem('jwt_token');
@@ -64,6 +70,52 @@
         default: return '';
       }
     }
+    function showOrderNotification(success, msg) {
+      let n = $('#orderNotif');
+      if (!n.length) {
+        n = $('<div id="orderNotif"></div>').appendTo('body');
+        n.css({position:'fixed',top:'30px',right:'30px',zIndex:9999,padding:'18px 32px',borderRadius:'10px',fontSize:'1.1rem',fontWeight:700,boxShadow:'0 2px 12px rgba(0,0,0,0.13)',display:'none'});
+      }
+      n.text(msg || (success ? 'Order updated!' : 'Failed to update order')).css('background',success?'#27ae60':'#e74c3c').css('color','#fff').fadeIn(200).delay(1200).fadeOut(400);
+    }
+    async function updateOrderStatus(orderinfo_id, status) {
+      if (!token) return;
+      try {
+        const res = await fetch(`${API_BASE}/seller/orders/${orderinfo_id}/status`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ status })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showOrderNotification(true, 'Order status updated!');
+          loadOrders();
+        } else {
+          showOrderNotification(false, data.message || 'Failed to update order');
+        }
+      } catch {
+        showOrderNotification(false, 'Failed to update order');
+      }
+    }
+    let ordersCache = [];
+    function showOrderDetails(orderinfo_id) {
+      const order = ordersCache.find(o => o.orderinfo_id == orderinfo_id);
+      if (!order) return;
+      let html = `<h3 style='color:#8B5C2A;margin-top:0;'>Order #${order.order_number || order.orderinfo_id}</h3>`;
+      html += `<div style='margin-bottom:10px;'><b>Date:</b> ${order.date_placed ? new Date(order.date_placed).toLocaleString() : ''}</div>`;
+      html += `<div style='margin-bottom:10px;'><b>Customer:</b> ${order.customer_fname || ''} ${order.customer_lname || ''}</div>`;
+      html += `<div style='margin-bottom:10px;'><b>Status:</b> <span class='order-status ${statusClass(order.order_status)}'>${order.order_status}</span></div>`;
+      html += `<div style='margin-bottom:10px;'><b>Products:</b><ul style='margin:0 0 0 18px;padding:0;'>`;
+      order.products.forEach(p => {
+        html += `<li>${p.name} <span style='color:#888;font-size:0.97em;'>x${p.quantity}</span></li>`;
+      });
+      html += `</ul></div>`;
+      html += `<div style='margin-bottom:10px;'><b>Total Quantity:</b> ${order.quantity}</div>`;
+      html += `<div style='margin-bottom:10px;'><b>Total Amount:</b> ₱${parseFloat(order.total_amount || 0).toLocaleString()}</div>`;
+      $('#orderDetailsContent').html(html);
+      $('#orderDetailsModal').fadeIn(120);
+    }
+    $(document).on('click', '#closeOrderModal', function(){ $('#orderDetailsModal').fadeOut(120); });
     async function loadOrders() {
       if (!token) return;
       try {
@@ -72,20 +124,25 @@
         if (data.success && data.orders && data.orders.length) {
           $('#ordersEmpty').hide();
           let html = '';
+          ordersCache = data.orders;
           data.orders.forEach(order => {
             let products = order.products ? order.products.map(p => `${p.name} <span style='color:#888;font-size:0.95em;'>x${p.quantity}</span>`).join('<br>') : '';
             let qty = order.products ? order.products.reduce((sum, p) => sum + p.quantity, 0) : order.quantity || 0;
+            // Determine which actions to show
+            let actions = `<button onclick="showOrderDetails('${order.orderinfo_id}')"><i class='fa fa-eye'></i> View</button>`;
+            if (order.order_status !== 'delivered' && order.order_status !== 'cancelled') {
+              actions += `<button onclick="updateOrderStatus('${order.orderinfo_id}','delivered')"><i class='fa fa-check'></i> Mark as Delivered</button>`;
+              actions += `<button onclick="updateOrderStatus('${order.orderinfo_id}','cancelled')"><i class='fa fa-times'></i> Cancel Order</button>`;
+            }
             html += `<tr>
               <td>${order.order_number || order.orderinfo_id}</td>
               <td>${order.date_placed ? new Date(order.date_placed).toLocaleDateString() : ''}</td>
-              <td>${order.customer_name || ''}</td>
+              <td>${order.customer_fname ? order.customer_fname + ' ' + (order.customer_lname||'') : ''}</td>
               <td>${products}</td>
-              <td>${qty}</td>
+              <td>${order.quantity || 0}</td>
               <td>₱${parseFloat(order.total_amount || 0).toLocaleString()}</td>
-              <td><span class="order-status ${statusClass(order.status)}">${order.status ? order.status.charAt(0).toUpperCase() + order.status.slice(1) : ''}</span></td>
-              <td class="order-actions">
-                <button onclick="alert('Order details coming soon!')"><i class="fa fa-eye"></i> View</button>
-              </td>
+              <td><span class="order-status ${statusClass(order.order_status)}">${order.order_status ? order.order_status.charAt(0).toUpperCase() + order.order_status.slice(1) : ''}</span></td>
+              <td class="order-actions">${actions}</td>
             </tr>`;
           });
           $('#ordersTbody').html(html);
