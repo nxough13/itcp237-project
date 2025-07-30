@@ -9,6 +9,7 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -101,6 +102,11 @@
   <div class="dashboard-header">
     <h1>Welcome, <span id="sellerName">Seller</span>!</h1>
     <p class="lead">Your business overview and analytics</p>
+    <div style="margin-top: 20px; text-align: center;">
+      <button id="generateReportBtn" class="btn" style="background: #fff; color: #8B5C2A; border: 3px solid #8B5C2A; font-weight: 700; padding: 15px 30px; font-size: 18px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); transition: all 0.3s ease;">
+        <i class="fas fa-download me-2"></i>📊 Generate Sales Report
+      </button>
+    </div>
   </div>
   <div id="pendingOrdersContainer" style="margin: 24px 0; padding: 18px; background: #fffbe6; border: 1.5px solid #bfa77a; border-radius: 10px; font-size: 1.1rem; color: #8B5C2A; display: none;"></div>
   <div class="loading-spinner"><div class="spinner"></div></div>
@@ -343,6 +349,101 @@ function loadPendingOrders() {
 $(document).ready(function() {
   loadPendingOrders();
 });
+</script>
+
+<!-- Sales Report Generation Script -->
+<script>
+$(document).ready(function() {
+  $('#generateReportBtn').on('click', function() {
+    generateSalesReport();
+  });
+});
+
+async function generateSalesReport() {
+  try {
+    // Show loading state
+    const btn = $('#generateReportBtn');
+    const originalText = btn.html();
+    btn.html('<i class="fas fa-spinner fa-spin me-2"></i>Generating Report...').prop('disabled', true);
+    
+    // Wait a moment for any pending DOM updates
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // Create a clone of the dashboard content for PDF
+    const dashboardContent = $('.container').clone();
+    
+    // Add a header to the report
+    const reportHeader = $(`
+      <div style="text-align: center; margin-bottom: 30px; padding: 20px; background: #f8f9fa; border-radius: 10px;">
+        <h1 style="color: #8B5C2A; margin-bottom: 10px;">HomeHaven Sales Report</h1>
+        <h2 style="color: #7a6242; margin-bottom: 20px;">${$('#sellerName').text()}'s Dashboard</h2>
+        <p style="color: #666;">Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}</p>
+      </div>
+    `);
+    
+    // Create the report container
+    const reportContainer = $('<div>').addClass('report-container');
+    reportContainer.append(reportHeader);
+    reportContainer.append(dashboardContent);
+    
+    // Style the report container
+    reportContainer.css({
+      'position': 'absolute',
+      'left': '-9999px',
+      'top': '0',
+      'width': '800px',
+      'padding': '20px',
+      'backgroundColor': 'white',
+      'color': 'black',
+      'fontFamily': 'Arial, sans-serif',
+      'fontSize': '12px'
+    });
+    
+    // Add the report container to the body
+    $('body').append(reportContainer);
+    
+    // Wait for content to render
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Generate PDF
+    const opt = {
+      margin: [0.5, 0.5, 0.5, 0.5],
+      filename: `sales_report_${$('#sellerName').text()}_${new Date().toISOString().split('T')[0]}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { 
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        logging: true
+      },
+      jsPDF: { 
+        unit: 'in', 
+        format: 'letter', 
+        orientation: 'portrait',
+        compress: true
+      }
+    };
+    
+    // Generate and download PDF
+    html2pdf().set(opt).from(reportContainer[0]).save().then(() => {
+      // Clean up
+      reportContainer.remove();
+      console.log('PDF generated successfully');
+    }).catch((error) => {
+      console.error('Error generating PDF:', error);
+      reportContainer.remove();
+      alert('Failed to generate PDF. Please try again.');
+    });
+    
+  } catch (error) {
+    console.error('Error generating sales report:', error);
+    alert('Failed to generate sales report. Please try again.');
+  } finally {
+    // Reset button
+    $('#generateReportBtn').html('<i class="fas fa-download me-2"></i>📊 Generate Sales Report').prop('disabled', false);
+  }
+}
 </script>
 </body>
 </html> 

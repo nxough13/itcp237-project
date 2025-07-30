@@ -21,6 +21,7 @@
     .wishlist-remove { position: absolute; top: 10px; right: 10px; background: none; border: none; color: #e74c3c; font-size: 1.2rem; cursor: pointer; }
     .wishlist-remove:hover { color: #c0392b; }
     .wishlist-empty { text-align: center; color: #888; font-size: 1.1rem; margin: 2.5em 0; }
+    .loading { text-align: center; color: #888; font-size: 1.1rem; margin: 2.5em 0; }
     @media (max-width: 900px) { .wishlist-list { flex-direction: column; align-items: center; } .wishlist-card { width: 95vw; max-width: 340px; } }
   </style>
 </head>
@@ -34,34 +35,183 @@
     <div class="wishlist-title"><i class="fa fa-heart" style="color:#e74c3c;"></i> My Wishlist</div>
     <div id="wishlistList" class="wishlist-list"></div>
     <div id="wishlistEmpty" class="wishlist-empty" style="display:none;">Your wishlist is empty. Start adding your favorite products!</div>
+    <div id="wishlistLoading" class="loading">Loading your wishlist...</div>
   </div>
   <script>
-    // Helper: Get wishlist from localStorage
-    function getWishlist() {
+    const API_BASE = 'http://localhost:4000/api/v1';
+    
+    // Helper: Get token from localStorage
+    function getToken() {
+      return localStorage.getItem('jwt_token');
+    }
+    
+    // Helper: Check if user is logged in
+    function isLoggedIn() {
+      return !!getToken();
+    }
+    
+    // Helper: Get wishlist from localStorage (for guests)
+    function getWishlistFromStorage() {
       return JSON.parse(localStorage.getItem('wishlist') || '[]');
     }
+    
+    // Fetch wishlist from database (for logged-in users)
+    async function fetchWishlistFromDB() {
+      try {
+        const token = getToken();
+        const response = await fetch(`${API_BASE}/wishlist`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        const data = await response.json();
+        if (data.success) {
+          return data.wishlist || [];
+        }
+        return [];
+      } catch (error) {
+        console.error('Error fetching wishlist from DB:', error);
+        return [];
+      }
+    }
+    
+    // Get wishlist items (from DB if logged in, localStorage if guest)
+    async function getWishlist() {
+      if (isLoggedIn()) {
+        return await fetchWishlistFromDB();
+      } else {
+        return getWishlistFromStorage();
+      }
+    }
+    
     // Fetch product details for all wishlist items
     async function fetchWishlistProducts(ids) {
       if (!ids.length) return [];
-      const res = await fetch(`http://localhost:4000/api/v1/products/wishlist?ids=${ids.join(',')}`);
-      const data = await res.json();
-      return data.products || [];
+      try {
+        const res = await fetch(`${API_BASE}/products/wishlist?ids=${ids.join(',')}`);
+        const data = await res.json();
+        return data.products || [];
+      } catch (error) {
+        console.error('Error fetching wishlist products:', error);
+        return [];
+      }
     }
+    
+    // Remove from wishlist (database or localStorage)
+    async function removeFromWishlist(itemId) {
+      if (isLoggedIn()) {
+        // Remove from database
+        try {
+          const token = getToken();
+          const response = await fetch(`${API_BASE}/wishlist/${itemId}`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          const data = await response.json();
+          if (data.success) {
+            showNotification('Removed from wishlist!', 'success');
+          } else {
+            showNotification('Failed to remove from wishlist', 'error');
+          }
+        } catch (error) {
+          console.error('Error removing from wishlist:', error);
+          showNotification('Failed to remove from wishlist', 'error');
+        }
+      } else {
+        // Remove from localStorage
+        let wishlist = getWishlistFromStorage();
+        wishlist = wishlist.filter(x => x != itemId);
+        localStorage.setItem('wishlist', JSON.stringify(wishlist));
+        showNotification('Removed from wishlist!', 'success');
+      }
+      renderWishlist();
+    }
+    
+    // Show notification
+    function showNotification(message, type = 'info') {
+      // Create notification element
+      const notification = $(`<div style="position:fixed;top:20px;right:20px;padding:12px 20px;border-radius:8px;color:#fff;font-weight:600;z-index:9999;background:${type === 'success' ? '#27ae60' : type === 'error' ? '#e74c3c' : '#3498db'};">${message}</div>`);
+      $('body').append(notification);
+      
+      // Remove after 3 seconds
+      setTimeout(() => {
+        notification.fadeOut(() => notification.remove());
+      }, 3000);
+    }
+    
+    // Add to cart functionality
+    function addToCart(itemId, itemName, price) {
+      if (isLoggedIn()) {
+        // Add to database cart
+        $.ajax({
+          url: `${API_BASE}/cart/add`,
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + getToken()
+          },
+          data: {
+            item_id: itemId,
+            quantity: 1
+          },
+          success: function(res) {
+            if (res.success) {
+              showNotification('Added to cart!', 'success');
+            } else {
+              showNotification(res.error || 'Failed to add to cart', 'error');
+            }
+          },
+          error: function() {
+            showNotification('Failed to add to cart', 'error');
+          }
+        });
+      } else {
+        // Add to localStorage cart
+        let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        const existingItem = cart.find(item => item.id === itemId);
+        
+        if (existingItem) {
+          existingItem.quantity += 1;
+        } else {
+          cart.push({
+            id: itemId,
+            name: itemName,
+            price: price,
+            quantity: 1
+          });
+        }
+        
+        localStorage.setItem('cart', JSON.stringify(cart));
+        showNotification('Added to cart!', 'success');
+      }
+    }
+    
     // Render wishlist
     async function renderWishlist() {
-      const wishlist = getWishlist();
+      $('#wishlistLoading').show();
+      $('#wishlistEmpty').hide();
+      $('#wishlistList').empty();
+      
+      const wishlist = await getWishlist();
+      
       if (!wishlist.length) {
         $('#wishlistList').empty();
         $('#wishlistEmpty').show();
+        $('#wishlistLoading').hide();
         return;
       }
+      
       $('#wishlistEmpty').hide();
       const products = await fetchWishlistProducts(wishlist);
+      
       if (!products.length) {
         $('#wishlistList').empty();
         $('#wishlistEmpty').show();
+        $('#wishlistLoading').hide();
         return;
       }
+      
       let html = '';
       products.forEach(p => {
         let img = '';
@@ -70,6 +220,7 @@
           try { const arr = JSON.parse(p.image); img = Array.isArray(arr) && arr.length ? arr[0] : p.image; } catch { img = p.image; }
         }
         if (!img) img = '../img/logo.png';
+        
         html += `<div class="wishlist-card">
           <button class="wishlist-remove" data-id="${p.item_id}" title="Remove from Wishlist"><i class="fa fa-times"></i></button>
           <img src="${img}" alt="${p.name}">
@@ -77,20 +228,21 @@
           <div class="wishlist-card-price">₱${parseFloat(p.sell_price).toLocaleString()}</div>
           <div class="wishlist-card-actions">
             <button onclick="window.location.href='product-details.html?id=${p.item_id}'">View</button>
-            <button onclick="alert('Added to cart!')">Add to Cart</button>
+            <button onclick="addToCart(${p.item_id}, '${p.name.replace(/'/g, "\\'")}', ${p.sell_price})">Add to Cart</button>
           </div>
         </div>`;
       });
+      
       $('#wishlistList').html(html);
+      $('#wishlistLoading').hide();
     }
-    // Remove from wishlist
+    
+    // Remove from wishlist event handler
     $(document).on('click', '.wishlist-remove', function() {
       const id = $(this).data('id');
-      let wishlist = getWishlist();
-      wishlist = wishlist.filter(x => x != id);
-      localStorage.setItem('wishlist', JSON.stringify(wishlist));
-      renderWishlist();
+      removeFromWishlist(id);
     });
+    
     // On page load
     $(document).ready(function() {
       renderWishlist();

@@ -32,7 +32,17 @@ function requireSellerRole(req, res, next) {
 // GET all products for this seller
 router.get('/seller/products', authenticateJWT, requireSellerRole, async (req, res) => {
   try {
-    const [products] = await db.query('SELECT * FROM item WHERE seller_id = ?', [req.user.id]);
+    const [products] = await db.query(`
+      SELECT 
+        i.*,
+        s.quantity as stock_quantity,
+        c.name as category_name
+      FROM item i
+      LEFT JOIN stock s ON i.item_id = s.item_id
+      LEFT JOIN categories c ON i.category_id = c.category_id
+      WHERE i.seller_id = ?
+    `, [req.user.id]);
+    
     // Parse image JSON or comma-separated string for each product
     products.forEach(p => {
       try {
@@ -346,7 +356,8 @@ router.get('/seller/profile', authenticateJWT, requireSellerRole, async (req, re
         s.is_verified,
         u.name AS user_name,
         u.email AS user_email,
-        u.role AS user_role
+        u.role AS user_role,
+        u.profile_image
       FROM sellers s
       JOIN users u ON s.user_id = u.id
       WHERE s.user_id = ?
@@ -358,6 +369,85 @@ router.get('/seller/profile', authenticateJWT, requireSellerRole, async (req, re
   } catch (err) {
     console.error('Error fetching seller profile:', err);
     res.status(500).json({ success: false, message: 'Failed to fetch seller profile.', error: err.message });
+  }
+});
+
+// PUT seller profile update (including image upload)
+router.put('/seller/profile', authenticateJWT, requireSellerRole, upload.single('profile_image'), async (req, res) => {
+  try {
+    const { name, email, password, business_name, business_address, business_phone } = req.body;
+    const conn = await db.getConnection();
+    
+    try {
+      await conn.beginTransaction();
+      
+      // Update user table if name, email, or password provided
+      if (name || email || password) {
+        let userUpdateQuery = 'UPDATE users SET ';
+        let userUpdateParams = [];
+        
+        if (name) {
+          userUpdateQuery += 'name = ?, ';
+          userUpdateParams.push(name);
+        }
+        if (email) {
+          userUpdateQuery += 'email = ?, ';
+          userUpdateParams.push(email);
+        }
+        if (password) {
+          userUpdateQuery += 'password = ?, ';
+          userUpdateParams.push(password); // Note: In production, hash the password
+        }
+        
+        userUpdateQuery = userUpdateQuery.slice(0, -2); // Remove trailing comma and space
+        userUpdateQuery += ' WHERE id = ?';
+        userUpdateParams.push(req.user.id);
+        
+        await conn.query(userUpdateQuery, userUpdateParams);
+      }
+      
+      // Update seller table if business info provided
+      if (business_name || business_address || business_phone) {
+        let sellerUpdateQuery = 'UPDATE sellers SET ';
+        let sellerUpdateParams = [];
+        
+        if (business_name) {
+          sellerUpdateQuery += 'business_name = ?, ';
+          sellerUpdateParams.push(business_name);
+        }
+        if (business_address) {
+          sellerUpdateQuery += 'business_address = ?, ';
+          sellerUpdateParams.push(business_address);
+        }
+        if (business_phone) {
+          sellerUpdateQuery += 'business_phone = ?, ';
+          sellerUpdateParams.push(business_phone);
+        }
+        
+        sellerUpdateQuery = sellerUpdateQuery.slice(0, -2); // Remove trailing comma and space
+        sellerUpdateQuery += ' WHERE user_id = ?';
+        sellerUpdateParams.push(req.user.id);
+        
+        await conn.query(sellerUpdateQuery, sellerUpdateParams);
+      }
+      
+      // Handle profile image upload
+      if (req.file) {
+        const imagePath = '/uploads/' + req.file.filename;
+        await conn.query('UPDATE users SET profile_image = ? WHERE id = ?', [imagePath, req.user.id]);
+      }
+      
+      await conn.commit();
+      res.json({ success: true, message: 'Profile updated successfully.' });
+    } catch (err) {
+      await conn.rollback();
+      throw err;
+    } finally {
+      conn.release();
+    }
+  } catch (err) {
+    console.error('Error updating seller profile:', err);
+    res.status(500).json({ success: false, message: 'Failed to update profile.', error: err.message });
   }
 });
 

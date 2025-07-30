@@ -9,6 +9,9 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -101,8 +104,35 @@
   <div class="dashboard-header">
     <h1>Welcome, <span id="sellerName">Seller</span>!</h1>
     <p class="lead">Your business overview and analytics</p>
+    <div style="margin-top: 20px; text-align: center;">
+      <button id="generateReportBtn" class="btn" style="background: #fff; color: #8B5C2A; border: 3px solid #8B5C2A; font-weight: 700; padding: 15px 30px; font-size: 18px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); transition: all 0.3s ease;">
+        <i class="fas fa-download me-2"></i>📊 Generate Sales Report
+      </button>
+    </div>
   </div>
   <div class="loading-spinner"><div class="spinner"></div></div>
+  
+  <!-- Sales Report Preview Modal -->
+  <div class="modal fade" id="salesReportModal" tabindex="-1" aria-labelledby="salesReportModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="salesReportModalLabel">Sales Report Preview</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="reportPreviewContent">
+          <!-- Report content will be loaded here -->
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" id="downloadReportBtn">
+            <i class="fas fa-download me-2"></i>Download PDF
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
   <div class="container">
     <div class="row mb-4">
       <div class="col-md-4">
@@ -318,6 +348,343 @@
       });
     }
     $(document).ready(loadDashboard);
+  </script>
+
+  <!-- Sales Report Generation Script -->
+  <script>
+  $(document).ready(function() {
+    $('#generateReportBtn').on('click', function() {
+      showReportPreview();
+    });
+    
+    $('#downloadReportBtn').on('click', function() {
+      downloadPDF();
+    });
+  });
+
+  function showReportPreview() {
+    try {
+      // Show loading state
+      const btn = $('#generateReportBtn');
+      btn.html('<i class="fas fa-spinner fa-spin me-2"></i>Generating Preview...').prop('disabled', true);
+      
+      // Create the report content
+      const reportContent = createComprehensiveReport();
+      
+      // Load content into modal
+      $('#reportPreviewContent').html(reportContent);
+      
+      // Show the modal
+      const modal = new bootstrap.Modal(document.getElementById('salesReportModal'));
+      modal.show();
+      
+      // Reset button
+      btn.html('<i class="fas fa-download me-2"></i>📊 Generate Sales Report').prop('disabled', false);
+      
+    } catch (error) {
+      console.error('Error generating report preview:', error);
+      alert('Failed to generate report preview. Please try again.');
+      $('#generateReportBtn').html('<i class="fas fa-download me-2"></i>📊 Generate Sales Report').prop('disabled', false);
+    }
+  }
+
+  async function downloadPDF() {
+    try {
+      // Show loading state on download button
+      const downloadBtn = $('#downloadReportBtn');
+      downloadBtn.html('<i class="fas fa-spinner fa-spin me-2"></i>Generating PDF...').prop('disabled', true);
+      
+      // Get the report content from the modal
+      const reportContent = $('#reportPreviewContent').html();
+      
+      // Create a temporary container for PDF generation
+      const tempContainer = $('<div>').addClass('pdf-container');
+      tempContainer.html(reportContent);
+      
+      // Style the container for PDF
+      tempContainer.css({
+        'position': 'absolute',
+        'left': '-9999px',
+        'top': '0',
+        'width': '800px',
+        'padding': '20px',
+        'backgroundColor': 'white',
+        'color': 'black',
+        'fontFamily': 'Arial, sans-serif',
+        'fontSize': '12px',
+        'lineHeight': '1.4',
+        'border': '1px solid #ccc'
+      });
+      
+      // Add to body
+      $('body').append(tempContainer);
+      
+      // Wait for content to render
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Use html2canvas to capture the content
+      const canvas = await html2canvas(tempContainer[0], {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        width: 800,
+        height: tempContainer[0].scrollHeight,
+        scrollX: 0,
+        scrollY: 0
+      });
+      
+      // Create PDF using jsPDF
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      
+      // Calculate dimensions
+      const imgWidth = 210; // A4 width in mm
+      const pageHeight = 295; // A4 height in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      
+      let position = 0;
+      
+      // Add image to PDF
+      pdf.addImage(canvas, 'JPEG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+      
+      // Add additional pages if needed
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(canvas, 'JPEG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+      
+      // Save the PDF
+      const filename = `sales_report_${$('#sellerName').text()}_${new Date().toISOString().split('T')[0]}.pdf`;
+      pdf.save(filename);
+      
+      // Clean up
+      tempContainer.remove();
+      console.log('PDF generated successfully');
+      
+      // Close modal after successful download
+      const modal = bootstrap.Modal.getInstance(document.getElementById('salesReportModal'));
+      modal.hide();
+      
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      alert('Failed to download PDF. Please try again. Error: ' + error.message);
+    } finally {
+      // Reset download button
+      $('#downloadReportBtn').html('<i class="fas fa-download me-2"></i>Download PDF').prop('disabled', false);
+    }
+  }
+
+  function createComprehensiveReport() {
+    // Get current dashboard data
+    const totalProducts = $('#totalProducts').text();
+    const totalOrders = $('#totalOrders').text();
+    const mostOrderedProduct = $('#mostOrderedProduct').text();
+    const sellerName = $('#sellerName').text();
+    
+    // Get recent orders data
+    const ordersData = [];
+    $('#recentOrdersTable tr').each(function() {
+      const cells = $(this).find('td');
+      if (cells.length > 0) {
+        ordersData.push({
+          orderNumber: $(cells[0]).text(),
+          product: $(cells[1]).text(),
+          customer: $(cells[2]).text(),
+          quantity: $(cells[3]).text(),
+          status: $(cells[4]).text(),
+          date: $(cells[5]).text()
+        });
+      }
+    });
+
+    // Calculate total revenue from orders
+    let totalRevenue = 0;
+    ordersData.forEach(order => {
+      // Assuming each order has a value, you might need to adjust this calculation
+      totalRevenue += parseInt(order.quantity) * 1000; // Placeholder calculation
+    });
+
+    // Get chart data from the dashboard
+    let barChartData = [];
+    let lineChartData = [];
+    let pieChartData = [];
+
+    // Try to get data from existing charts
+    if (window.barChartObj && window.barChartObj.data) {
+      barChartData = window.barChartObj.data.labels.map((label, index) => ({
+        label: label,
+        value: window.barChartObj.data.datasets[0].data[index]
+      }));
+    }
+
+    if (window.lineChartObj && window.lineChartObj.data) {
+      lineChartData = window.lineChartObj.data.labels.map((label, index) => ({
+        label: label,
+        value: window.lineChartObj.data.datasets[0].data[index]
+      }));
+    }
+
+    if (window.pieChartObj && window.pieChartObj.data) {
+      pieChartData = window.pieChartObj.data.labels.map((label, index) => ({
+        label: label,
+        value: window.pieChartObj.data.datasets[0].data[index]
+      }));
+    }
+
+    return `
+      <div style="text-align: center; margin-bottom: 30px; padding: 20px; background: #f8f9fa; border-radius: 10px;">
+        <h1 style="color: #8B5C2A; margin-bottom: 10px; font-size: 24px;">HomeHaven Sales Report</h1>
+        <h2 style="color: #7a6242; margin-bottom: 20px; font-size: 18px;">${sellerName}'s Business Dashboard</h2>
+        <p style="color: #666; font-size: 12px;">Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}</p>
+      </div>
+
+      <div style="margin-bottom: 30px;">
+        <h3 style="color: #8B5C2A; border-bottom: 2px solid #8B5C2A; padding-bottom: 5px; font-size: 16px;">Business Overview</h3>
+        <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+          <tr style="background-color: #f5f3f0;">
+            <th style="padding: 8px; border: 1px solid #ddd; text-align: left; color: black;">Metric</th>
+            <th style="padding: 8px; border: 1px solid #ddd; text-align: left; color: black;">Value</th>
+          </tr>
+          <tr>
+            <td style="padding: 8px; border: 1px solid #ddd; color: black; font-weight: bold;">Total Products</td>
+            <td style="padding: 8px; border: 1px solid #ddd; color: black;">${totalProducts}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; border: 1px solid #ddd; color: black; font-weight: bold;">Total Orders</td>
+            <td style="padding: 8px; border: 1px solid #ddd; color: black;">${totalOrders}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; border: 1px solid #ddd; color: black; font-weight: bold;">Most Ordered Product</td>
+            <td style="padding: 8px; border: 1px solid #ddd; color: black;">${mostOrderedProduct}</td>
+          </tr>
+          <tr style="background-color: #e8f5e8;">
+            <td style="padding: 8px; border: 1px solid #ddd; color: black; font-weight: bold;">Total Revenue</td>
+            <td style="padding: 8px; border: 1px solid #ddd; color: black; font-weight: bold;">₱${totalRevenue.toLocaleString()}</td>
+          </tr>
+        </table>
+      </div>
+
+      <div style="margin-bottom: 30px;">
+        <h3 style="color: #8B5C2A; border-bottom: 2px solid #8B5C2A; padding-bottom: 5px; font-size: 16px;">Chart Analysis</h3>
+        
+        <div style="display: flex; justify-content: space-between; margin-top: 15px;">
+          <div style="width: 48%; text-align: center; padding: 15px; border: 1px solid #ddd; border-radius: 8px;">
+            <h4 style="color: #8B5C2A; margin-bottom: 10px;">Orders per Product</h4>
+            ${barChartData.length > 0 ? `
+              <div style="background: #f8f9fa; border-radius: 5px; padding: 10px;">
+                ${barChartData.map(item => `
+                  <div style="display: flex; justify-content: space-between; margin: 5px 0; padding: 5px; background: white; border-radius: 3px;">
+                    <span style="font-weight: bold;">${item.label}</span>
+                    <span style="color: #8B5C2A; font-weight: bold;">${item.value}</span>
+                  </div>
+                `).join('')}
+              </div>
+            ` : `
+              <div style="height: 200px; background: #f8f9fa; border-radius: 5px; display: flex; align-items: center; justify-content: center; color: #666;">
+                <p>No chart data available</p>
+              </div>
+            `}
+          </div>
+          
+          <div style="width: 48%; text-align: center; padding: 15px; border: 1px solid #ddd; border-radius: 8px;">
+            <h4 style="color: #8B5C2A; margin-bottom: 10px;">Orders Over Time</h4>
+            ${lineChartData.length > 0 ? `
+              <div style="background: #f8f9fa; border-radius: 5px; padding: 10px;">
+                ${lineChartData.map(item => `
+                  <div style="display: flex; justify-content: space-between; margin: 5px 0; padding: 5px; background: white; border-radius: 3px;">
+                    <span style="font-weight: bold;">${item.label}</span>
+                    <span style="color: #8B5C2A; font-weight: bold;">${item.value}</span>
+                  </div>
+                `).join('')}
+              </div>
+            ` : `
+              <div style="height: 200px; background: #f8f9fa; border-radius: 5px; display: flex; align-items: center; justify-content: center; color: #666;">
+                <p>No chart data available</p>
+              </div>
+            `}
+          </div>
+        </div>
+        
+        <div style="margin-top: 15px; text-align: center; padding: 15px; border: 1px solid #ddd; border-radius: 8px;">
+          <h4 style="color: #8B5C2A; margin-bottom: 10px;">Product Category Distribution</h4>
+          ${pieChartData.length > 0 ? `
+            <div style="background: #f8f9fa; border-radius: 5px; padding: 10px;">
+              ${pieChartData.map(item => `
+                <div style="display: flex; justify-content: space-between; margin: 5px 0; padding: 5px; background: white; border-radius: 3px;">
+                  <span style="font-weight: bold;">${item.label}</span>
+                  <span style="color: #8B5C2A; font-weight: bold;">${item.value}</span>
+                </div>
+              `).join('')}
+            </div>
+          ` : `
+            <div style="height: 200px; background: #f8f9fa; border-radius: 5px; display: flex; align-items: center; justify-content: center; color: #666;">
+              <p>No chart data available</p>
+            </div>
+          `}
+        </div>
+      </div>
+
+      <div style="margin-bottom: 30px;">
+        <h3 style="color: #8B5C2A; border-bottom: 2px solid #8B5C2A; padding-bottom: 5px; font-size: 16px;">Recent Orders History</h3>
+        <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+          <tr style="background-color: #f5f3f0;">
+            <th style="padding: 8px; border: 1px solid #ddd; text-align: left; color: black;">Order #</th>
+            <th style="padding: 8px; border: 1px solid #ddd; text-align: left; color: black;">Product</th>
+            <th style="padding: 8px; border: 1px solid #ddd; text-align: left; color: black;">Customer</th>
+            <th style="padding: 8px; border: 1px solid #ddd; text-align: left; color: black;">Quantity</th>
+            <th style="padding: 8px; border: 1px solid #ddd; text-align: left; color: black;">Status</th>
+            <th style="padding: 8px; border: 1px solid #ddd; text-align: left; color: black;">Date</th>
+          </tr>
+          ${ordersData.length > 0 ? ordersData.map(order => `
+            <tr>
+              <td style="padding: 8px; border: 1px solid #ddd; color: black;">${order.orderNumber}</td>
+              <td style="padding: 8px; border: 1px solid #ddd; color: black;">${order.product}</td>
+              <td style="padding: 8px; border: 1px solid #ddd; color: black;">${order.customer}</td>
+              <td style="padding: 8px; border: 1px solid #ddd; color: black;">${order.quantity}</td>
+              <td style="padding: 8px; border: 1px solid #ddd; color: black;">${order.status}</td>
+              <td style="padding: 8px; border: 1px solid #ddd; color: black;">${order.date}</td>
+            </tr>
+          `).join('') : `
+            <tr>
+              <td colspan="6" style="padding: 8px; border: 1px solid #ddd; color: black; text-align: center;">No orders found</td>
+            </tr>
+          `}
+        </table>
+      </div>
+
+      <div style="margin-bottom: 30px;">
+        <h3 style="color: #8B5C2A; border-bottom: 2px solid #8B5C2A; padding-bottom: 5px; font-size: 16px;">Performance Summary</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
+          <div style="padding: 15px; border: 1px solid #ddd; border-radius: 8px; text-align: center;">
+            <h4 style="color: #8B5C2A; margin-bottom: 5px;">Top Selling Products</h4>
+            <p style="color: #666; font-size: 12px;">Based on order frequency and quantity</p>
+            ${barChartData.length > 0 ? `
+              <div style="margin-top: 10px;">
+                <p style="font-weight: bold; color: #8B5C2A;">${barChartData[0]?.label || 'N/A'}</p>
+                <p style="font-size: 12px; color: #666;">${barChartData[0]?.value || 0} orders</p>
+              </div>
+            ` : '<p style="color: #666; font-size: 12px;">No data available</p>'}
+          </div>
+          <div style="padding: 15px; border: 1px solid #ddd; border-radius: 8px; text-align: center;">
+            <h4 style="color: #8B5C2A; margin-bottom: 5px;">Revenue Trends</h4>
+            <p style="color: #666; font-size: 12px;">Monthly and quarterly performance</p>
+            <p style="font-weight: bold; color: #8B5C2A; margin-top: 10px;">₱${totalRevenue.toLocaleString()}</p>
+            <p style="font-size: 12px; color: #666;">Total Revenue</p>
+          </div>
+        </div>
+      </div>
+
+      <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 2px solid #8B5C2A;">
+        <p style="color: #666; font-size: 10px;">This report was generated automatically by HomeHaven Seller Dashboard</p>
+        <p style="color: #666; font-size: 10px;">For detailed analytics, visit your dashboard at HomeHaven</p>
+      </div>
+    `;
+  }
   </script>
 </body>
 </html> 

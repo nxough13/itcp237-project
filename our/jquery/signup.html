@@ -371,16 +371,25 @@
   <script>
 $(function() {
   $('#signupForm').on('submit', function(e) {
-    let valid = true;
+    e.preventDefault();
+    
+    // Clear previous errors
     $('.signup-error').remove();
+    
+    // Get form data
     const name = $('#name').val().trim();
     const email = $('#email').val().trim();
     const password = $('#password').val();
-    const confirm = $('#confirm_password').val();
+    const confirmPassword = $('#confirm-password').val();
+    
+    let valid = true;
+    
+    // Validation
     if (!name) {
       $('#name').after('<div class="signup-error" style="color:#c00;font-size:0.95em;margin-top:2px;">Name is required.</div>');
       valid = false;
     }
+    
     if (!email) {
       $('#email').after('<div class="signup-error" style="color:#c00;font-size:0.95em;margin-top:2px;">Email is required.</div>');
       valid = false;
@@ -388,6 +397,7 @@ $(function() {
       $('#email').after('<div class="signup-error" style="color:#c00;font-size:0.95em;margin-top:2px;">Enter a valid email.</div>');
       valid = false;
     }
+    
     if (!password) {
       $('#password').after('<div class="signup-error" style="color:#c00;font-size:0.95em;margin-top:2px;">Password is required.</div>');
       valid = false;
@@ -395,19 +405,76 @@ $(function() {
       $('#password').after('<div class="signup-error" style="color:#c00;font-size:0.95em;margin-top:2px;">Password must be at least 6 characters.</div>');
       valid = false;
     }
-    if (!confirm) {
-      $('#confirm_password').after('<div class="signup-error" style="color:#c00;font-size:0.95em;margin-top:2px;">Please confirm your password.</div>');
+    
+    if (!confirmPassword) {
+      $('#confirm-password').after('<div class="signup-error" style="color:#c00;font-size:0.95em;margin-top:2px;">Please confirm your password.</div>');
       valid = false;
-    } else if (password !== confirm) {
-      $('#confirm_password').after('<div class="signup-error" style="color:#c00;font-size:0.95em;margin-top:2px;">Passwords do not match.</div>');
+    } else if (password !== confirmPassword) {
+      $('#confirm-password').after('<div class="signup-error" style="color:#c00;font-size:0.95em;margin-top:2px;">Passwords do not match.</div>');
       valid = false;
     }
+    
     if (!valid) {
-      e.preventDefault();
       return false;
     }
+    
+    // Show loading state
+    const submitBtn = $('.login-btn');
+    const originalText = submitBtn.text();
+    submitBtn.text('Signing up...').prop('disabled', true);
+    
+    // Send AJAX request to backend
+    $.ajax({
+      url: 'http://localhost:4000/api/v1/register',
+      method: 'POST',
+      contentType: 'application/json',
+      data: JSON.stringify({
+        name: name,
+        email: email,
+        password: password
+      }),
+      success: function(response) {
+        if (response.success) {
+          // Show success message
+          $('#successMessage').text(response.message);
+          $('#successModal').show();
+        } else {
+          // Show error message
+          $('.login-form').prepend('<div class="signup-error" style="color:#c00;font-size:0.95em;margin-bottom:1rem;text-align:center;">' + response.message + '</div>');
+        }
+      },
+      error: function(xhr, status, error) {
+        console.error('Signup error:', error);
+        $('.login-form').prepend('<div class="signup-error" style="color:#c00;font-size:0.95em;margin-bottom:1rem;text-align:center;">Registration failed. Please try again.</div>');
+      },
+      complete: function() {
+        // Reset button state
+        submitBtn.text(originalText).prop('disabled', false);
+      }
+    });
   });
 });
+
+// Function to close success modal
+function closeSuccessModal() {
+  $('#successModal').hide();
+  // Redirect to login page after successful registration
+  window.location.href = 'login.html';
+}
+
+// Function to toggle password visibility
+function togglePassword(inputId, button) {
+  const input = document.getElementById(inputId);
+  const svg = button.querySelector('svg');
+  
+  if (input.type === 'password') {
+    input.type = 'text';
+    svg.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+  } else {
+    input.type = 'password';
+    svg.innerHTML = '<path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/>';
+  }
+}
   </script>
 </body>
 </html>

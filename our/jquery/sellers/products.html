@@ -16,9 +16,10 @@
       background: #f8f5f2;
       border-radius: 28px;
       box-shadow: 0 2px 16px rgba(139,92,42,0.08);
-      max-width: 1000px;
+      max-width: 1400px;
+      width: 95%;
       margin: 0 auto 35px auto;
-      padding: 2px 24px 32px 24px;
+      padding: 2px 32px 32px 32px;
       border: 6px solid #e5e0da;
     }
     .main-card h2 {
@@ -81,7 +82,7 @@
       box-shadow: 0 2px 8px rgba(139,92,42,0.06);
     }
     th, td {
-      padding: 14px 12px;
+      padding: 16px 14px;
       text-align: left;
       font-size: 1rem;
     }
@@ -106,9 +107,28 @@
       background: #ff6b6b;
       color: #fff;
     }
+    .stock-badge {
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      display: inline-block;
+    }
+    .stock-available {
+      background: #d5f4e6;
+      color: #27ae60;
+    }
+    .stock-low {
+      background: #fef5e7;
+      color: #f39c12;
+    }
+    .stock-out {
+      background: #fadbd8;
+      color: #e74c3c;
+    }
     .img-thumb {
-      width: 48px;
-      height: 48px;
+      width: 120px;
+      height: 120px;
       object-fit: cover;
       border-radius: 8px;
       border: 1px solid #eee;
@@ -266,6 +286,100 @@
     .remove-img-btn:hover {
       background: #c0392b;
     }
+    .btn-sm {
+      padding: 4px 8px;
+      font-size: 0.85rem;
+      margin: 2px;
+    }
+    .photo-count-box {
+      background: rgba(0,0,0,0.7);
+      color: white;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      margin-left: 4px;
+    }
+    td .btn {
+      display: inline-block;
+      margin: 2px;
+    }
+    .carousel-container {
+      position: relative;
+      width: 120px;
+      height: 120px;
+      overflow: hidden;
+      border-radius: 8px;
+      border: 1px solid #eee;
+    }
+    .carousel-slide {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .carousel-slide.active {
+      opacity: 1;
+    }
+    .carousel-slide img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .carousel-nav {
+      position: absolute;
+      bottom: 2px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 2px;
+      z-index: 2;
+    }
+    .carousel-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.5);
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .carousel-dot.active {
+      background: rgba(255,255,255,0.9);
+    }
+    .carousel-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(0,0,0,0.6);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      font-size: 14px;
+      cursor: pointer;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+    .carousel-arrow:hover {
+      background: rgba(0,0,0,0.8);
+    }
+    .carousel-arrow.prev {
+      left: 2px;
+    }
+    .carousel-arrow.next {
+      right: 2px;
+    }
+    .carousel-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
   </style>
 </head>
 <body>
@@ -285,6 +399,7 @@
           <th>Name</th>
           <th>Price</th>
           <th>Category</th>
+          <th>Stock</th>
           <th>Photo</th>
           <th>Status</th>
           <th>Actions</th>
@@ -354,35 +469,128 @@
     </div>
   </div>
 
-  <!-- Add this to your product details modal or details section -->
-<div id="reviewsSection" style="margin-top:24px;">
-  <h3>Customer Reviews</h3>
-  <div id="reviewsList"></div>
-</div>
-<script>
-function renderReviews(reviews) {
-  let html = '';
-  if (!reviews.length) {
-    html = '<div style="color:#888;">No reviews yet for this product.</div>';
-  } else {
-    reviews.forEach(r => {
-      html += `<div class='review-box' style='border-bottom:1px solid #eee;padding:10px 0;'>
-        <div style='font-weight:600;'>${r.fname} ${r.lname} <span style='color:#f5b301;'>${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</span></div>
-        <div style='margin:4px 0 0 0;'>${r.review_text ? r.review_text.replace(/</g,'&lt;') : ''}</div>
-        <div style='font-size:0.95em;color:#aaa;'>${new Date(r.created_at).toLocaleString()}</div>
-      </div>`;
-    });
-  }
-  $('#reviewsList').html(html);
-}
-async function loadReviews(item_id) {
-  const res = await fetch(`${API_BASE}/products/${item_id}/reviews`);
-  const data = await res.json();
-  if (data.success) renderReviews(data.reviews);
-}
-// After loading product details, call:
-// loadReviews(productId);
-</script>
+  <!-- Customer Reviews Section -->
+  <div class="main-card" id="reviewsSection" style="display:none;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <h2 id="reviewsTitle">Customer Reviews</h2>
+      <button class="btn btn-gray btn-sm" id="closeReviewsBtn" style="margin:0;">Close Reviews</button>
+    </div>
+    <div id="reviewsList"></div>
+  </div>
+
+  <script>
+    // Use a different variable name to avoid conflict with seller.js
+    const REVIEWS_API_BASE = 'http://localhost:4000/api/v1';
+    
+    function renderReviews(reviews) {
+      let html = '';
+      if (!reviews || !reviews.length) {
+        html = '<div style="color:#888;text-align:center;padding:20px;">No reviews yet for this product.</div>';
+      } else {
+        reviews.forEach(r => {
+          const stars = '★'.repeat(r.rating) + '☆'.repeat(5-r.rating);
+          html += `<div class='review-box' style='border-bottom:1px solid #eee;padding:15px 0;'>
+            <div style='font-weight:600;color:#333;'>${escapeHtml(r.fname || '')} ${escapeHtml(r.lname || '')} <span style='color:#f5b301;'>${stars}</span></div>
+            <div style='margin:8px 0 0 0;color:#666;'>${r.review_text ? escapeHtml(r.review_text) : ''}</div>
+            <div style='font-size:0.9em;color:#aaa;margin-top:5px;'>${new Date(r.created_at).toLocaleString()}</div>
+          </div>`;
+        });
+      }
+      $('#reviewsList').html(html);
+    }
+
+    async function loadReviews(item_id) {
+      try {
+        const res = await fetch(`${REVIEWS_API_BASE}/products/${item_id}/reviews`);
+        const data = await res.json();
+        if (data.success) {
+          renderReviews(data.reviews);
+          $('#reviewsSection').show();
+        } else {
+          console.error('Failed to load reviews:', data.message);
+          $('#reviewsList').html('<div style="color:#e74c3c;text-align:center;padding:20px;">Failed to load reviews.</div>');
+          $('#reviewsSection').show();
+        }
+      } catch (error) {
+        console.error('Error loading reviews:', error);
+        $('#reviewsList').html('<div style="color:#e74c3c;text-align:center;padding:20px;">Error loading reviews.</div>');
+        $('#reviewsSection').show();
+      }
+    }
+
+    // Create carousel for multiple images
+    function createCarousel(images, productId) {
+      let slides = '';
+      let dots = '';
+      
+      images.forEach((image, index) => {
+        const imagePath = image.startsWith('http') ? image : `http://localhost:4000${image}`;
+        const activeClass = index === 0 ? 'active' : '';
+        slides += `<div class="carousel-slide ${activeClass}" data-index="${index}">
+          <img src="${imagePath}" alt="Product Image ${index + 1}">
+        </div>`;
+        dots += `<div class="carousel-dot ${activeClass}" data-index="${index}"></div>`;
+      });
+      
+      return `
+        <div class="carousel-wrapper">
+          <div class="carousel-container" data-product-id="${productId}">
+            ${slides}
+            ${images.length > 1 ? `
+              <button class="carousel-arrow prev" onclick="changeSlide(${productId}, -1)">‹</button>
+              <button class="carousel-arrow next" onclick="changeSlide(${productId}, 1)">›</button>
+              <div class="carousel-nav">
+                ${dots}
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      `;
+    }
+
+    // Change carousel slide
+    function changeSlide(productId, direction) {
+      const container = document.querySelector(`[data-product-id="${productId}"]`);
+      if (!container) return;
+      
+      const slides = container.querySelectorAll('.carousel-slide');
+      const dots = container.querySelectorAll('.carousel-dot');
+      const currentSlide = container.querySelector('.carousel-slide.active');
+      const currentDot = container.querySelector('.carousel-dot.active');
+      
+      if (!currentSlide) return;
+      
+      const currentIndex = parseInt(currentSlide.dataset.index);
+      let newIndex = currentIndex + direction;
+      
+      // Loop around
+      if (newIndex < 0) newIndex = slides.length - 1;
+      if (newIndex >= slides.length) newIndex = 0;
+      
+      // Update active slide and dot
+      currentSlide.classList.remove('active');
+      currentDot.classList.remove('active');
+      
+      slides[newIndex].classList.add('active');
+      dots[newIndex].classList.add('active');
+    }
+
+    // Function to show reviews for a specific product
+    function showProductReviews(productId) {
+      if (productId) {
+        const product = allProducts.find(p => p.item_id == productId);
+        if (product) {
+          $('#reviewsTitle').text(`Customer Reviews - ${escapeHtml(product.name)}`);
+          loadReviews(productId);
+        }
+      }
+    }
+
+    // Close reviews section
+    function closeReviewsSection() {
+      $('#reviewsSection').hide();
+    }
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     // Modal open/close logic: always allow opening after closing
@@ -408,7 +616,7 @@ async function loadReviews(item_id) {
       }
     });
   </script>
-  <script src="../js/seller.js"></script>
+  <!-- Removed seller.js to avoid conflicts with inline script -->
   <script>
     $(function() {
       $(document).on('submit', '#productForm', function(e) {
@@ -435,35 +643,245 @@ async function loadReviews(item_id) {
     });
   </script>
   <script>
-    // Infinite scroll for seller products table
+    // Global variables for products management
     let allProducts = [];
+    let allCategories = [];
     let currentPage = 1;
     let productsPerPage = 12;
     let isLoadingMore = false;
+
+    // Utility functions
+    function escapeHtml(text) {
+      return text ? text.replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\'':'&#39;','"':'&quot;'}[c])) : '';
+    }
+
+    function getJwt() {
+      return localStorage.getItem('jwt_token');
+    }
+
+    // Action buttons for product table
+    function getActionButtons(product) {
+      const statusBtn = product.status === 'active'
+        ? `<button class="btn btn-gray btn-sm status-btn" data-id="${product.item_id}" title="Set Inactive">Inactive</button>`
+        : `<button class="btn btn-blue btn-sm status-btn" data-id="${product.item_id}" title="Set Active">Active</button>`;
+      
+      return `
+        <button class="btn btn-red btn-sm delete-btn" data-id="${product.item_id}" title="Delete">Delete</button>
+        <button class="btn btn-beige btn-sm edit-btn" data-id="${product.item_id}" title="Edit">Edit</button>
+        <button class="btn btn-blue btn-sm reviews-btn" data-id="${product.item_id}" title="View Reviews">Reviews</button>
+        ${statusBtn}
+      `;
+    }
+
+    // Create product row with proper action buttons
+    function createProductRow(product) {
+      let imgs = '';
+      let imageArray = [];
+      
+      // Parse images
+      if (Array.isArray(product.image) && product.image.length > 0) {
+        imageArray = product.image;
+      } else if (typeof product.image === 'string') {
+        try {
+          imageArray = JSON.parse(product.image);
+        } catch (e) {
+          imageArray = [product.image];
+        }
+      }
+      
+      // Create carousel if multiple images, otherwise single image
+      if (imageArray.length > 1) {
+        imgs = createCarousel(imageArray, product.item_id);
+      } else if (imageArray.length === 1) {
+        const imagePath = imageArray[0].startsWith('http') ? imageArray[0] : `http://localhost:4000${imageArray[0]}`;
+        imgs = `<img src="${imagePath}" class="img-thumb" alt="Product Image">`;
+      } else {
+        imgs = `<div class="img-thumb" style="background:#f5f3f0;display:flex;align-items:center;justify-content:center;color:#999;">No Image</div>`;
+      }
+
+      const statusClass = product.status === 'inactive' ? 'status-badge status-inactive' : 'status-badge';
+      const category = allCategories.find(c => c.category_id == product.category_id);
+      
+      // Handle stock quantity display
+      const stockQuantity = parseInt(product.stock_quantity || product.stock || product.quantity || 0);
+      const stockClass = stockQuantity === 0 ? 'stock-out' : stockQuantity <= 10 ? 'stock-low' : 'stock-available';
+      const stockText = stockQuantity === 0 ? 'Out of Stock' : stockQuantity <= 10 ? `${stockQuantity} left` : `${stockQuantity}`;
+      
+      return `<tr>
+        <td>${product.item_id}</td>
+        <td>${escapeHtml(product.name)}</td>
+        <td>₱${parseFloat(product.sell_price).toLocaleString()}</td>
+        <td>${category ? escapeHtml(category.name) : ''}</td>
+        <td><span class="stock-badge ${stockClass}">${stockText}</span></td>
+        <td><div class="img-thumb-wrapper">${imgs}</div></td>
+        <td><span class="${statusClass}">${escapeHtml(product.status)}</span></td>
+        <td>${getActionButtons(product)}</td>
+      </tr>`;
+    }
+
+    // Load products with proper error handling
     async function loadSellerProductsInfinite(append = false) {
       try {
-        // Fetch all products for this seller (or use your existing fetch logic)
         if (!allProducts.length) {
-          const res = await fetch('http://localhost:4000/api/v1/seller/products', { headers: { 'Authorization': `Bearer ${localStorage.getItem('jwt_token')}` } });
+          const res = await fetch('http://localhost:4000/api/v1/seller/products', { 
+            headers: { 'Authorization': `Bearer ${getJwt()}` } 
+          });
           const data = await res.json();
-          if (data.success) allProducts = data.products || [];
+          if (data.success) {
+            allProducts = data.products || [];
+          } else {
+            console.error('Failed to load products:', data.message);
+            throw new Error(data.message || 'Failed to load products');
+          }
         }
+
         const tbody = $('#productsTable tbody');
         if (!append) tbody.empty();
+        
         if (allProducts.length === 0) {
-          tbody.append('<tr><td colspan="7" style="text-align:center;color:#888;">No products found.</td></tr>');
+          tbody.append('<tr><td colspan="8" style="text-align:center;color:#888;">No products found.</td></tr>');
           return;
         }
+
         const startIndex = (currentPage - 1) * productsPerPage;
         const endIndex = startIndex + productsPerPage;
         const pageProducts = allProducts.slice(startIndex, endIndex);
+        
         pageProducts.forEach(product => {
           tbody.append(createProductRow(product));
         });
+
+        // Setup event handlers for action buttons
+        setupActionButtonHandlers();
+        
       } catch (err) {
-        $('#productsTable tbody').append('<tr><td colspan="7" style="text-align:center;color:#e74c3c;">Failed to load products.</td></tr>');
+        console.error('Error loading products:', err);
+        $('#productsTable tbody').append('<tr><td colspan="8" style="text-align:center;color:#e74c3c;">Failed to load products.</td></tr>');
       }
     }
+
+    // Setup event handlers for action buttons
+    function setupActionButtonHandlers() {
+      // Delete button
+      $(document).off('click.delete-btn').on('click.delete-btn', '.delete-btn', function() {
+        const productId = $(this).data('id');
+        if (confirm('Are you sure you want to delete this product?')) {
+          deleteProduct(productId);
+        }
+      });
+
+      // Edit button
+      $(document).off('click.edit-btn').on('click.edit-btn', '.edit-btn', function() {
+        const productId = $(this).data('id');
+        const product = allProducts.find(p => p.item_id == productId);
+        if (product) {
+          showProductModal(true, product);
+        }
+      });
+
+      // Status toggle button
+      $(document).off('click.status-btn').on('click.status-btn', '.status-btn', function() {
+        const productId = $(this).data('id');
+        const product = allProducts.find(p => p.item_id == productId);
+        if (product) {
+          toggleProductStatus(productId, product.status === 'active' ? 'inactive' : 'active');
+        }
+      });
+
+      // Reviews button
+      $(document).off('click.reviews-btn').on('click.reviews-btn', '.reviews-btn', function() {
+        const productId = $(this).data('id');
+        const product = allProducts.find(p => p.item_id == productId);
+        if (product) {
+          showProductReviews(productId);
+          // Scroll to reviews section
+          $('#reviewsSection')[0].scrollIntoView({ behavior: 'smooth' });
+        }
+      });
+    }
+
+    // Delete product function
+    async function deleteProduct(productId) {
+      try {
+        const response = await fetch(`http://localhost:4000/api/v1/seller/products/${productId}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${getJwt()}` }
+        });
+        const data = await response.json();
+        if (data.success) {
+          // Remove from local array and reload
+          allProducts = allProducts.filter(p => p.item_id != productId);
+          loadSellerProductsInfinite(false);
+          alert('Product deleted successfully!');
+        } else {
+          alert('Failed to delete product: ' + (data.message || 'Unknown error'));
+        }
+      } catch (error) {
+        console.error('Error deleting product:', error);
+        alert('Failed to delete product');
+      }
+    }
+
+    // Toggle product status
+    async function toggleProductStatus(productId, newStatus) {
+      try {
+        const response = await fetch(`http://localhost:4000/api/v1/seller/products/${productId}/status`, {
+          method: 'PATCH',
+          headers: { 
+            'Authorization': `Bearer ${getJwt()}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ status: newStatus })
+        });
+        const data = await response.json();
+        if (data.success) {
+          // Update local array and reload
+          const product = allProducts.find(p => p.item_id == productId);
+          if (product) {
+            product.status = newStatus;
+          }
+          loadSellerProductsInfinite(false);
+          alert('Product status updated successfully!');
+        } else {
+          alert('Failed to update product status: ' + (data.message || 'Unknown error'));
+        }
+      } catch (error) {
+        console.error('Error updating product status:', error);
+        alert('Failed to update product status');
+      }
+    }
+
+    // Show product modal for editing
+    function showProductModal(editing = false, product = null) {
+      const modal = document.getElementById('productModal');
+      if (modal) {
+        modal.style.display = 'flex';
+        
+        if (editing && product) {
+          // Populate form with product data
+          $('#productId').val(product.item_id);
+          $('#productName').val(product.name);
+          $('#productCategory').val(product.category_id);
+          $('#productSKU').val(product.sku);
+          $('#productPrice').val(product.sell_price);
+          $('#productStatus').val(product.status);
+          $('#productDescription').val(product.description);
+          
+          // Handle existing images
+          if (product.image) {
+            $('#existingImagesSection').show();
+            // Populate existing images (you may need to adjust this based on your image structure)
+          }
+        } else {
+          // Clear form for new product
+          $('#productForm')[0].reset();
+          $('#productId').val('');
+          $('#existingImagesSection').hide();
+        }
+      }
+    }
+
+    // Infinite scroll handler
     function handleInfiniteScrollSellerTable() {
       if (isLoadingMore) return;
       const table = document.getElementById('productsTable');
@@ -483,24 +901,80 @@ async function loadReviews(item_id) {
         }
       }
     }
-    // Helper to create a product row (reuse your existing logic)
-    function createProductRow(product) {
-      // You may want to update this to match your table columns
-      return `<tr>
-        <td>${product.item_id}</td>
-        <td>${product.name}</td>
-        <td>₱${parseFloat(product.sell_price).toLocaleString()}</td>
-        <td>${product.category_name || ''}</td>
-        <td>${product.image ? `<img src="${product.image}" class="img-thumb">` : ''}</td>
-        <td><span class="status-badge ${product.status === 'inactive' ? 'status-inactive' : ''}">${product.status}</span></td>
-        <td><!-- Actions here --></td>
-      </tr>`;
+
+    // Load categories for dropdown
+    async function loadCategories() {
+      try {
+        const response = await fetch('http://localhost:4000/api/v1/products/categories');
+        const data = await response.json();
+        if (data.success) {
+          allCategories = data.categories || [];
+          populateCategoryDropdown();
+        }
+      } catch (error) {
+        console.error('Error loading categories:', error);
+      }
     }
+
+    // Populate category dropdown
+    function populateCategoryDropdown() {
+      const dropdown = $('#productCategory');
+      dropdown.empty();
+      dropdown.append('<option value="">Select Category</option>');
+      allCategories.forEach(category => {
+        dropdown.append(`<option value="${category.category_id}">${category.name}</option>`);
+      });
+    }
+
+    // Initialize page
     $(document).ready(function() {
+      // Check authentication
+      const jwt = getJwt();
+      const role = localStorage.getItem('user_role');
+      if (!jwt || role !== 'seller') {
+        window.location.href = '../login.html?reason=unauthorized';
+        return;
+      }
+
+      // Load initial data
       allProducts = [];
       currentPage = 1;
-      loadSellerProductsInfinite(false);
+      
+      // Load categories first, then products
+      loadCategories().then(() => {
+        loadSellerProductsInfinite(false);
+      });
+
+      // Setup infinite scroll
       $(window).off('scroll.sellercrud').on('scroll.sellercrud', handleInfiniteScrollSellerTable);
+
+      // Setup modal events
+      $('#addProductBtn').on('click', function() {
+        showProductModal(false);
+      });
+
+      $('#closeProductModalBtn, #cancelProductBtn').on('click', function() {
+        $('#productModal').hide();
+      });
+
+      // Close reviews button
+      $('#closeReviewsBtn').on('click', function() {
+        closeReviewsSection();
+      });
+
+      // Carousel dot click handlers
+      $(document).off('click.carousel-dot').on('click.carousel-dot', '.carousel-dot', function() {
+        const container = $(this).closest('.carousel-container');
+        const productId = container.data('product-id');
+        const targetIndex = parseInt($(this).data('index'));
+        
+        // Update active slide and dot
+        container.find('.carousel-slide.active').removeClass('active');
+        container.find('.carousel-dot.active').removeClass('active');
+        
+        container.find(`.carousel-slide[data-index="${targetIndex}"]`).addClass('active');
+        $(this).addClass('active');
+      });
     });
   </script>
 </body>

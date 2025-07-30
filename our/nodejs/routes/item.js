@@ -88,6 +88,24 @@ router.get('/products/categories', async (req, res) => {
   }
 });
 
+// GET /products/wishlist - fetch products by a list of IDs (for wishlist)
+router.get('/products/wishlist', async (req, res) => {
+  try {
+    let ids = req.query.ids;
+    if (!ids) return res.json({ success: true, products: [] });
+    if (typeof ids === 'string') ids = ids.split(',').map(x => parseInt(x)).filter(x => !isNaN(x));
+    if (!Array.isArray(ids) || !ids.length) return res.json({ success: true, products: [] });
+    const placeholders = ids.map(() => '?').join(',');
+    const [rows] = await db.query(`SELECT * FROM item WHERE item_id IN (${placeholders})`, ids);
+    // Parse image JSON for each product
+    rows.forEach(row => { try { row.image = JSON.parse(row.image); } catch {} });
+    res.json({ success: true, products: rows });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, error: 'Failed to fetch wishlist products' });
+  }
+});
+
 // GET /products/:id - get one product
 router.get('/products/:id', async (req, res) => {
   try {
@@ -117,24 +135,6 @@ router.get('/products/details/:id', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, error: 'Failed to fetch product details' });
-  }
-});
-
-// GET /products/wishlist - fetch products by a list of IDs (for wishlist)
-router.get('/products/wishlist', async (req, res) => {
-  try {
-    let ids = req.query.ids;
-    if (!ids) return res.json({ success: true, products: [] });
-    if (typeof ids === 'string') ids = ids.split(',').map(x => parseInt(x)).filter(x => !isNaN(x));
-    if (!Array.isArray(ids) || !ids.length) return res.json({ success: true, products: [] });
-    const placeholders = ids.map(() => '?').join(',');
-    const [rows] = await db.query(`SELECT * FROM item WHERE item_id IN (${placeholders})`, ids);
-    // Parse image JSON for each product
-    rows.forEach(row => { try { row.image = JSON.parse(row.image); } catch {} });
-    res.json({ success: true, products: rows });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, error: 'Failed to fetch wishlist products' });
   }
 });
 

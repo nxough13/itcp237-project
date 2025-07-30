@@ -7,93 +7,91 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <link rel="stylesheet" href="../css/style.css">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      background: #f4f1ed;
       min-height: 100vh;
     }
-    .hero-section {
+    .seller-header {
       background: linear-gradient(135deg, #8B5C2A 0%, #A67C52 100%);
       color: white;
-      padding: 28px 12px;
-      border-radius: 12px;
+      padding: 40px 20px;
       text-align: center;
-      margin-bottom: 18px;
-      box-shadow: 0 4px 16px rgba(139, 92, 42, 0.18);
+      margin-bottom: 30px;
     }
-    .products-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 14px;
-      margin-bottom: 18px;
-    }
-    .product-card {
+    .seller-info {
       background: white;
-      border-radius: 10px;
-      overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-      transition: all 0.3s ease;
-      position: relative;
+      border-radius: 15px;
+      padding: 25px;
+      margin-bottom: 30px;
+      box-shadow: 0 2px 12px rgba(139, 92, 42, 0.08);
     }
-    .product-card:hover {
-      transform: translateY(-6px);
-      box-shadow: 0 10px 25px rgba(139, 92, 42, 0.13);
-    }
-    .product-image {
-      width: 100%;
-      height: 110px;
-      background: linear-gradient(135deg, #f0f0f0 0%, #e0e0e0 100%);
+    .seller-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: #e3dbd1;
       display: flex;
       align-items: center;
       justify-content: center;
+      font-size: 2rem;
+      color: #7a6242;
+      margin: 0 auto 15px;
+    }
+    .product-card {
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 12px rgba(139, 92, 42, 0.08);
+      transition: transform 0.2s, box-shadow 0.2s;
+      border: 1px solid #e5e0da;
+      height: 100%;
+    }
+    .product-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 20px rgba(139, 92, 42, 0.15);
+    }
+    .product-image {
       position: relative;
+      height: 200px;
       overflow: hidden;
     }
     .product-image img {
       width: 100%;
       height: 100%;
       object-fit: cover;
-      transition: transform 0.3s ease;
+      transition: transform 0.3s;
     }
     .product-card:hover .product-image img {
-      transform: scale(1.1);
-    }
-    .product-image-placeholder {
-      font-size: 3rem;
-      color: #8B5C2A;
-      opacity: 0.3;
-      height: 110px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      transform: scale(1.05);
     }
     .product-content {
-      padding: 10px 8px 8px 8px;
+      padding: 16px;
     }
     .product-category {
       color: #8B5C2A;
       font-size: 0.8rem;
       font-weight: 600;
-      margin-bottom: 2px;
+      margin-bottom: 6px;
       text-transform: uppercase;
       letter-spacing: 1px;
     }
     .product-title {
-      font-size: 1.02rem;
+      font-size: 1.1rem;
       font-weight: 600;
       color: #333;
-      margin-bottom: 4px;
+      margin-bottom: 8px;
       line-height: 1.3;
     }
     .product-description {
       color: #666;
-      font-size: 0.88rem;
+      font-size: 0.9rem;
       line-height: 1.5;
-      margin-bottom: 6px;
+      margin-bottom: 12px;
       display: -webkit-box;
-      -webkit-line-clamp: 1;
+      -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
@@ -101,219 +99,404 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 8px;
+      margin-top: auto;
     }
     .product-price {
-      font-size: 1.08rem;
+      font-size: 1.2rem;
       font-weight: 700;
       color: #8B5C2A;
     }
     .product-stock {
       font-size: 0.85rem;
-      color: #666;
+      font-weight: 500;
+      padding: 4px 8px;
+      border-radius: 12px;
     }
     .stock-available {
       color: #27ae60;
+      background: #d5f4e6;
     }
     .stock-low {
       color: #f39c12;
+      background: #fef5e7;
     }
     .stock-out {
       color: #e74c3c;
+      background: #fadbd8;
+    }
+    .search-filters {
+      background: white;
+      border-radius: 15px;
+      padding: 20px;
+      margin-bottom: 30px;
+      box-shadow: 0 2px 12px rgba(139, 92, 42, 0.08);
+    }
+    .loading-spinner {
+      display: none;
+      text-align: center;
+      padding: 40px;
+    }
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #8B5C2A;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
     .no-products {
       text-align: center;
-      padding: 24px 8px;
+      padding: 60px 20px;
       color: #666;
-      font-size: 1rem;
     }
-    @media (max-width: 768px) {
-      .hero-section {
-        padding: 12px 4px;
-      }
-      .products-grid {
-        grid-template-columns: 1fr 1fr;
-        gap: 6px;
-      }
-      .product-image {
-        height: 70px;
-      }
+    .no-products i {
+      font-size: 4rem;
+      color: #ddd;
+      margin-bottom: 20px;
     }
   </style>
 </head>
 <body>
   <div id="header"></div>
   <script>$(function(){$('#header').load('../header.html');});</script>
-  <div class="container mt-4">
-    <div class="hero-section">
-      <h1 id="sellerName">Seller's Catalog</h1>
-      <p id="sellerDesc" style="font-size:1rem; opacity:0.9;"></p>
+  
+  <!-- Seller Header -->
+  <div class="seller-header">
+    <div class="container">
+      <h1 id="sellerName">Seller Store</h1>
+      <p class="lead">Browse products from this seller</p>
     </div>
-    <div class="products-grid" id="sellerCatalogGrid"></div>
-    <div id="noProductsMsg" class="no-products" style="display:none;"></div>
   </div>
+
+  <!-- Seller Info -->
+  <div class="container">
+    <div class="seller-info">
+      <div class="row align-items-center">
+        <div class="col-md-3 text-center">
+          <div class="seller-avatar" id="sellerAvatar">
+            <i class="fas fa-store"></i>
+          </div>
+        </div>
+        <div class="col-md-9">
+          <h3 id="sellerBusinessName">Seller Business Name</h3>
+          <p id="sellerDescription" class="text-muted">Business description will appear here</p>
+          <div class="row">
+            <div class="col-md-4">
+              <small class="text-muted">📍 <span id="sellerAddress">Address</span></small>
+            </div>
+            <div class="col-md-4">
+              <small class="text-muted">📞 <span id="sellerPhone">Phone</span></small>
+            </div>
+            <div class="col-md-4">
+              <small class="text-muted">📧 <span id="sellerEmail">Email</span></small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Search and Filters -->
+    <div class="search-filters">
+      <div class="row">
+        <div class="col-md-6">
+          <div class="input-group">
+            <span class="input-group-text"><i class="fas fa-search"></i></span>
+            <input type="text" class="form-control" id="searchInput" placeholder="Search products...">
+          </div>
+        </div>
+        <div class="col-md-3">
+          <select class="form-select" id="categoryFilter">
+            <option value="">All Categories</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <select class="form-select" id="sortFilter">
+            <option value="name">Sort by Name</option>
+            <option value="price_low">Price: Low to High</option>
+            <option value="price_high">Price: High to Low</option>
+            <option value="newest">Newest First</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Products Grid -->
+    <div class="row" id="productsGrid">
+      <!-- Products will be loaded here -->
+    </div>
+
+    <!-- Loading Spinner -->
+    <div class="loading-spinner" id="loadingSpinner">
+      <div class="spinner"></div>
+      <p class="mt-3">Loading products...</p>
+    </div>
+
+    <!-- No Products Message -->
+    <div class="no-products" id="noProducts" style="display: none;">
+      <i class="fas fa-box-open"></i>
+      <h4>No products found</h4>
+      <p>This seller hasn't posted any products yet.</p>
+    </div>
+
+    <!-- Load More Button -->
+    <div class="text-center mt-4" id="loadMoreContainer" style="display: none;">
+      <button class="btn btn-outline-primary" id="loadMoreBtn">
+        <i class="fas fa-plus me-2"></i>Load More Products
+      </button>
+    </div>
+  </div>
+
   <script>
     const API_BASE = 'http://localhost:4000/api/v1';
-    function getQueryParam(name) {
-      const url = new URL(window.location.href);
-      return url.searchParams.get(name);
+    let currentPage = 1;
+    let allProducts = [];
+    let filteredProducts = [];
+    let sellerId = null;
+    
+    // Get seller ID from URL parameter
+    function getSellerIdFromURL() {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get('seller_id');
     }
-    async function loadSellerCatalog() {
-      const sellerId = getQueryParam('seller_id');
-      if (!sellerId) {
-        $('#noProductsMsg').text('No seller specified.').show();
+    
+    // Load seller information
+    async function loadSellerInfo() {
+      try {
+        const sellerId = getSellerIdFromURL();
+        if (!sellerId) {
+          alert('No seller ID provided');
+          return;
+        }
+        
+        const response = await $.get(`${API_BASE}/sellers/${sellerId}`);
+        if (response.success && response.seller) {
+          const seller = response.seller;
+          
+          $('#sellerName').text(seller.business_name || 'Seller Store');
+          $('#sellerBusinessName').text(seller.business_name || 'Seller Business');
+          $('#sellerDescription').text(seller.business_description || 'No description available');
+          $('#sellerAddress').text(seller.business_address || 'Address not provided');
+          $('#sellerPhone').text(seller.business_phone || 'Phone not provided');
+          $('#sellerEmail').text(seller.business_email || 'Email not provided');
+          
+          // Update page title
+          document.title = `${seller.business_name} - HomeHaven`;
+        }
+      } catch (error) {
+        console.error('Error loading seller info:', error);
+      }
+    }
+    
+    // Load seller products
+    async function loadSellerProducts(page = 1, append = false) {
+      try {
+        const sellerId = getSellerIdFromURL();
+        if (!sellerId) return;
+        
+        $('#loadingSpinner').show();
+        $('#noProducts').hide();
+        
+        const response = await $.get(`${API_BASE}/sellers/${sellerId}/products?page=${page}`);
+        
+        if (response.success && response.products) {
+          const products = response.products;
+          
+          if (page === 1) {
+            allProducts = products;
+          } else {
+            allProducts = allProducts.concat(products);
+          }
+          
+          filteredProducts = [...allProducts];
+          
+          if (append) {
+            renderProducts(products, true);
+          } else {
+            renderProducts(filteredProducts);
+          }
+          
+          // Show/hide load more button
+          if (products.length >= 12) { // Assuming 12 products per page
+            $('#loadMoreContainer').show();
+          } else {
+            $('#loadMoreContainer').hide();
+          }
+          
+          // Load categories for filter
+          if (page === 1) {
+            loadCategories();
+          }
+        } else {
+          if (page === 1) {
+            $('#noProducts').show();
+          }
+        }
+      } catch (error) {
+        console.error('Error loading products:', error);
+        if (page === 1) {
+          $('#noProducts').show();
+        }
+      } finally {
+        $('#loadingSpinner').hide();
+      }
+    }
+    
+    // Load categories for filter
+    async function loadCategories() {
+      try {
+        const response = await $.get(`${API_BASE}/products/categories`);
+        if (response.success && response.categories) {
+          const categoryFilter = $('#categoryFilter');
+          response.categories.forEach(category => {
+            categoryFilter.append(`<option value="${category.category_id}">${category.name}</option>`);
+          });
+        }
+      } catch (error) {
+        console.error('Error loading categories:', error);
+      }
+    }
+    
+    // Render products
+    function renderProducts(products, append = false) {
+      const grid = $('#productsGrid');
+      
+      if (!append) {
+        grid.empty();
+      }
+      
+      if (products.length === 0) {
+        if (!append) {
+          $('#noProducts').show();
+        }
         return;
       }
-      try {
-        // Fetch products for this seller
-        const res = await $.get(API_BASE + '/catalog/seller/' + sellerId);
-        const products = res.products || [];
-        const grid = $('#sellerCatalogGrid');
-        grid.empty();
-        if (products.length === 0) {
-          $('#noProductsMsg').text('No products found for this seller.').show();
-          return;
-        } else {
-          $('#noProductsMsg').hide();
-        }
-        // Optionally show seller name/desc if available
-        if (res.seller) {
-          $('#sellerName').text(res.seller.business_name + "'s Catalog");
-          $('#sellerDesc').text(res.seller.business_description || '');
-        }
-        products.forEach(product => {
-          grid.append(createProductCard(product));
-        });
-      } catch (err) {
-        $('#noProductsMsg').text('Failed to load products.').show();
-      }
+      
+      $('#noProducts').hide();
+      
+      products.forEach(product => {
+        const productCard = createProductCard(product);
+        grid.append(productCard);
+      });
     }
+    
+    // Create product card
     function createProductCard(product) {
-      const stock = parseInt(product.stock_quantity || product.stock || 0);
-      const stockClass = stock === 0 ? 'stock-out' : stock <= 10 ? 'stock-low' : 'stock-available';
-      const stockText = stock === 0 ? 'Out of Stock' : stock <= 10 ? `Only ${stock} left` : 'In Stock';
+      const stockQuantity = parseInt(product.stock_quantity || product.stock || 0);
+      const stockClass = stockQuantity === 0 ? 'stock-out' : stockQuantity <= 10 ? 'stock-low' : 'stock-available';
+      const stockText = stockQuantity === 0 ? 'Out of Stock' : stockQuantity <= 10 ? `Only ${stockQuantity} left` : 'In Stock';
+      
       let imageHtml = '';
       if (product.image) {
         let imgSrc = '';
         try {
           const imgs = typeof product.image === 'string' ? JSON.parse(product.image) : product.image;
           imgSrc = Array.isArray(imgs) ? imgs[0] : imgs;
-        } catch { imgSrc = product.image; }
-        if (imgSrc) {
-          imageHtml = `<img src="${imgSrc}" alt="${product.name}" style="width:100%; height:110px; object-fit:cover; border-radius:10px 10px 0 0;">`;
-        } else {
-          imageHtml = `<div class="product-image-placeholder"><i class="fas fa-couch"></i></div>`;
+        } catch (e) { 
+          imgSrc = product.image; 
         }
-      } else {
-        imageHtml = `<div class="product-image-placeholder"><i class="fas fa-couch"></i></div>`;
+        
+        if (imgSrc) {
+          const imagePath = imgSrc.startsWith('http') ? imgSrc : `http://localhost:4000${imgSrc}`;
+          imageHtml = `<img src="${imagePath}" alt="${product.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">`;
+        }
       }
+      
+      if (!imageHtml) {
+        imageHtml = `<div class="product-image-placeholder" style="display: flex; align-items: center; justify-content: center; height: 100%; background: #f8f5f2; color: #8B5C2A; font-size: 3rem; opacity: 0.3;"><i class="fas fa-couch"></i></div>`;
+      }
+      
       return `
-        <div class="product-card">
-          <div class="product-image">${imageHtml}</div>
-          <div class="product-content">
-            <div class="product-category">${product.category_name || 'Uncategorized'}</div>
-            <h3 class="product-title">${product.name}</h3>
-            <p class="product-description">${product.description}</p>
-            <div class="product-meta">
-              <div class="product-price">₱${parseFloat(product.sell_price).toLocaleString()}</div>
-              <div class="product-stock ${stockClass}">${stockText}</div>
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+          <div class="product-card">
+            <div class="product-image">
+              ${imageHtml}
+            </div>
+            <div class="product-content">
+              <div class="product-category">${product.category_name || 'Uncategorized'}</div>
+              <h3 class="product-title">${product.name}</h3>
+              <p class="product-description">${product.description || 'No description available'}</p>
+              <div class="product-meta">
+                <div class="product-price">₱${parseFloat(product.sell_price).toLocaleString()}</div>
+                <div class="product-stock ${stockClass}">${stockText}</div>
+              </div>
+              <div class="mt-3">
+                <button class="btn btn-primary btn-sm w-100" onclick="addToCart(${product.item_id})">
+                  <i class="fas fa-cart-plus me-2"></i>Add to Cart
+                </button>
+              </div>
             </div>
           </div>
         </div>
       `;
     }
-    // Infinite scroll for seller catalog
-    let allProducts = [];
-    let currentPage = 1;
-    let productsPerPage = 12;
-    let isLoadingMore = false;
-    async function loadSellerCatalogInfinite(append = false) {
-      const sellerId = getQueryParam('seller_id');
-      if (!sellerId) {
-        $('#noProductsMsg').text('No seller specified.').show();
+    
+    // Add to cart function
+    function addToCart(itemId) {
+      // Check if user is logged in
+      const token = localStorage.getItem('jwt_token');
+      if (!token) {
+        alert('Please log in to add items to cart');
         return;
       }
-      try {
-        // Fetch products for this seller (fetch all at once for now)
-        const res = await $.get(API_BASE + '/catalog/seller/' + sellerId);
-        if (!allProducts.length) allProducts = res.products || [];
-        const grid = $('#sellerCatalogGrid');
-        if (!append) grid.empty();
-        if (allProducts.length === 0) {
-          $('#noProductsMsg').text('No products found for this seller.').show();
-          return;
-        } else {
-          $('#noProductsMsg').hide();
-        }
-        // Optionally show seller name/desc if available
-        if (res.seller) {
-          $('#sellerName').text(res.seller.business_name + "'s Catalog");
-          $('#sellerDesc').text(res.seller.business_description || '');
-        }
-        const startIndex = (currentPage - 1) * productsPerPage;
-        const endIndex = startIndex + productsPerPage;
-        const pageProducts = allProducts.slice(startIndex, endIndex);
-        pageProducts.forEach(product => {
-          grid.append(createProductCard(product));
-        });
-      } catch (err) {
-        $('#noProductsMsg').text('Failed to load products.').show();
-      }
+      
+      // Add to cart logic here
+      console.log('Adding item to cart:', itemId);
+      // You can implement the actual add to cart functionality
     }
-    function handleInfiniteScrollSeller() {
-      if (isLoadingMore) return;
-      const grid = document.getElementById('sellerCatalogGrid');
-      if (!grid) return;
-      const scrollY = window.scrollY || window.pageYOffset;
-      const windowH = window.innerHeight;
-      const gridBottom = grid.getBoundingClientRect().bottom + scrollY;
-      if (scrollY + windowH + 200 >= gridBottom) {
-        const totalPages = Math.ceil(allProducts.length / productsPerPage);
-        if (currentPage < totalPages) {
-          isLoadingMore = true;
-          currentPage++;
-          setTimeout(() => {
-            loadSellerCatalogInfinite(true);
-            isLoadingMore = false;
-          }, 300);
-        }
+    
+    // Filter and search products
+    function filterProducts() {
+      const searchTerm = $('#searchInput').val().toLowerCase();
+      const categoryFilter = $('#categoryFilter').val();
+      const sortFilter = $('#sortFilter').val();
+      
+      filteredProducts = allProducts.filter(product => {
+        const matchesSearch = product.name.toLowerCase().includes(searchTerm) || 
+                            product.description.toLowerCase().includes(searchTerm);
+        const matchesCategory = !categoryFilter || product.category_id == categoryFilter;
+        
+        return matchesSearch && matchesCategory;
+      });
+      
+      // Sort products
+      switch (sortFilter) {
+        case 'price_low':
+          filteredProducts.sort((a, b) => parseFloat(a.sell_price) - parseFloat(b.sell_price));
+          break;
+        case 'price_high':
+          filteredProducts.sort((a, b) => parseFloat(b.sell_price) - parseFloat(a.sell_price));
+          break;
+        case 'newest':
+          filteredProducts.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+          break;
+        default:
+          filteredProducts.sort((a, b) => a.name.localeCompare(b.name));
       }
+      
+      renderProducts(filteredProducts);
     }
+    
+    // Event listeners
     $(document).ready(function() {
-      allProducts = [];
-      currentPage = 1;
-      loadSellerCatalogInfinite(false);
-      $(window).off('scroll.sellerinf').on('scroll.sellerinf', handleInfiniteScrollSeller);
+      // Load initial data
+      loadSellerInfo();
+      loadSellerProducts();
+      
+      // Search and filter events
+      $('#searchInput').on('input', filterProducts);
+      $('#categoryFilter').on('change', filterProducts);
+      $('#sortFilter').on('change', filterProducts);
+      
+      // Load more button
+      $('#loadMoreBtn').on('click', function() {
+        currentPage++;
+        loadSellerProducts(currentPage, true);
+      });
     });
   </script>
-  <script>
-$(function() {
-  $(document).on('click', '.add-to-cart-btn', function(e) {
-    const $row = $(this).closest('.product-card');
-    const $qty = $row.find('.product-qty');
-    if ($qty.length) {
-      const val = parseInt($qty.val(), 10);
-      const max = parseInt($qty.attr('max'), 10);
-      $('.product-qty-error').remove();
-      if (isNaN(val) || val < 1) {
-        $qty.after('<div class="product-qty-error" style="color:#c00;font-size:0.95em;margin-top:2px;">Quantity must be at least 1.</div>');
-        e.preventDefault();
-        return false;
-      } else if (max && val > max) {
-        $qty.after('<div class="product-qty-error" style="color:#c00;font-size:0.95em;margin-top:2px;">Exceeds stock.</div>');
-        e.preventDefault();
-        return false;
-      }
-    }
-  });
-  // Optional: validate search input
-  $('#searchInput').on('input', function() {
-    $('.search-error').remove();
-    if ($(this).val().length > 0 && $(this).val().length < 2) {
-      $(this).after('<div class="search-error" style="color:#c00;font-size:0.95em;margin-top:2px;">Enter at least 2 characters to search.</div>');
-    }
-  });
-});
-</script>
 </body>
 </html> 

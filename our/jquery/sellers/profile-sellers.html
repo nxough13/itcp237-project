@@ -7,202 +7,879 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <link rel="stylesheet" href="../css/style.css">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      background: #f4f1ed;
       min-height: 100vh;
     }
-    .profile-header {
-      background: linear-gradient(135deg, #8B5C2A 0%, #A67C52 100%);
-      color: white;
-      padding: 28px 12px 18px 12px;
-      border-radius: 0 0 1rem 1rem;
-      margin-bottom: 2rem;
-      text-align: center;
-      box-shadow: 0 4px 16px rgba(139, 92, 42, 0.18);
+    .profile-card-container {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      margin-top: 40px;
+      margin-bottom: 32px;
     }
-    .profile-card {
-      max-width: 500px;
-      margin: 0 auto;
-      background: white;
-      border-radius: 1rem;
-      box-shadow: 0 2px 8px rgba(139,92,42,0.07);
-      padding: 2rem 2.5rem 2rem 2.5rem;
-      margin-bottom: 2rem;
+    .profile-card-content {
+      background: #fff;
+      border-radius: 22px;
+      box-shadow: 0 4px 24px rgba(139, 92, 42, 0.10);
+      padding: 36px 38px 32px 38px;
+      width: 100%;
+      max-width: 1100px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
-    .profile-label {
-      color: #8B5C2A;
-      font-weight: 600;
-      font-size: 1.05rem;
+    .profile-header-section {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 18px;
     }
-    .profile-value {
-      color: #444;
-      font-size: 1.1rem;
-      margin-bottom: 1rem;
+    .profile-img-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 8px;
     }
-    .verified {
-      color: #27ae60;
-      font-weight: 700;
-    }
-    .not-verified {
-      color: #e67e22;
-      font-weight: 700;
-    }
-    .loading-spinner {
-      display: none;
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      z-index: 1000;
-    }
-    .spinner {
-      width: 36px;
-      height: 36px;
-      border: 4px solid #f3f3f3;
-      border-top: 4px solid #8B5C2A;
+    .profile-img-circle {
+      width: 120px;
+      height: 120px;
       border-radius: 50%;
-      animation: spin 1s linear infinite;
+      background: #e3dbd1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 4.5rem;
+      color: #7a6242;
+      position: relative;
+      margin-bottom: 8px;
+      box-shadow: 0 2px 8px rgba(139, 92, 42, 0.10);
+      border: 4px solid #a78b6c;
     }
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+    .profile-edit-icon {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      background: #fff;
+      border-radius: 50%;
+      padding: 4px 6px;
+      font-size: 1rem;
+      color: #7a6242;
+      border: 1.5px solid #c3b7a6;
+      cursor: pointer;
+      box-shadow: 0 1px 4px rgba(139, 92, 42, 0.10);
+    }
+    .profile-role {
+      font-size: 1.1rem;
+      color: #7a6242;
+      margin-bottom: 2px;
+      margin-top: 2px;
+      text-align: center;
+    }
+    .profile-name {
+      font-size: 2.7rem;
+      font-weight: 500;
+      color: #3d3323;
+      margin-bottom: 10px;
+      text-align: center;
+      font-family: Georgia, serif;
+    }
+    .seller-profile-container {
+      display: flex;
+      gap: 40px;
+      width: 100%;
+      background: none;
+      border-radius: 0;
+      box-shadow: none;
+      padding: 0;
+    }
+    .profile-left, .profile-right {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .profile-form {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .profile-form label {
+      font-size: 1rem;
+      color: #7a6242;
+      margin-bottom: 2px;
+      font-weight: 500;
+    }
+    .profile-form input[type="text"],
+    .profile-form input[type="email"],
+    .profile-form input[type="password"] {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1.5px solid #c3b7a6;
+      border-radius: 8px;
+      background: #fcfcfc;
+      font-size: 1.05rem;
+      margin-bottom: 6px;
+      outline: none;
+      transition: border 0.2s;
+    }
+    .profile-form input:focus {
+      border: 1.5px solid #8B5C2A;
+      background: #f7f3ee;
+    }
+    .input-group {
+      display: flex;
+      align-items: center;
+      position: relative;
+    }
+    .input-group input {
+      flex: 1;
+      margin-bottom: 0;
+    }
+    .input-group-icon {
+      position: absolute;
+      right: 12px;
+      color: #8B5C2A;
+      cursor: pointer;
+      font-size: 1.1rem;
+    }
+    .email-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .verify-email {
+      color: #e74c3c;
+      font-size: 0.98rem;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    .email-status {
+      color: #e74c3c;
+      font-size: 0.98rem;
+      margin-top: -6px;
+      margin-bottom: 8px;
+    }
+    .profile-btn-row {
+      display: flex;
+      gap: 12px;
+      margin: 18px 0 18px 0;
+    }
+    .profile-btn {
+      background: #a78b6c;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 18px;
+      font-size: 1.05rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .profile-btn:hover {
+      background: #8B5C2A;
+    }
+    .save-btn {
+      background: #7a6242;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 12px 0;
+      width: 100%;
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-top: 18px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .save-btn:hover {
+      background: #8B5C2A;
+    }
+    .profile-card-content {
+      margin-bottom: 0;
+    }
+    
+    /* Product Catalog Preview Styles */
+    .catalog-preview-container {
+      max-width: 1400px;
+      margin: 0 auto 40px auto;
+      padding: 0 20px;
+    }
+    .catalog-preview-header {
+      background: #fff;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 2px 12px rgba(139, 92, 42, 0.08);
+      text-align: center;
+    }
+    .catalog-preview-title {
+      font-size: 1.8rem;
+      font-weight: 600;
+      color: #3d3323;
+      margin-bottom: 8px;
+    }
+    .catalog-preview-subtitle {
+      color: #7a6242;
+      font-size: 1rem;
+    }
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 24px;
+      margin-top: 24px;
+    }
+    .product-card {
+      background: #fff;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 12px rgba(139, 92, 42, 0.08);
+      transition: transform 0.2s, box-shadow 0.2s;
+      border: 1px solid #e5e0da;
+    }
+    .product-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 20px rgba(139, 92, 42, 0.15);
+    }
+    .product-image {
+      position: relative;
+      height: 200px;
+      overflow: hidden;
+    }
+    .product-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s;
+    }
+    .product-card:hover .product-image img {
+      transform: scale(1.05);
+    }
+    .product-content {
+      padding: 16px;
+    }
+    .product-category {
+      color: #8B5C2A;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .product-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 8px;
+      line-height: 1.3;
+    }
+    .product-description {
+      color: #666;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      margin-bottom: 12px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .product-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: auto;
+    }
+    .product-price {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #8B5C2A;
+    }
+    .product-stock {
+      font-size: 0.85rem;
+      font-weight: 500;
+      padding: 4px 8px;
+      border-radius: 12px;
+    }
+    .stock-available {
+      color: #27ae60;
+      background: #d5f4e6;
+    }
+    .stock-low {
+      color: #f39c12;
+      background: #fef5e7;
+    }
+    .stock-out {
+      color: #e74c3c;
+      background: #fadbd8;
+    }
+    .product-image-placeholder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      background: #f8f5f2;
+      color: #8B5C2A;
+      font-size: 3rem;
+      opacity: 0.3;
+    }
+    
+    @media (max-width: 900px) {
+      .profile-card-content {
+        padding: 16px 2px 16px 2px;
+      }
+      .seller-profile-container {
+        flex-direction: column;
+        padding: 0;
+        gap: 18px;
+      }
+      .profile-left, .profile-right {
+        width: 100%;
+        align-items: stretch;
+      }
+      .products-grid {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 16px;
+      }
+      .catalog-preview-container {
+        padding: 0 16px;
+      }
     }
   </style>
 </head>
 <body>
   <div id="header"></div>
   <script>$(function(){$('#header').load('../header.html');});</script>
-  <div class="profile-header">
-    <h1>Seller Profile</h1>
-    <p class="lead">View and manage your business information</p>
-  </div>
-  <div class="loading-spinner"><div class="spinner"></div></div>
-  <div class="profile-card" id="profileCard">
-    <!-- Seller info will be loaded here -->
-  </div>
-  <div class="container" id="sellerCatalogPreviewContainer">
-    <div class="hero-section" style="margin-bottom:18px;">
-      <h2 style="font-size:1.3rem; font-weight:600;">Product Catalog Preview</h2>
-      <p style="font-size:0.98rem; opacity:0.9;">This is how your products appear to customers.</p>
+  
+  <div class="profile-card-container">
+    <div class="profile-card-content">
+      <div class="profile-header-section">
+        <div class="profile-img-wrapper">
+          <div class="profile-img-circle" id="profileImgCircle">
+            <i class="fas fa-user" id="profileImgIcon"></i>
+            <span class="profile-edit-icon" id="editProfilePicBtn"><i class="fas fa-pen"></i></span>
+            <input type="file" id="profilePicInput" accept="image/*" style="display:none;" />
+          </div>
+          <div class="profile-role">Seller</div>
+          <div class="profile-name" id="profileUserName">Name Name Name</div>
+        </div>
+      </div>
+      <div class="seller-profile-container">
+        <div class="profile-left">
+          <form class="profile-form">
+            <label>Name:</label>
+            <input type="text" name="name" placeholder="Seller Name" />
+            <label>Change Password:</label>
+            <div class="input-group">
+              <input type="password" placeholder="" />
+              <span class="input-group-icon"><i class="fas fa-eye"></i></span>
+            </div>
+            <label>Confirm Password:</label>
+            <div class="input-group">
+              <input type="password" placeholder="" />
+              <span class="input-group-icon"><i class="fas fa-eye"></i></span>
+            </div>
+            <label>Email:</label>
+            <div class="email-row">
+              <input type="email" name="email" placeholder="Seller Email" />
+              <span class="verify-email">Verify Email</span>
+            </div>
+            <div class="email-status">Email not verified</div>
+            <button type="submit" class="save-btn">Save Changes</button>
+          </form>
+        </div>
+        <div class="profile-right">
+          <form class="profile-form">
+            <label>Business Name:</label>
+            <input type="text" name="business_name" placeholder="" />
+            <label>Address:</label>
+            <input type="text" name="business_address" placeholder="Home Address" />
+            <label>Phone Number:</label>
+            <input type="text" name="business_phone" placeholder="" />
+            <div class="profile-btn-row">
+              <button type="button" class="profile-btn">My Products</button>
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
-    <div class="products-grid" id="sellerProductsGrid" style="margin-bottom:18px;"></div>
+  </div>
+
+  <!-- Product Catalog Preview Section -->
+  <div class="catalog-preview-container">
+    <div class="catalog-preview-header">
+      <div class="catalog-preview-title">🛍️ Your Store Preview</div>
+      <div class="catalog-preview-subtitle">This is how your products appear to customers</div>
+    </div>
+    <div class="products-grid" id="sellerProductsGrid"></div>
     <div id="noProductsMsg" style="display:none; text-align:center; color:#888; font-size:1.1rem; padding:24px 8px;"></div>
   </div>
+
   <script>
     const API_BASE = 'http://localhost:4000/api/v1';
+    
     function showLoading() { $('.loading-spinner').show(); }
     function hideLoading() { $('.loading-spinner').hide(); }
     function getToken() { return localStorage.getItem('jwt_token'); }
+    
     $.ajaxSetup({
       beforeSend: function(xhr) {
         const token = getToken();
         if (token) xhr.setRequestHeader('Authorization', 'Bearer ' + token);
       }
     });
-    async function loadSellerProfile() {
-      showLoading();
+
+    // Load seller profile data
+    async function loadSellerProfileForm() {
       try {
-        // Get seller info for the logged-in user
         const res = await $.get(API_BASE + '/seller/profile');
-        const seller = res.profile; // <-- FIXED
-        let html = '';
-        if (!seller) {
-          html = '<div class="text-danger">Seller information not found.</div>';
-        } else {
-          html += `<div class="mb-3 text-center">
-            <i class="fas fa-store fa-3x" style="color:#8B5C2A;"></i>
-          </div>`;
-          html += `<div class="profile-label">Business Name</div><div class="profile-value">${seller.business_name || '-'}</div>`;
-          html += `<div class="profile-label">Description</div><div class="profile-value">${seller.business_description || '-'}</div>`;
-          html += `<div class="profile-label">Address</div><div class="profile-value">${seller.business_address || '-'}</div>`;
-          html += `<div class="profile-label">Phone</div><div class="profile-value">${seller.business_phone || '-'}</div>`;
-          html += `<div class="profile-label">Email</div><div class="profile-value">${seller.business_email || '-'}</div>`;
-          html += `<div class="profile-label">Verification Status</div><div class="profile-value">${seller.is_verified ? '<span class=\'verified\'>Verified</span>' : '<span class=\'not-verified\'>Not Verified</span>'}</div>`;
-          html += `<div class="profile-label">Joined</div><div class="profile-value">${seller.created_at ? seller.created_at.split('T')[0] : '-'}</div>`;
+        const seller = res.profile;
+        if (seller) {
+          $('input[name="name"]').val(seller.user_name || '');
+          $('input[name="email"]').val(seller.user_email || '');
+          $('input[name="business_name"]').val(seller.business_name || '');
+          $('input[name="business_address"]').val(seller.business_address || '');
+          $('input[name="business_phone"]').val(seller.business_phone || '');
+          $('#profileUserName').text(seller.user_name || 'Seller');
+          
+          // Handle profile image display
+          if (seller.profile_image) {
+            const imagePath = seller.profile_image.startsWith('http') ? seller.profile_image : `http://localhost:4000${seller.profile_image}`;
+            $('#profileImgCircle').css('background-image', 'url(' + imagePath + ')');
+            $('#profileImgCircle').css('background-size', 'cover');
+            $('#profileImgIcon').css('opacity', 0);
+          } else {
+            $('#profileImgCircle').css('background-image', 'none');
+            $('#profileImgIcon').css('opacity', 1);
+          }
         }
-        $('#profileCard').html(html);
       } catch (err) {
-        $('#profileCard').html('<div class="text-danger">Failed to load seller profile. Please try again.</div>');
-      } finally {
-        hideLoading();
+        console.error('Error loading seller profile:', err);
       }
     }
+
+    // Load seller products preview
     async function loadSellerProductsPreview() {
       try {
         const res = await $.get(API_BASE + '/seller/products');
         const products = res.products || [];
         const grid = $('#sellerProductsGrid');
         grid.empty();
+        
         if (products.length === 0) {
-          $('#noProductsMsg').text('No products found.').show();
+          $('#noProductsMsg').text('No products found. Add some products to see your store preview!').show();
           return;
         } else {
           $('#noProductsMsg').hide();
         }
+        
         products.forEach(product => {
           grid.append(createProductCardPreview(product));
         });
       } catch (err) {
+        console.error('Error loading products:', err);
         $('#noProductsMsg').text('Failed to load products.').show();
       }
     }
+
+    // Create product card preview
     function createProductCardPreview(product) {
-      const stock = parseInt(product.stock_quantity || product.stock || 0);
-      const stockClass = stock === 0 ? 'stock-out' : stock <= 10 ? 'stock-low' : 'stock-available';
-      const stockText = stock === 0 ? 'Out of Stock' : stock <= 10 ? `Only ${stock} left` : 'In Stock';
+      // Handle stock quantity - check multiple possible fields
+      const stockQuantity = parseInt(product.stock_quantity || product.stock || product.quantity || 0);
+      const stockClass = stockQuantity === 0 ? 'stock-out' : stockQuantity <= 10 ? 'stock-low' : 'stock-available';
+      const stockText = stockQuantity === 0 ? 'Out of Stock' : stockQuantity <= 10 ? `Only ${stockQuantity} left` : 'In Stock';
+      
       let imageHtml = '';
       if (product.image) {
         let imgSrc = '';
         try {
           const imgs = typeof product.image === 'string' ? JSON.parse(product.image) : product.image;
           imgSrc = Array.isArray(imgs) ? imgs[0] : imgs;
-        } catch { imgSrc = product.image; }
+        } catch (e) { 
+          imgSrc = product.image; 
+        }
+        
         if (imgSrc) {
-          imageHtml = `<img src="${imgSrc}" alt="${product.name}" style="width:100%; height:110px; object-fit:cover; border-radius:10px 10px 0 0;">`;
+          // Fix image path
+          const imagePath = imgSrc.startsWith('http') ? imgSrc : `http://localhost:4000${imgSrc}`;
+          imageHtml = `<img src="${imagePath}" alt="${product.name}" style="width:100%; height:100%; object-fit:cover;">`;
         } else {
-          imageHtml = `<div class="product-image-placeholder" style="font-size:3rem; color:#8B5C2A; opacity:0.3; height:110px; display:flex; align-items:center; justify-content:center;"><i class="fas fa-couch"></i></div>`;
+          imageHtml = `<div class="product-image-placeholder"><i class="fas fa-couch"></i></div>`;
         }
       } else {
-        imageHtml = `<div class="product-image-placeholder" style="font-size:3rem; color:#8B5C2A; opacity:0.3; height:110px; display:flex; align-items:center; justify-content:center;"><i class="fas fa-couch"></i></div>`;
+        imageHtml = `<div class="product-image-placeholder"><i class="fas fa-couch"></i></div>`;
       }
+      
       return `
-        <div class="product-card" style="background:white; border-radius:10px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.07); margin-bottom:10px;">
+        <div class="product-card">
           <div class="product-image">${imageHtml}</div>
-          <div class="product-content" style="padding:10px 8px 8px 8px;">
-            <div class="product-category" style="color:#8B5C2A; font-size:0.8rem; font-weight:600; margin-bottom:2px; text-transform:uppercase; letter-spacing:1px;">${product.category_name || 'Uncategorized'}</div>
-            <h3 class="product-title" style="font-size:1.02rem; font-weight:600; color:#333; margin-bottom:4px; line-height:1.3;">${product.name}</h3>
-            <p class="product-description" style="color:#666; font-size:0.88rem; line-height:1.5; margin-bottom:6px;">${product.description}</p>
-            <div class="product-meta" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-              <div class="product-price" style="font-size:1.08rem; font-weight:700; color:#8B5C2A;">₱${parseFloat(product.sell_price).toLocaleString()}</div>
-              <div class="product-stock ${stockClass}" style="font-size:0.85rem;">${stockText}</div>
+          <div class="product-content">
+            <div class="product-category">${product.category_name || 'Uncategorized'}</div>
+            <h3 class="product-title">${product.name}</h3>
+            <p class="product-description">${product.description || 'No description available'}</p>
+            <div class="product-meta">
+              <div class="product-price">₱${parseFloat(product.sell_price).toLocaleString()}</div>
+              <div class="product-stock ${stockClass}">${stockText}</div>
             </div>
           </div>
         </div>
       `;
     }
+
+    // Profile picture upload logic
+    $('#editProfilePicBtn').on('click', function(e) {
+      e.preventDefault();
+      $('#profilePicInput').click();
+    });
+
+    $('#profilePicInput').on('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        // Show preview immediately
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+          $('#profileImgCircle').css('background-image', 'url(' + evt.target.result + ')');
+          $('#profileImgCircle').css('background-size', 'cover');
+          $('#profileImgIcon').css('opacity', 0);
+        };
+        reader.readAsDataURL(file);
+        
+        // Upload the file to server
+        uploadProfileImage(file);
+      }
+    });
+
+    // Function to upload profile image
+    function uploadProfileImage(file) {
+      const formData = new FormData();
+      formData.append('profile_image', file);
+      
+      $.ajax({
+        url: API_BASE + '/seller/profile',
+        method: 'PUT',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(res) {
+          if (res.success) {
+            console.log('Profile image uploaded successfully');
+          }
+        },
+        error: function(xhr) {
+          console.error('Failed to upload profile image:', xhr.responseText);
+        }
+      });
+    }
+
+    // Form submission handlers
+    $('.profile-left .profile-form').on('submit', function(e) {
+      e.preventDefault();
+      const data = {};
+      const name = $('input[name="name"]').val();
+      const password = $('input[type="password"]').eq(0).val();
+      const email = $('input[name="email"]').val();
+      
+      if (name) data.name = name;
+      if (password) data.password = password;
+      if (email) data.email = email;
+      
+      $.ajax({
+        url: API_BASE + '/seller/profile',
+        method: 'PUT',
+        contentType: 'application/json',
+        data: JSON.stringify(data),
+        success: function(res) {
+          if (res.success) {
+            alert('Profile updated successfully!');
+            loadSellerProfileForm();
+          } else {
+            alert('Failed to update profile: ' + (res.message || 'Unknown error'));
+          }
+        },
+        error: function(xhr) {
+          alert('Failed to update profile: ' + (xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Server error'));
+        }
+      });
+    });
+
+    $('.profile-right .profile-form').on('submit', function(e) {
+      e.preventDefault();
+      const data = {};
+      const business_name = $('input[name="business_name"]').val();
+      const business_address = $('input[name="business_address"]').val();
+      const business_phone = $('input[name="business_phone"]').val();
+      
+      if (business_name) data.business_name = business_name;
+      if (business_address) data.business_address = business_address;
+      if (business_phone) data.business_phone = business_phone;
+      
+      $.ajax({
+        url: API_BASE + '/seller/profile',
+        method: 'PUT',
+        contentType: 'application/json',
+        data: JSON.stringify(data),
+        success: function(res) {
+          if (res.success) {
+            alert('Profile updated successfully!');
+            loadSellerProfileForm();
+          } else {
+            alert('Failed to update profile: ' + (res.message || 'Unknown error'));
+          }
+        },
+        error: function(xhr) {
+          alert('Failed to update profile: ' + (xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Server error'));
+        }
+      });
+    });
+
+    // Button navigation
+    $('.profile-btn').eq(0).on('click', function() {
+      window.location.href = 'products.html';
+    });
+
+    // Sales Report functionality - prevent redirection
+    // $('#salesReportBtn').on('click', function(e) {
+    //   e.preventDefault();
+    //   e.stopPropagation();
+    //   generateSalesReport();
+    // });
+
+    // Generate comprehensive sales report
+    async function generateSalesReport() {
+      try {
+        // Show loading state
+        // $('#salesReportBtn').text('Generating Report...').prop('disabled', true);
+        
+        // Fetch all necessary data
+        const [productsRes, ordersRes, profileRes] = await Promise.all([
+          $.get(API_BASE + '/seller/products'),
+          $.get(API_BASE + '/seller/orders'),
+          $.get(API_BASE + '/seller/profile')
+        ]);
+
+        const products = productsRes.products || [];
+        const orders = ordersRes.orders || [];
+        const profile = profileRes.profile;
+
+        // Calculate statistics
+        const stats = calculateSellerStats(products, orders);
+        
+        // Generate and download PDF report
+        await generatePDFReport(profile, products, orders, stats);
+        
+        // Reset button
+        // $('#salesReportBtn').text('Sales Report').prop('disabled', false);
+        
+      } catch (error) {
+        console.error('Error generating sales report:', error);
+        alert('Failed to generate sales report. Please try again.');
+        // $('#salesReportBtn').text('Sales Report').prop('disabled', false);
+      }
+    }
+
+    // Calculate seller statistics
+    function calculateSellerStats(products, orders) {
+      const totalProducts = products.length;
+      const activeProducts = products.filter(p => p.status === 'active').length;
+      const totalStock = products.reduce((sum, p) => sum + parseInt(p.stock_quantity || p.stock || 0), 0);
+      
+      // Order statistics
+      const orderStats = {
+        total: orders.length,
+        pending: orders.filter(o => o.order_status === 'pending').length,
+        delivered: orders.filter(o => o.order_status === 'delivered').length,
+        cancelled: orders.filter(o => o.order_status === 'cancelled').length,
+        totalRevenue: orders.reduce((sum, o) => sum + parseFloat(o.total_amount || 0), 0)
+      };
+
+      // Product performance
+      const productPerformance = products.map(p => {
+        const productOrders = orders.filter(o => 
+          o.products && o.products.some(op => op.name === p.name)
+        );
+        const totalSold = productOrders.reduce((sum, o) => {
+          const productOrder = o.products.find(op => op.name === p.name);
+          return sum + (productOrder ? productOrder.quantity : 0);
+        }, 0);
+        
+        return {
+          name: p.name,
+          price: p.sell_price,
+          stock: p.stock_quantity || p.stock || 0,
+          sold: totalSold,
+          revenue: totalSold * parseFloat(p.sell_price)
+        };
+      }).sort((a, b) => b.revenue - a.revenue);
+
+      return {
+        totalProducts,
+        activeProducts,
+        totalStock,
+        orderStats,
+        productPerformance,
+        topProducts: productPerformance.slice(0, 5)
+      };
+    }
+
+    // Generate PDF report
+    async function generatePDFReport(profile, products, orders, stats) {
+      // Create a temporary div to hold the report content
+      const reportDiv = document.createElement('div');
+      reportDiv.style.position = 'absolute';
+      reportDiv.style.left = '-9999px';
+      reportDiv.style.top = '0';
+      reportDiv.style.width = '800px';
+      reportDiv.style.padding = '20px';
+      reportDiv.style.fontFamily = 'Arial, sans-serif';
+      reportDiv.style.fontSize = '12px';
+      reportDiv.style.backgroundColor = 'white';
+      reportDiv.style.color = 'black';
+      reportDiv.style.visibility = 'visible';
+      reportDiv.style.display = 'block';
+      
+      // Generate report HTML with simpler styling
+      const reportHTML = `
+        <div style="text-align: center; margin-bottom: 30px; color: black;">
+          <h1 style="color: #8B5C2A; margin-bottom: 10px; font-size: 24px;">HomeHaven Sales Report</h1>
+          <h2 style="color: #7a6242; margin-bottom: 20px; font-size: 18px;">${profile.business_name || 'Seller Store'}</h2>
+          <p style="color: #666; font-size: 12px;">Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}</p>
+        </div>
+
+        <div style="margin-bottom: 30px; color: black;">
+          <h3 style="color: #8B5C2A; border-bottom: 2px solid #8B5C2A; padding-bottom: 5px; font-size: 16px;">Business Information</h3>
+          <table style="width: 100%; border-collapse: collapse; margin-top: 10px; color: black;">
+            <tr><td style="padding: 5px; font-weight: bold; border: 1px solid #ddd;">Business Name:</td><td style="padding: 5px; border: 1px solid #ddd;">${profile.business_name || 'N/A'}</td></tr>
+            <tr><td style="padding: 5px; font-weight: bold; border: 1px solid #ddd;">Address:</td><td style="padding: 5px; border: 1px solid #ddd;">${profile.business_address || 'N/A'}</td></tr>
+            <tr><td style="padding: 5px; font-weight: bold; border: 1px solid #ddd;">Phone:</td><td style="padding: 5px; border: 1px solid #ddd;">${profile.business_phone || 'N/A'}</td></tr>
+            <tr><td style="padding: 5px; font-weight: bold; border: 1px solid #ddd;">Email:</td><td style="padding: 5px; border: 1px solid #ddd;">${profile.business_email || 'N/A'}</td></tr>
+          </table>
+        </div>
+
+        <div style="margin-bottom: 30px; color: black;">
+          <h3 style="color: #8B5C2A; border-bottom: 2px solid #8B5C2A; padding-bottom: 5px; font-size: 16px;">Inventory Summary</h3>
+          <table style="width: 100%; border-collapse: collapse; margin-top: 10px; color: black;">
+            <tr style="background-color: #f5f3f0;">
+              <th style="padding: 8px; border: 1px solid #ddd; text-align: left; color: black;">Metric</th>
+              <th style="padding: 8px; border: 1px solid #ddd; text-align: left; color: black;">Count</th>
+            </tr>
+            <tr><td style="padding: 8px; border: 1px solid #ddd; color: black;">Total Products</td><td style="padding: 8px; border: 1px solid #ddd; color: black;">${stats.totalProducts}</td></tr>
+            <tr><td style="padding: 8px; border: 1px solid #ddd; color: black;">Active Products</td><td style="padding: 8px; border: 1px solid #ddd; color: black;">${stats.activeProducts}</td></tr>
+            <tr><td style="padding: 8px; border: 1px solid #ddd; color: black;">Total Stock</td><td style="padding: 8px; border: 1px solid #ddd; color: black;">${stats.totalStock}</td></tr>
+          </table>
+        </div>
+
+        <div style="margin-bottom: 30px; color: black;">
+          <h3 style="color: #8B5C2A; border-bottom: 2px solid #8B5C2A; padding-bottom: 5px; font-size: 16px;">Order Statistics</h3>
+          <table style="width: 100%; border-collapse: collapse; margin-top: 10px; color: black;">
+            <tr style="background-color: #f5f3f0;">
+              <th style="padding: 8px; border: 1px solid #ddd; text-align: left; color: black;">Status</th>
+              <th style="padding: 8px; border: 1px solid #ddd; text-align: left; color: black;">Count</th>
+            </tr>
+            <tr><td style="padding: 8px; border: 1px solid #ddd; color: black;">Total Orders</td><td style="padding: 8px; border: 1px solid #ddd; color: black;">${stats.orderStats.total}</td></tr>
+            <tr><td style="padding: 8px; border: 1px solid #ddd; color: black;">Pending Orders</td><td style="padding: 8px; border: 1px solid #ddd; color: black;">${stats.orderStats.pending}</td></tr>
+            <tr><td style="padding: 8px; border: 1px solid #ddd; color: black;">Delivered Orders</td><td style="padding: 8px; border: 1px solid #ddd; color: black;">${stats.orderStats.delivered}</td></tr>
+            <tr><td style="padding: 8px; border: 1px solid #ddd; color: black;">Cancelled Orders</td><td style="padding: 8px; border: 1px solid #ddd; color: black;">${stats.orderStats.cancelled}</td></tr>
+            <tr style="background-color: #e8f5e8;"><td style="padding: 8px; border: 1px solid #ddd; font-weight: bold; color: black;">Total Revenue</td><td style="padding: 8px; border: 1px solid #ddd; font-weight: bold; color: black;">₱${stats.orderStats.totalRevenue.toLocaleString()}</td></tr>
+          </table>
+        </div>
+
+        <div style="margin-bottom: 30px; color: black;">
+          <h3 style="color: #8B5C2A; border-bottom: 2px solid #8B5C2A; padding-bottom: 5px; font-size: 16px;">Top Performing Products</h3>
+          <table style="width: 100%; border-collapse: collapse; margin-top: 10px; color: black;">
+            <tr style="background-color: #f5f3f0;">
+              <th style="padding: 8px; border: 1px solid #ddd; text-align: left; color: black;">Product</th>
+              <th style="padding: 8px; border: 1px solid #ddd; text-align: left; color: black;">Price</th>
+              <th style="padding: 8px; border: 1px solid #ddd; text-align: left; color: black;">Sold</th>
+              <th style="padding: 8px; border: 1px solid #ddd; text-align: left; color: black;">Revenue</th>
+            </tr>
+            ${stats.topProducts.map(p => `
+              <tr>
+                <td style="padding: 8px; border: 1px solid #ddd; color: black;">${p.name}</td>
+                <td style="padding: 8px; border: 1px solid #ddd; color: black;">₱${parseFloat(p.price).toLocaleString()}</td>
+                <td style="padding: 8px; border: 1px solid #ddd; color: black;">${p.sold}</td>
+                <td style="padding: 8px; border: 1px solid #ddd; color: black;">₱${p.revenue.toLocaleString()}</td>
+              </tr>
+            `).join('')}
+          </table>
+        </div>
+
+        <div style="margin-bottom: 30px; color: black;">
+          <h3 style="color: #8B5C2A; border-bottom: 2px solid #8B5C2A; padding-bottom: 5px; font-size: 16px;">Recent Orders</h3>
+          <table style="width: 100%; border-collapse: collapse; margin-top: 10px; color: black;">
+            <tr style="background-color: #f5f3f0;">
+              <th style="padding: 8px; border: 1px solid #ddd; text-align: left; color: black;">Order #</th>
+              <th style="padding: 8px; border: 1px solid #ddd; text-align: left; color: black;">Date</th>
+              <th style="padding: 8px; border: 1px solid #ddd; text-align: left; color: black;">Customer</th>
+              <th style="padding: 8px; border: 1px solid #ddd; text-align: left; color: black;">Status</th>
+              <th style="padding: 8px; border: 1px solid #ddd; text-align: left; color: black;">Amount</th>
+            </tr>
+            ${orders.slice(0, 10).map(o => `
+              <tr>
+                <td style="padding: 8px; border: 1px solid #ddd; color: black;">${o.order_number}</td>
+                <td style="padding: 8px; border: 1px solid #ddd; color: black;">${new Date(o.date_placed).toLocaleDateString()}</td>
+                <td style="padding: 8px; border: 1px solid #ddd; color: black;">${o.customer_fname} ${o.customer_lname}</td>
+                <td style="padding: 8px; border: 1px solid #ddd; color: black;">${o.order_status || 'pending'}</td>
+                <td style="padding: 8px; border: 1px solid #ddd; color: black;">₱${parseFloat(o.total_amount || 0).toLocaleString()}</td>
+              </tr>
+            `).join('')}
+          </table>
+        </div>
+
+        <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 2px solid #8B5C2A; color: black;">
+          <p style="color: #666; font-size: 10px;">This report was generated automatically by HomeHaven Seller Dashboard</p>
+        </div>
+      `;
+      
+      reportDiv.innerHTML = reportHTML;
+      document.body.appendChild(reportDiv);
+
+      // Wait a moment for the content to render
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Use html2pdf to generate PDF with better options
+      const opt = {
+        margin: [0.5, 0.5, 0.5, 0.5],
+        filename: `sales_report_${profile.business_name || 'seller'}_${new Date().toISOString().split('T')[0]}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#ffffff'
+        },
+        jsPDF: { 
+          unit: 'in', 
+          format: 'letter', 
+          orientation: 'portrait',
+          compress: true
+        }
+      };
+
+      // Generate PDF using html2pdf
+      html2pdf().set(opt).from(reportDiv).save().then(() => {
+        document.body.removeChild(reportDiv);
+        console.log('PDF generated successfully');
+      }).catch((error) => {
+        console.error('Error generating PDF:', error);
+        document.body.removeChild(reportDiv);
+        alert('Failed to generate PDF. Please try again.');
+      });
+    }
+
+    // Initialize page
     $(document).ready(function() {
-      loadSellerProfile();
+      // Display user name if available
+      const userName = localStorage.getItem('user_name') || 'Name Name Name';
+      $('#profileUserName').text(userName);
+      
+      loadSellerProfileForm();
       loadSellerProductsPreview();
     });
   </script>
-  <script>
-$(function() {
-  $(document).on('submit', '#sellerProfileForm', function(e) {
-    let valid = true;
-    $('.profile-error').remove();
-    const name = $('#business_name').val().trim();
-    const email = $('#business_email').val().trim();
-    const phone = $('#business_phone').val().trim();
-    if (!name) { $('#business_name').after('<div class="profile-error" style="color:#c00;font-size:0.95em;margin-top:2px;">Business name is required.</div>'); valid = false; }
-    if (!email) { $('#business_email').after('<div class="profile-error" style="color:#c00;font-size:0.95em;margin-top:2px;">Email is required.</div>'); valid = false; }
-    else if (!/^\S+@\S+\.\S+$/.test(email)) { $('#business_email').after('<div class="profile-error" style="color:#c00;font-size:0.95em;margin-top:2px;">Enter a valid email.</div>'); valid = false; }
-    if (!phone) { $('#business_phone').after('<div class="profile-error" style="color:#c00;font-size:0.95em;margin-top:2px;">Phone is required.</div>'); valid = false; }
-    if (!valid) { e.preventDefault(); return false; }
-  });
-});
-</script>
 </body>
 </html> 
