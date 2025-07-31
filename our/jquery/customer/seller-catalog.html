@@ -158,11 +158,39 @@
       color: #ddd;
       margin-bottom: 20px;
     }
+    
+    /* Custom brown theme for Add to Cart button */
+    .btn-primary {
+      background-color: #8B5C2A !important;
+      border-color: #8B5C2A !important;
+      color: white !important;
+    }
+    
+    .btn-primary:hover {
+      background-color: #A67C52 !important;
+      border-color: #A67C52 !important;
+      color: white !important;
+    }
+    
+    .btn-primary:focus {
+      background-color: #8B5C2A !important;
+      border-color: #8B5C2A !important;
+      box-shadow: 0 0 0 0.2rem rgba(139, 92, 42, 0.25) !important;
+    }
+    
+    .btn-primary:active {
+      background-color: #7a6242 !important;
+      border-color: #7a6242 !important;
+    }
   </style>
 </head>
 <body>
-  <div id="header"></div>
-  <script>$(function(){$('#header').load('../header.html');});</script>
+  <div id="headerContainer"></div>
+  <script>
+    $(function() {
+      $("#headerContainer").load("../header.html");
+    });
+  </script>
   
   <!-- Seller Header -->
   <div class="seller-header">
@@ -176,11 +204,12 @@
   <div class="container">
     <div class="seller-info">
       <div class="row align-items-center">
-        <div class="col-md-3 text-center">
-          <div class="seller-avatar" id="sellerAvatar">
-            <i class="fas fa-store"></i>
-          </div>
-        </div>
+                 <div class="col-md-3 text-center">
+           <div class="seller-avatar" id="sellerAvatar">
+             <img id="sellerProfileImage" src="" alt="Seller Profile" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: none;">
+             <i class="fas fa-store" id="sellerDefaultIcon"></i>
+           </div>
+         </div>
         <div class="col-md-9">
           <h3 id="sellerBusinessName">Seller Business Name</h3>
           <p id="sellerDescription" class="text-muted">Business description will appear here</p>
@@ -272,20 +301,30 @@
           return;
         }
         
-        const response = await $.get(`${API_BASE}/sellers/${sellerId}`);
-        if (response.success && response.seller) {
-          const seller = response.seller;
-          
-          $('#sellerName').text(seller.business_name || 'Seller Store');
-          $('#sellerBusinessName').text(seller.business_name || 'Seller Business');
-          $('#sellerDescription').text(seller.business_description || 'No description available');
-          $('#sellerAddress').text(seller.business_address || 'Address not provided');
-          $('#sellerPhone').text(seller.business_phone || 'Phone not provided');
-          $('#sellerEmail').text(seller.business_email || 'Email not provided');
-          
-          // Update page title
-          document.title = `${seller.business_name} - HomeHaven`;
-        }
+                 const response = await $.get(`${API_BASE}/sellers/${sellerId}`);
+         if (response.success && response.seller) {
+           const seller = response.seller;
+           
+           $('#sellerName').text(seller.business_name || 'Seller Store');
+           $('#sellerBusinessName').text(seller.business_name || 'Seller Business');
+           $('#sellerDescription').text(seller.business_description || 'No description available');
+           $('#sellerAddress').text(seller.business_address || 'Address not provided');
+           $('#sellerPhone').text(seller.business_phone || 'Phone not provided');
+           $('#sellerEmail').text(seller.business_email || 'Email not provided');
+           
+           // Handle seller profile image
+           if (seller.profile_image) {
+             const imagePath = seller.profile_image.startsWith('http') ? seller.profile_image : `http://localhost:4000${seller.profile_image}`;
+             $('#sellerProfileImage').attr('src', imagePath).show();
+             $('#sellerDefaultIcon').hide();
+           } else {
+             $('#sellerProfileImage').hide();
+             $('#sellerDefaultIcon').show();
+           }
+           
+           // Update page title
+           document.title = `${seller.business_name} - HomeHaven`;
+         }
       } catch (error) {
         console.error('Error loading seller info:', error);
       }
@@ -435,7 +474,7 @@
     }
     
     // Add to cart function
-    function addToCart(itemId) {
+    async function addToCart(itemId) {
       // Check if user is logged in
       const token = localStorage.getItem('jwt_token');
       if (!token) {
@@ -443,9 +482,39 @@
         return;
       }
       
-      // Add to cart logic here
-      console.log('Adding item to cart:', itemId);
-      // You can implement the actual add to cart functionality
+      try {
+        // Get product details to get the price
+        const product = allProducts.find(p => p.item_id == itemId);
+        if (!product) {
+          alert('Product not found');
+          return;
+        }
+        
+        // Add to cart
+        const response = await fetch(`${API_BASE}/cart/add`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            item_id: itemId,
+            quantity: 1,
+            price: product.sell_price
+          })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          alert('Item added to cart successfully!');
+        } else {
+          alert('Failed to add item to cart: ' + (result.error || result.message));
+        }
+      } catch (error) {
+        console.error('Error adding to cart:', error);
+        alert('Failed to add item to cart. Please try again.');
+      }
     }
     
     // Filter and search products

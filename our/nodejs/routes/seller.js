@@ -451,4 +451,214 @@ router.put('/seller/profile', authenticateJWT, requireSellerRole, upload.single(
   }
 });
 
+// ----------- PUBLIC SELLER CATALOG ENDPOINTS -----------
+// GET seller information by seller_id (public endpoint)
+router.get('/sellers/:sellerId', async (req, res) => {
+  try {
+    const sellerId = parseInt(req.params.sellerId);
+    
+    if (isNaN(sellerId) || sellerId <= 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Invalid seller ID.' 
+      });
+    }
+    
+    const [rows] = await db.query(`
+      SELECT 
+        s.seller_id,
+        s.business_name,
+        s.business_description,
+        s.business_address,
+        s.business_phone,
+        s.business_email,
+        s.is_verified,
+        s.created_at,
+        u.name AS user_name,
+        u.email AS user_email,
+        u.profile_image
+      FROM sellers s
+      JOIN users u ON s.user_id = u.id
+      WHERE s.seller_id = ? AND u.status = 'active'
+      LIMIT 1
+    `, [sellerId]);
+    
+    if (!rows.length) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Seller not found or inactive.' 
+      });
+    }
+    
+    res.json({ 
+      success: true, 
+      seller: rows[0] 
+    });
+  } catch (err) {
+    console.error('Error fetching seller info:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to fetch seller information.' 
+    });
+  }
+});
+
+// GET seller products by seller_id with pagination (public endpoint)
+router.get('/sellers/:sellerId/products', async (req, res) => {
+  try {
+    const sellerId = parseInt(req.params.sellerId);
+    const page = parseInt(req.query.page) || 1;
+    const limit = 12; // Products per page
+    const offset = (page - 1) * limit;
+    
+    if (isNaN(sellerId) || sellerId <= 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Invalid seller ID.' 
+      });
+    }
+    
+    if (page < 1) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Invalid page number.' 
+      });
+    }
+    
+    // First, get the user_id for this seller
+    const [sellerRows] = await db.query(`
+      SELECT user_id FROM sellers WHERE seller_id = ?
+    `, [sellerId]);
+    
+    if (!sellerRows.length) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Seller not found.' 
+      });
+    }
+    
+    const userId = sellerRows[0].user_id;
+    
+    // Get products with pagination
+    const [products] = await db.query(`
+      SELECT 
+        i.*,
+        s.quantity as stock_quantity,
+        c.name as category_name,
+        c.category_id
+      FROM item i
+      LEFT JOIN stock s ON i.item_id = s.item_id
+      LEFT JOIN categories c ON i.category_id = c.category_id
+      WHERE i.seller_id = ? AND i.status = 'active'
+      ORDER BY i.created_at DESC
+      LIMIT ? OFFSET ?
+    `, [userId, limit, offset]);
+    
+    // Parse image JSON for each product
+    products.forEach(product => {
+      try {
+        if (product.image) {
+          const images = JSON.parse(product.image);
+          product.image = Array.isArray(images) ? images : [images];
+        } else {
+          product.image = [];
+        }
+      } catch (e) {
+        // Fallback: split by comma if not JSON
+        product.image = typeof product.image === 'string' && product.image.trim() !== ''
+          ? product.image.split(',').map(s => s.trim()).filter(Boolean)
+          : [];
+      }
+    });
+    
+    res.json({ 
+      success: true, 
+      products: products,
+      pagination: {
+        page,
+        limit,
+        total: products.length,
+        hasMore: products.length === limit
+      }
+    });
+  } catch (err) {
+    console.error('Error fetching seller products:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to fetch seller products.' 
+    });
+  }
+});
+
+// GET seller products count (for pagination info)
+router.get('/sellers/:sellerId/products/count', async (req, res) => {
+  try {
+    const sellerId = parseInt(req.params.sellerId);
+    
+    if (isNaN(sellerId) || sellerId <= 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Invalid seller ID.' 
+      });
+    }
+    
+    // Get the user_id for this seller
+    const [sellerRows] = await db.query(`
+      SELECT user_id FROM sellers WHERE seller_id = ?
+    `, [sellerId]);
+    
+    if (!sellerRows.length) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Seller not found.' 
+      });
+    }
+    
+    const userId = sellerRows[0].user_id;
+    
+    // Get total count
+    const [countRows] = await db.query(`
+      SELECT COUNT(*) as total
+      FROM item i
+      WHERE i.seller_id = ? AND i.status = 'active'
+    `, [userId]);
+    
+    res.json({ 
+      success: true, 
+      total: countRows[0].total 
+    });
+  } catch (err) {
+    console.error('Error fetching seller products count:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to fetch seller products count.' 
+    });
+  }
+});
+
+// ----------- SELLER CATEGORIES ENDPOINT -----------
+// GET categories for seller products (public endpoint)
+router.get('/seller/categories', async (req, res) => {
+  try {
+    const [categories] = await db.query(`
+      SELECT DISTINCT c.category_id, c.name, c.description
+      FROM categories c
+      JOIN item i ON c.category_id = i.category_id
+      WHERE c.is_active = 1 AND i.status = 'active'
+      ORDER BY c.name
+    `);
+    
+    res.json({ 
+      success: true, 
+      categories: categories 
+    });
+  } catch (err) {
+    console.error('Error fetching seller categories:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to fetch categories.' 
+    });
+  }
+});
+
 module.exports = router; 

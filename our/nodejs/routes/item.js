@@ -122,7 +122,7 @@ router.get('/products/:id', async (req, res) => {
 router.get('/products/details/:id', async (req, res) => {
   try {
     const [rows] = await db.query(`
-      SELECT i.*, c.name AS category_name, s.business_name, s.business_description, s.business_email, st.quantity AS stock_quantity
+      SELECT i.*, c.name AS category_name, s.business_name, s.business_description, s.business_email, s.seller_id, st.quantity AS stock_quantity
       FROM item i
       LEFT JOIN categories c ON i.category_id = c.category_id
       LEFT JOIN sellers s ON i.seller_id = s.user_id
